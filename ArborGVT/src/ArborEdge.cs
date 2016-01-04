@@ -10,22 +10,22 @@ using System;
 
 namespace ArborGVT
 {
-	public class ArborEdge
+    public class ArborEdge
     {
-    	public ArborNode Source;
-    	public ArborNode Target;
+        public ArborNode Source;
+        public ArborNode Target;
 
-    	public double Length;
-    	public bool Directed;
-    	public double Stiffness;
+        public double Length;
+        public bool Directed;
+        public double Stiffness;
 
-    	public ArborEdge(ArborNode src, ArborNode tgt, double len, double stiffness)
-    	{
-    		this.Source = src;
-    		this.Target = tgt;
-    		this.Length = len;
-    		this.Directed = true;
-    		this.Stiffness = stiffness;
-    	}
+        public ArborEdge(ArborNode src, ArborNode tgt, double len, double stiffness)
+        {
+            this.Source = src;
+            this.Target = tgt;
+            this.Length = len;
+            this.Directed = true;
+            this.Stiffness = stiffness;
+        }
     }
 }

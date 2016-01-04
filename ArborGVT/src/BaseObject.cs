@@ -6,7 +6,7 @@ namespace ArborGVT
     /// 
     /// </summary>
     public class BaseObject : IDisposable
-	{
+    {
         private bool fDisposed;
 
         protected virtual void Dispose(bool disposing)

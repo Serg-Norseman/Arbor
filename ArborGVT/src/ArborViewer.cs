@@ -15,14 +15,14 @@ namespace ArborGVT
 {
     public sealed class ArborViewer : Panel, IArborRenderer
     {
-    	private bool fEnergyDebug;
+        private bool fEnergyDebug;
         private readonly Font fDrawFont;
         private readonly ArborSystem fSys;
 
         public bool EnergyDebug
         {
-        	get { return this.fEnergyDebug; }
-        	set { this.fEnergyDebug = value; }
+            get { return this.fEnergyDebug; }
+            set { this.fEnergyDebug = value; }
         }
 
         public ArborSystem Sys
@@ -110,8 +110,8 @@ namespace ArborGVT
                 }
 
                 if (this.fEnergyDebug) {
-                	string energy = "max=" + fSys.energy_max.ToString("0.00000") + ", mean=" + fSys.energy_mean.ToString("0.00000") + ", thres=" + fSys.energy_threshold.ToString("0.00000");
-                	gfx.DrawString(energy, fDrawFont, new SolidBrush(Color.Black), 10, 10);
+                    string energy = "max=" + fSys.energy_max.ToString("0.00000") + ", mean=" + fSys.energy_mean.ToString("0.00000") + ", thres=" + fSys.energy_threshold.ToString("0.00000");
+                    gfx.DrawString(energy, fDrawFont, new SolidBrush(Color.Black), 10, 10);
                 }
             } catch (Exception ex) {
                 //SysUtils.LogWrite("ArborViewer.OnPaint(): " + ex.Message);

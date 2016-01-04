@@ -10,8 +10,8 @@ using System;
 
 namespace ArborGVT
 {
-	public interface IArborRenderer
-	{
-		void redraw();
-	}
+    public interface IArborRenderer
+    {
+        void redraw();
+    }
 }

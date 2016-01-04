@@ -11,38 +11,38 @@ using System.Drawing;
 
 namespace ArborGVT
 {
-	public class ArborNode
-    { 
-		public string Sign;
-		public object Data;
+    public class ArborNode
+    {
+        public string Sign;
+        public object Data;
 
         public bool Fixed;
-		public double Mass;
+        public double Mass;
         public ArborPoint Pt;
 
         public Color Color;
-		public RectangleF Box;
+        public RectangleF Box;
 
-    	public ArborPoint v;
-    	public ArborPoint f;
+        public ArborPoint v;
+        public ArborPoint f;
 
-		public ArborNode(string sign)
-		{
-			this.Sign = sign;
+        public ArborNode(string sign)
+        {
+            this.Sign = sign;
 
-			this.Fixed = false;
-			this.Mass = 1;
-			this.Pt = new ArborPoint(double.NaN, double.NaN);
+            this.Fixed = false;
+            this.Mass = 1;
+            this.Pt = new ArborPoint(double.NaN, double.NaN);
 
-			this.Color = Color.Gray;
+            this.Color = Color.Gray;
 
-			this.v = new ArborPoint(0, 0);
-    		this.f = new ArborPoint(0, 0);
-		}
+            this.v = new ArborPoint(0, 0);
+            this.f = new ArborPoint(0, 0);
+        }
 
-		public void applyForce(ArborPoint a)
-    	{
-    		this.f.t_add(a.div(this.Mass));
-    	}
+        public void applyForce(ArborPoint a)
+        {
+            this.f.t_add(a.div(this.Mass));
+        }
     }
 }
