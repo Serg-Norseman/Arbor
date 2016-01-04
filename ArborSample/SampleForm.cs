@@ -1,6 +1,4 @@
-﻿using System.Drawing;
-using System.Windows.Forms;
-
+﻿using System.Windows.Forms;
 using ArborGVT;
 
 namespace ArborSample
@@ -17,6 +15,7 @@ namespace ArborSample
             this.fTip = new ToolTip();
             this.fTipShow = false;
 
+            arborViewer1.EnergyDebug = true;
             arborViewer1.doSample();
         	arborViewer1.start();
 		}

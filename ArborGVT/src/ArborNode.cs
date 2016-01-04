@@ -42,7 +42,7 @@ namespace ArborGVT
 
 		public void applyForce(ArborPoint a)
     	{
-    		this.f = this.f.add(a.div(this.Mass));
+    		this.f.t_add(a.div(this.Mass));
     	}
     }
 }

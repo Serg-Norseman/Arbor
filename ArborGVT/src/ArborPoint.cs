@@ -38,6 +38,13 @@ namespace ArborGVT
             return new ArborPoint(this.x + a.x, this.y + a.y);
         }
 
+		// this_add(), for decrease memory allocations
+		public void t_add(ArborPoint a)
+		{
+            this.x += a.x;
+            this.y += a.y;
+        }
+
 		public ArborPoint sub(ArborPoint a)
 		{
             return new ArborPoint(this.x - a.x, this.y - a.y);
@@ -48,9 +55,23 @@ namespace ArborGVT
             return new ArborPoint(this.x * a, this.y * a);
         }
 
+		// this_mul(), for decrease memory allocations
+		public void t_mul(double a)
+		{
+            this.x *= a;
+            this.y *= a;
+        }
+
 		public ArborPoint div(double a)
 		{
             return new ArborPoint(this.x / a, this.y / a);
+        }
+
+		// this_div(), for decrease memory allocations
+		public void t_div(double a)
+		{
+            this.x /= a;
+            this.y /= a;
         }
 
 		public double magnitude()
@@ -58,10 +79,11 @@ namespace ArborGVT
             return Math.Sqrt(this.x * this.x + this.y * this.y);
         }
 
-		public ArborPoint normal()
+		// not used
+		/*public ArborPoint normal()
 		{
             return new ArborPoint(-this.y, this.x);
-        }
+        }*/
 
 		public ArborPoint normalize()
 		{

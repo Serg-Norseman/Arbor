@@ -38,6 +38,7 @@ namespace ArborGVT
 		private PSBounds n_bnd = null;
 		private PSBounds o_bnd = null;
 
+		private bool fAutoStop;
 		private IArborRenderer c_renderer;
 		private System.Timers.Timer itv = null;
 		private DateTime tm = DateTime.FromBinary(0);
@@ -68,6 +69,12 @@ namespace ArborGVT
         private EventHandler fOnStop;
 
         #region Properties
+
+        public bool AutoStop
+        {
+        	get { return this.fAutoStop; }
+        	set { this.fAutoStop = value; }
+        }
 
         public List<ArborNode> Nodes
         {
@@ -112,6 +119,8 @@ namespace ArborGVT
 			this.param_stiffness = stiffness;
 			this.param_friction = friction;
 			this.c_renderer = renderer;
+
+			this.fAutoStop = true;
 		}
 
         protected override void Dispose(bool disposing)
@@ -136,16 +145,18 @@ namespace ArborGVT
 					c_renderer.redraw();
 				}
 
-				if (energy_threshold <= /*0.05*/ 0.7) {
-					if (tm == DateTime.FromBinary(0)) {
-						tm = DateTime.Now;
+				if (this.fAutoStop) {
+					if (energy_threshold <= /*0.05*/ 0.7) {
+						if (tm == DateTime.FromBinary(0)) {
+							tm = DateTime.Now;
+						}
+						TimeSpan ts = DateTime.Now - tm;
+						if (ts.TotalMilliseconds > 1000) {
+							this.stop();
+						}
+					} else {
+						tm = DateTime.FromBinary(0);
 					}
-					TimeSpan ts = DateTime.Now - tm;
-					if (ts.TotalMilliseconds > 1000) {
-						this.stop();
-					}
-				} else {
-					tm = DateTime.FromBinary(0);
 				}
 			}
 			catch (Exception ex)
@@ -428,7 +439,7 @@ namespace ArborGVT
 			double q = 0.0;
 			ArborPoint r = new ArborPoint(0, 0);
 			foreach (ArborNode s in fNodes) {
-				r = r.add(s.Pt);
+				r.t_add(s.Pt);
 				q++;
 			}
 
@@ -456,11 +467,14 @@ namespace ArborGVT
 					q.f = new ArborPoint(0, 0);
 					continue;
 				}
-				q.v = q.v.add(q.f.mul(p)).mul(1 - param_friction);
+
+				q.v.t_add(q.f.mul(p));
+				q.v.t_mul(1 - param_friction);
+
 				q.f.x = q.f.y = 0;
 				double r = q.v.magnitude();
 				if (r > 1000) {
-					q.v = q.v.div(r * r);
+					q.v.t_div(r * r);
 				}
 			}
 		}
@@ -475,7 +489,7 @@ namespace ArborGVT
 
 			foreach (ArborNode v in fNodes)
 			{
-				v.Pt = v.Pt.add(v.v.mul(q));
+				v.Pt.t_add(v.v.mul(q));
 				double x = v.v.magnitude();
 				double z = x * x;
 				r += z;

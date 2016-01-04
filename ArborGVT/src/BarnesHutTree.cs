@@ -91,7 +91,7 @@ namespace ArborGVT
 
 						f.mass += m;
 						if (f.pt != null) {
-							f.pt = f.pt.add(h.Pt.mul(m));
+							f.pt.t_add(h.Pt.mul(m));
 						} else {
 							f.pt = h.Pt.mul(m);
 						}
@@ -99,7 +99,7 @@ namespace ArborGVT
 						if (fp is Branch) {
 							f.mass += (m);
 							if (f.pt != null) {
-								f.pt = f.pt.add(h.Pt.mul(m));
+								f.pt.t_add(h.Pt.mul(m));
 							} else {
 								f.pt = h.Pt.mul(m);
 							}
