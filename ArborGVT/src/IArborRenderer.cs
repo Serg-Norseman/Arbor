@@ -12,6 +12,6 @@ namespace ArborGVT
 {
     public interface IArborRenderer
     {
-        void redraw();
+        void Invalidate();
     }
 }

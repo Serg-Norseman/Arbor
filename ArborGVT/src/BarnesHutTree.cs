@@ -8,22 +8,21 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace ArborGVT
 {
     public class Branch
     {
-        public ArborPoint origin = null;
-        public ArborPoint size = null;
+        public ArborPoint origin = ArborPoint.Null;
+        public ArborPoint size = ArborPoint.Null;
         public object[] q = new object[4] { null, null, null, null };
         public double mass = 0.0;
-        public ArborPoint pt = null;
+        public ArborPoint pt = ArborPoint.Null;
     }
 
     public class BarnesHutTree
     {
-        private static readonly Random _random = new Random();
-
         private const int q_ne = 0;
         private const int q_nw = 1;
         private const int q_se = 2;
@@ -66,7 +65,7 @@ namespace ArborGVT
             }
             catch (Exception ex)
             {
-                //SysUtils.LogWrite("BarnesHutTree.getQuad(): " + ex.Message);
+                Debug.WriteLine("BarnesHutTree.getQuad(): " + ex.Message);
                 return q_none;
             }
         }
@@ -90,16 +89,16 @@ namespace ArborGVT
                         f.q[p] = h;
 
                         f.mass += m;
-                        if (f.pt != null) {
-                            f.pt.t_add(h.Pt.mul(m));
+                        if (!f.pt.isNull()) {
+                            f.pt = f.pt.add(h.Pt.mul(m));
                         } else {
                             f.pt = h.Pt.mul(m);
                         }
                     } else {
                         if (fp is Branch) {
                             f.mass += (m);
-                            if (f.pt != null) {
-                                f.pt.t_add(h.Pt.mul(m));
+                            if (!f.pt.isNull()) {
+                                f.pt = f.pt.add(h.Pt.mul(m));
                             } else {
                                 f.pt = h.Pt.mul(m);
                             }
@@ -132,8 +131,8 @@ namespace ArborGVT
                             if (o.Pt.x == h.Pt.x && o.Pt.y == h.Pt.y) {
                                 double k = l.x * 0.08;
                                 double i = l.y * 0.08;
-                                o.Pt.x = Math.Min(n.x + l.x, Math.Max(n.x, o.Pt.x - k / 2 + _random.NextDouble() * k));
-                                o.Pt.y = Math.Min(n.y + l.y, Math.Max(n.y, o.Pt.y - i / 2 + _random.NextDouble() * i));
+                                o.Pt.x = Math.Min(n.x + l.x, Math.Max(n.x, o.Pt.x - k / 2 + ArborSystem.NextRndDouble() * k));
+                                o.Pt.y = Math.Min(n.y + l.y, Math.Max(n.y, o.Pt.y - i / 2 + ArborSystem.NextRndDouble() * i));
                             }
 
                             gst.Add(o);
@@ -144,7 +143,7 @@ namespace ArborGVT
             }
             catch (Exception ex)
             {
-                //SysUtils.LogWrite("BarnesHutTree.insert(): " + ex.Message);
+                Debug.WriteLine("BarnesHutTree.insert(): " + ex.Message);
             }
         }
 
@@ -167,7 +166,7 @@ namespace ArborGVT
                         ArborNode p_node = (node as ArborNode);
                         k = m.Pt.sub(p_node.Pt);
                         l = Math.Max(1, k.magnitude());
-                        i = ((k.magnitude() > 0) ? k : ArborPoint.rnd(1)).normalize();
+                        i = ((k.magnitude() > 0) ? k : ArborPoint.newRnd(1)).normalize();
                         m.applyForce(i.mul(g * p_node.Mass).div(l * l));
                     } else {
                         Branch b_node = (node as Branch);
@@ -181,7 +180,7 @@ namespace ArborGVT
                         } else {
                             k = m.Pt.sub(b_node.pt.div(b_node.mass));
                             l = Math.Max(1, k.magnitude());
-                            i = ((k.magnitude() > 0) ? k : ArborPoint.rnd(1)).normalize();
+                            i = ((k.magnitude() > 0) ? k : ArborPoint.newRnd(1)).normalize();
                             m.applyForce(i.mul(g * (b_node.mass)).div(l * l));
                         }
                     }
@@ -189,7 +188,7 @@ namespace ArborGVT
             }
             catch (Exception ex)
             {
-                //SysUtils.LogWrite("BarnesHutTree.applyForces(): " + ex.Message);
+                Debug.WriteLine("BarnesHutTree.applyForces(): " + ex.Message);
             }
         }
     }

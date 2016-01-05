@@ -23,8 +23,8 @@ namespace ArborGVT
         public Color Color;
         public RectangleF Box;
 
-        public ArborPoint v;
-        public ArborPoint f;
+        internal ArborPoint v;
+        internal ArborPoint f;
 
         public ArborNode(string sign)
         {
@@ -32,7 +32,7 @@ namespace ArborGVT
 
             this.Fixed = false;
             this.Mass = 1;
-            this.Pt = new ArborPoint(double.NaN, double.NaN);
+            this.Pt = ArborPoint.Null;
 
             this.Color = Color.Gray;
 
@@ -40,9 +40,9 @@ namespace ArborGVT
             this.f = new ArborPoint(0, 0);
         }
 
-        public void applyForce(ArborPoint a)
+        internal void applyForce(ArborPoint a)
         {
-            this.f.t_add(a.div(this.Mass));
+            this.f = this.f.add(a.div(this.Mass));
         }
     }
 }

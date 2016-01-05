@@ -10,22 +10,27 @@ using System;
 
 namespace ArborGVT
 {
-    public class ArborPoint
+    public struct ArborPoint
     {
-        private static readonly Random _random = new Random();
-
+        public static readonly ArborPoint Null = new ArborPoint(double.NaN, double.NaN);
+        
         public double x;
         public double y;
 
-        public ArborPoint(double a, double b)
+        public ArborPoint(double x, double y)
         {
-            this.x = a;
-            this.y = b;
+            this.x = x;
+            this.y = y;
         }
 
-        public static ArborPoint rnd(double a = 5)
+        public bool isNull()
         {
-            return new ArborPoint(2 * a * (_random.NextDouble() - 0.5), 2 * a * (_random.NextDouble() - 0.5));
+            return (double.IsNaN(this.x) && double.IsNaN(this.y));
+        }
+
+        public static ArborPoint newRnd(double a = 5)
+        {
+            return new ArborPoint(2 * a * (ArborSystem.NextRndDouble() - 0.5), 2 * a * (ArborSystem.NextRndDouble() - 0.5));
         }
 
         public bool exploded()
@@ -38,13 +43,6 @@ namespace ArborGVT
             return new ArborPoint(this.x + a.x, this.y + a.y);
         }
 
-        // this_add(), for decrease memory allocations
-        public void t_add(ArborPoint a)
-        {
-            this.x += a.x;
-            this.y += a.y;
-        }
-
         public ArborPoint sub(ArborPoint a)
         {
             return new ArborPoint(this.x - a.x, this.y - a.y);
@@ -55,23 +53,9 @@ namespace ArborGVT
             return new ArborPoint(this.x * a, this.y * a);
         }
 
-        // this_mul(), for decrease memory allocations
-        public void t_mul(double a)
-        {
-            this.x *= a;
-            this.y *= a;
-        }
-
         public ArborPoint div(double a)
         {
             return new ArborPoint(this.x / a, this.y / a);
-        }
-
-        // this_div(), for decrease memory allocations
-        public void t_div(double a)
-        {
-            this.x /= a;
-            this.y /= a;
         }
 
         public double magnitude()
@@ -79,15 +63,15 @@ namespace ArborGVT
             return Math.Sqrt(this.x * this.x + this.y * this.y);
         }
 
+        public ArborPoint normalize()
+        {
+            return this.div(this.magnitude());
+        }
+
         // not used
         /*public ArborPoint normal()
 		{
             return new ArborPoint(-this.y, this.x);
         }*/
-
-        public ArborPoint normalize()
-        {
-            return this.div(this.magnitude());
-        }
     }
 }

@@ -7,6 +7,7 @@
 // 
 
 using System;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
@@ -17,7 +18,9 @@ namespace ArborGVT
     {
         private bool fEnergyDebug;
         private readonly Font fDrawFont;
+        private readonly StringFormat fStrFormat;
         private readonly ArborSystem fSys;
+        private readonly SolidBrush fWhiteBrush;
 
         public bool EnergyDebug
         {
@@ -33,58 +36,59 @@ namespace ArborGVT
         public ArborViewer()
         {
             base.BorderStyle = BorderStyle.Fixed3D;
-            base.DoubleBuffered = true;
             base.TabStop = true;
             base.BackColor = Color.White;
 
-            // repulsion - отталкивание, stiffness - тугоподвижность, friction - сила трения
-            fSys = new ArborSystem(10000, 250/*1000*/, 0.1, this);
-            fSys.setScreenSize(this.Width, this.Height);
+        	base.DoubleBuffered = true;
+        	base.SetStyle(ControlStyles.AllPaintingInWmPaint, true);
+        	base.SetStyle(ControlStyles.OptimizedDoubleBuffer, true);
 
-            fSys.AutoStop = false;
+            // repulsion - отталкивание, stiffness - тугоподвижность, friction - сила трения
+            this.fSys = new ArborSystem(10000, 250/*1000*/, 0.1, this);
+            this.fSys.setScreenSize(this.Width, this.Height);
+            this.fSys.AutoStop = false;
 
             this.fEnergyDebug = false;
-            
             this.fDrawFont = new Font("Calibri", 9);
-            this.Resize += new EventHandler(this.av_Resize);
-        }
 
-        private void av_Resize(object sender, EventArgs e)
-        {
-            fSys.setScreenSize(this.Width, this.Height);
-            redraw();
+            this.fStrFormat = new StringFormat();
+            this.fStrFormat.Alignment = StringAlignment.Center;
+            this.fStrFormat.LineAlignment = StringAlignment.Center;
+
+            this.fWhiteBrush = new SolidBrush(Color.White);
         }
 
         protected override void Dispose(bool disposing)
         {
             if (disposing)
             {
-                fSys.Dispose();
-                fDrawFont.Dispose();
+                this.fSys.Dispose();
+                this.fDrawFont.Dispose();
             }
             base.Dispose(disposing);
+        }
+
+        protected override void OnResize(EventArgs e)
+        {
+            base.OnResize(e);
+
+            this.fSys.setScreenSize(this.Width, this.Height);
+            this.Invalidate();
         }
 
         protected override void OnPaint(PaintEventArgs pe)
         {
             Graphics gfx = pe.Graphics;
 
-            StringFormat strFormat = new StringFormat();
-            strFormat.Alignment = StringAlignment.Center;
-            strFormat.LineAlignment = StringAlignment.Center;
-
-            SolidBrush whiteBrush = new SolidBrush(Color.White);
-
             try
             {
                 gfx.SmoothingMode = SmoothingMode.AntiAlias;
-                gfx.Clear(Color.White);
 
                 foreach (ArborNode node in fSys.Nodes)
                 {
                     node.Box = this.getNodeRect(gfx, node);
                     gfx.FillRectangle(new SolidBrush(node.Color), node.Box);
-                    gfx.DrawString(node.Sign, fDrawFont, whiteBrush, node.Box, strFormat);
+                    gfx.DrawString(node.Sign, fDrawFont, this.fWhiteBrush, node.Box, this.fStrFormat);
                 }
 
                 using (Pen grayPen = new Pen(Color.Gray, 1))
@@ -101,9 +105,9 @@ namespace ArborGVT
                         ArborPoint pt2 = fSys.toScreen(tgtNode.Pt);
 
                         ArborPoint tail = intersect_line_box(pt1, pt2, srcNode.Box);
-                        ArborPoint head = (tail == null) ? null : intersect_line_box(tail, pt2, tgtNode.Box);
+                        ArborPoint head = (tail.isNull()) ? ArborPoint.Null : intersect_line_box(tail, pt2, tgtNode.Box);
 
-                        if (head != null && tail != null) {
+                        if (!head.isNull() && !tail.isNull()) {
                             gfx.DrawLine(grayPen, (int)tail.x, (int)tail.y, (int)head.x, (int)head.y);
                         }
                     }
@@ -114,24 +118,19 @@ namespace ArborGVT
                     gfx.DrawString(energy, fDrawFont, new SolidBrush(Color.Black), 10, 10);
                 }
             } catch (Exception ex) {
-                //SysUtils.LogWrite("ArborViewer.OnPaint(): " + ex.Message);
+                Debug.WriteLine("ArborViewer.OnPaint(): " + ex.Message);
             }
-        }
-
-        public void redraw()
-        {
-            this.Invalidate();
         }
 
         public static ArborPoint intersect_line_line(ArborPoint p1, ArborPoint p2, ArborPoint p3, ArborPoint p4)
         {
             double denom = ((p4.y - p3.y) * (p2.x - p1.x) - (p4.x - p3.x) * (p2.y - p1.y));
-            if (denom == 0) return null; // lines are parallel
+            if (denom == 0) return ArborPoint.Null; // lines are parallel
 
             double ua = ((p4.x - p3.x) * (p1.y - p3.y) - (p4.y - p3.y) * (p1.x - p3.x)) / denom;
             double ub = ((p2.x - p1.x) * (p1.y - p3.y) - (p2.y - p1.y) * (p1.x - p3.x)) / denom;
 
-            if (ua < 0 || ua > 1 || ub < 0 || ub > 1) return null;
+            if (ua < 0 || ua > 1 || ub < 0 || ub > 1) return ArborPoint.Null;
 
             return new ArborPoint(p1.x + ua * (p2.x - p1.x), p1.y + ua * (p2.y - p1.y));
         }
@@ -151,18 +150,18 @@ namespace ArborGVT
             ArborPoint pt;
 
             pt = intersect_line_line(p1, p2, tl, tr);
-            if (pt != null) return pt;
+            if (!pt.isNull()) return pt;
 
             pt = intersect_line_line(p1, p2, tr, br);
-            if (pt != null) return pt;
+            if (!pt.isNull()) return pt;
 
             pt = intersect_line_line(p1, p2, br, bl);
-            if (pt != null) return pt;
+            if (!pt.isNull()) return pt;
 
             pt = intersect_line_line(p1, p2, bl, tl);
-            if (pt != null) return pt;
+            if (!pt.isNull()) return pt;
 
-            return null;
+            return ArborPoint.Null;
         }
 
         public void start()
