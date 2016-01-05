@@ -44,7 +44,6 @@
     <Compile Include="src\ArborSystem.cs" />
     <Compile Include="src\ArborViewer.cs" />
     <Compile Include="src\BarnesHutTree.cs" />
-    <Compile Include="src\BaseObject.cs" />
     <Compile Include="src\IArborRenderer.cs" />
   </ItemGroup>
   <ItemGroup>
