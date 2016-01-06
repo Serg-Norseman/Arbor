@@ -17,6 +17,7 @@ namespace ArborGVT
     public sealed class ArborViewer : Panel, IArborRenderer
     {
         private bool fEnergyDebug;
+        private ArborNode fDragged;
         private readonly Font fDrawFont;
         private readonly StringFormat fStrFormat;
         private readonly ArborSystem fSys;
@@ -39,9 +40,9 @@ namespace ArborGVT
             base.TabStop = true;
             base.BackColor = Color.White;
 
-        	base.DoubleBuffered = true;
-        	base.SetStyle(ControlStyles.AllPaintingInWmPaint, true);
-        	base.SetStyle(ControlStyles.OptimizedDoubleBuffer, true);
+            base.DoubleBuffered = true;
+            base.SetStyle(ControlStyles.AllPaintingInWmPaint, true);
+            base.SetStyle(ControlStyles.OptimizedDoubleBuffer, true);
 
             // repulsion - отталкивание, stiffness - тугоподвижность, friction - сила трения
             this.fSys = new ArborSystem(10000, 250/*1000*/, 0.1, this);
@@ -56,6 +57,7 @@ namespace ArborGVT
             this.fStrFormat.LineAlignment = StringAlignment.Center;
 
             this.fWhiteBrush = new SolidBrush(Color.White);
+            this.fDragged = null;
         }
 
         protected override void Dispose(bool disposing)
@@ -173,6 +175,32 @@ namespace ArborGVT
         {
             base.OnMouseDown(e);
             if (!this.Focused) base.Focus();
+
+            this.fDragged = fSys.nearest(e.X, e.Y);
+
+            if (this.fDragged != null) {
+                this.fDragged.Fixed = true;
+            }
+        }
+
+        protected override void OnMouseUp(MouseEventArgs e)
+        {
+            base.OnMouseUp(e);
+            
+            if (this.fDragged != null) {
+                this.fDragged.Fixed = false;
+                //this.fDragged.Mass = 1000;
+                this.fDragged = null;
+            }
+        }
+
+        protected override void OnMouseMove(MouseEventArgs e)
+        {
+            base.OnMouseMove(e);
+            
+            if (this.fDragged != null) {
+                this.fDragged.Pt = fSys.fromScreen(e.X, e.Y);
+            }
         }
 
         public RectangleF getNodeRect(Graphics gfx, ArborNode node)
@@ -189,13 +217,15 @@ namespace ArborGVT
 
         public ArborNode getNodeByCoord(int x, int y)
         {
-            foreach (ArborNode node in fSys.Nodes)
+            return fSys.nearest(x, y);
+
+            /*foreach (ArborNode node in fSys.Nodes)
             {
                 if (node.Box.Contains(x, y)) {
                     return node;
                 }
             }
-            return null;
+            return null;*/
         }
 
         public void doSample()

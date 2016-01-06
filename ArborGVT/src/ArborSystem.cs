@@ -278,15 +278,46 @@ namespace ArborGVT
             return new ArborPoint(sx, sy);
         }
 
-        /*private ArborPoint fromScreen(int sx, int sy)
+        public ArborPoint fromScreen(double sx, double sy)
 		{
-			if (n_bnd == null) return null;
+			if (n_bnd == null) return ArborPoint.Null;
 
 			ArborPoint x = n_bnd.bottomright.sub(n_bnd.topleft);
 			double w = (sx - margins[3]) / (usz.Width - (margins[1] + margins[3])) * x.x + n_bnd.topleft.x;
 			double v = (sy - margins[0]) / (usz.Height - (margins[0] + margins[2])) * x.y + n_bnd.topleft.y;
 			return new ArborPoint(w, v);
-		}*/
+		}
+
+        public ArborNode nearest(int sx, int sy)
+        {
+            ArborPoint x = this.fromScreen(sx, sy);
+            
+            ArborNode w_node = null;
+            ArborPoint w_point = ArborPoint.Null;
+            double w_distance = +1.0;
+
+            foreach (ArborNode y in this.fNodes)
+            {
+                ArborPoint z = y.Pt;
+                if (z.exploded()) {
+                    continue;
+                }
+
+                double A = z.sub(x).magnitude();
+                if (A < w_distance) {
+                    w_node = y;
+                    w_point = z;
+                    w_distance = A;
+                }
+            }
+
+            if (w_node != null) {
+                w_distance = this.toScreen(w_node.Pt).sub(this.toScreen(x)).magnitude();
+                return w_node;
+            } else {
+                return null;
+            }
+        }
 
         private void updateBounds()
         {
