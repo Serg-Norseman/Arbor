@@ -19,6 +19,7 @@ namespace ArborGVT
         private bool fEnergyDebug;
         private ArborNode fDragged;
         private readonly Font fDrawFont;
+        private bool fNodesDragging;
         private readonly StringFormat fStrFormat;
         private readonly ArborSystem fSys;
         private readonly SolidBrush fWhiteBrush;
@@ -27,6 +28,12 @@ namespace ArborGVT
         {
             get { return this.fEnergyDebug; }
             set { this.fEnergyDebug = value; }
+        }
+
+        public bool NodesDragging
+        {
+            get { return this.fNodesDragging; }
+            set { this.fNodesDragging = value; }
         }
 
         public ArborSystem Sys
@@ -58,6 +65,7 @@ namespace ArborGVT
 
             this.fWhiteBrush = new SolidBrush(Color.White);
             this.fDragged = null;
+            this.fNodesDragging = false;
         }
 
         protected override void Dispose(bool disposing)
@@ -176,18 +184,20 @@ namespace ArborGVT
             base.OnMouseDown(e);
             if (!this.Focused) base.Focus();
 
-            this.fDragged = fSys.nearest(e.X, e.Y);
+            if (this.fNodesDragging) {
+                this.fDragged = fSys.nearest(e.X, e.Y);
 
-            if (this.fDragged != null) {
-                this.fDragged.Fixed = true;
+                if (this.fDragged != null) {
+                    this.fDragged.Fixed = true;
+                }
             }
         }
 
         protected override void OnMouseUp(MouseEventArgs e)
         {
             base.OnMouseUp(e);
-            
-            if (this.fDragged != null) {
+
+            if (this.fNodesDragging && this.fDragged != null) {
                 this.fDragged.Fixed = false;
                 //this.fDragged.Mass = 1000;
                 this.fDragged = null;
@@ -197,8 +207,8 @@ namespace ArborGVT
         protected override void OnMouseMove(MouseEventArgs e)
         {
             base.OnMouseMove(e);
-            
-            if (this.fDragged != null) {
+
+            if (this.fNodesDragging && this.fDragged != null) {
                 this.fDragged.Pt = fSys.fromScreen(e.X, e.Y);
             }
         }
