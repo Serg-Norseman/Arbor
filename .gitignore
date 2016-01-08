@@ -1,0 +1,9 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/cpp/solution/.vs/
+/cpp/solution/arbor.desktop.2015.VC.VC.opendb
+/cpp/solution/arbor.desktop.2015.VC.db
+/cpp/solution/arborgvt/arborgvt.vcxproj.user
+/cpp/build/
