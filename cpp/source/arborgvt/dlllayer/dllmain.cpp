@@ -1,4 +1,4 @@
-#include "targetver.h"
+#include "sdkver.h"
 #include <Windows.h>
 
 BOOL APIENTRY DllMain(_In_ HMODULE hModule, _In_ DWORD nReasonForCall, _In_ LPVOID pReserved)

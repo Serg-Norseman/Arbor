@@ -132,15 +132,19 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <IncludePath>$(IntDir);$(IncludePath)</IncludePath>
+    <GenerateManifest>false</GenerateManifest>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <IncludePath>$(IntDir);$(IncludePath)</IncludePath>
+    <GenerateManifest>false</GenerateManifest>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IncludePath>$(IntDir);$(IncludePath)</IncludePath>
+    <GenerateManifest>false</GenerateManifest>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IncludePath>$(IntDir);$(IncludePath)</IncludePath>
+    <GenerateManifest>false</GenerateManifest>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -191,7 +195,20 @@
     <None Include="..\..\source\arborgvt\exports\arborgvt.def" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\source\arborgvt\dlllayer\arbor.cpp" />
     <ClCompile Include="..\..\source\arborgvt\dlllayer\dllmain.cpp" />
+    <ClCompile Include="..\..\source\arborgvt\ui\nowindow\avisimpl.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\source\arborgvt\dlllayer\arbor.h" />
+    <ClInclude Include="..\..\source\arborgvt\dlllayer\arborvis.h" />
+    <ClInclude Include="..\..\source\arborgvt\ns\atladd.h" />
+    <ClInclude Include="..\..\source\arborgvt\sdkver.h" />
+    <ClInclude Include="..\..\source\arborgvt\service\com\impl.h" />
+    <ClInclude Include="..\..\source\arborgvt\ui\nowindow\avisimpl.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="..\..\source\arborgvt\resource\arborgvt.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -20,6 +20,39 @@
     <Filter Include="source files\library layer">
       <UniqueIdentifier>{6d197fb6-7dd9-43f4-98bc-2c26a0092715}</UniqueIdentifier>
     </Filter>
+    <Filter Include="header files\namespaces">
+      <UniqueIdentifier>{c7f0d950-f994-4133-a7ec-10ace53961e1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="header files\library layer">
+      <UniqueIdentifier>{8ea19201-beae-4f18-b8ba-f4ee1f6140c2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="header files\ui">
+      <UniqueIdentifier>{e132d11d-a861-4f99-b333-f1aba466f059}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="header files\ui\non-windowed">
+      <UniqueIdentifier>{1f9096da-bcd1-4905-8a9c-ff9885889952}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="header files\ui\windowed">
+      <UniqueIdentifier>{526a1a40-849a-486d-b1fe-103c5e1d6278}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source files\ui">
+      <UniqueIdentifier>{51f71eea-f815-4651-a1f9-c414caed2d28}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source files\ui\non-windowed">
+      <UniqueIdentifier>{1b8fedf5-33d1-4e48-bda7-dbdcd304c2b6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source files\ui\windowed">
+      <UniqueIdentifier>{d29964ce-2491-4345-9d85-77e7b8e3dca6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="header files\service">
+      <UniqueIdentifier>{1cb942eb-5b92-44ce-9158-0efc9ea0296c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="header files\service\com">
+      <UniqueIdentifier>{72378f7b-4c96-4edb-8290-5238a3880da6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="header files\_untagged">
+      <UniqueIdentifier>{29a354dc-f63b-468f-b466-9af4f2ca8fe2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\source\arborgvt\exports\arborgvt.def">
@@ -30,5 +63,36 @@
     <ClCompile Include="..\..\source\arborgvt\dlllayer\dllmain.cpp">
       <Filter>source files\library layer</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\source\arborgvt\dlllayer\arbor.cpp">
+      <Filter>source files\library layer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\arborgvt\ui\nowindow\avisimpl.cpp">
+      <Filter>source files\ui\non-windowed</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\source\arborgvt\ns\atladd.h">
+      <Filter>header files\namespaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\dlllayer\arborvis.h">
+      <Filter>header files\library layer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\dlllayer\arbor.h">
+      <Filter>header files\library layer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\service\com\impl.h">
+      <Filter>header files\service\com</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\ui\nowindow\avisimpl.h">
+      <Filter>header files\ui\non-windowed</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\sdkver.h">
+      <Filter>header files\_untagged</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="..\..\source\arborgvt\resource\arborgvt.rc">
+      <Filter>resource files</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>

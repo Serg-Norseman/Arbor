@@ -18,6 +18,54 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\source\dtsample\ns\atladd.h" />
+    <ClInclude Include="..\..\source\dtsample\ns\dxu.h" />
+    <ClInclude Include="..\..\source\dtsample\ns\miscutil.h" />
+    <ClInclude Include="..\..\source\dtsample\ns\stladd.h" />
+    <ClInclude Include="..\..\source\dtsample\ns\wapi.h" />
+    <ClInclude Include="..\..\source\dtsample\resource.h" />
+    <ClInclude Include="..\..\source\dtsample\sdkver.h" />
+    <ClInclude Include="..\..\source\dtsample\service\com\comptr.h" />
+    <ClInclude Include="..\..\source\dtsample\service\functype.h" />
+    <ClInclude Include="..\..\source\dtsample\service\memmgti.h" />
+    <ClInclude Include="..\..\source\dtsample\service\memorymg.h" />
+    <ClInclude Include="..\..\source\dtsample\service\miscutil.h" />
+    <ClInclude Include="..\..\source\dtsample\service\stladdon.h" />
+    <ClInclude Include="..\..\source\dtsample\service\strgutil.h" />
+    <ClInclude Include="..\..\source\dtsample\service\winapi\chkerror.h" />
+    <ClInclude Include="..\..\source\dtsample\service\winapi\directx\dx.h" />
+    <ClInclude Include="..\..\source\dtsample\service\winapi\heap.h" />
+    <ClInclude Include="..\..\source\dtsample\service\winapi\icon.h" />
+    <ClInclude Include="..\..\source\dtsample\service\winapi\menu.h" />
+    <ClInclude Include="..\..\source\dtsample\service\winapi\srwlock.h" />
+    <ClInclude Include="..\..\source\dtsample\service\winapi\theme.h" />
+    <ClInclude Include="..\..\source\dtsample\service\winapi\uh.h" />
+    <ClInclude Include="..\..\source\dtsample\service\winapi\wam\animatio.h" />
+    <ClInclude Include="..\..\source\dtsample\ui\window\appmsg.h" />
+    <ClInclude Include="..\..\source\dtsample\ui\window\top\onscreen\dtsmpwnd.h" />
+    <ClInclude Include="..\..\source\dtsample\ui\window\top\twinimpl.h" />
+    <ClInclude Include="..\..\source\dtsample\ui\window\wi.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\source\dtsample\applayer\dtsample.cpp" />
+    <ClCompile Include="..\..\source\dtsample\service\memorymg.cpp" />
+    <ClCompile Include="..\..\source\dtsample\service\miscutil.cpp" />
+    <ClCompile Include="..\..\source\dtsample\service\strgutil.cpp" />
+    <ClCompile Include="..\..\source\dtsample\ui\window\top\onscreen\dtsmpwnd.cpp" />
+    <ClCompile Include="..\..\source\dtsample\ui\window\top\twinimpl.cpp" />
+    <ClCompile Include="..\..\source\dtsample\ui\window\wi.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\source\dtsample\resource\dtsample.exe.amd64.manifest" />
+    <None Include="..\..\source\dtsample\resource\dtsample.exe.manifest" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="..\..\source\dtsample\resource\dtsample.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\..\source\dtsample\resource\dtsample.ico" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{3758EA3D-0F72-4DEF-B427-51EB9D3B0570}</ProjectGuid>
     <RootNamespace>dtsample</RootNamespace>
@@ -150,18 +198,22 @@
     <ClCompile>
       <AdditionalOptions>/D_WINDOWS %(AdditionalOptions)</AdditionalOptions>
       <ControlFlowGuard>Guard</ControlFlowGuard>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\source\arborgvt;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalOptions>/SUBSYSTEM:WINDOWS,6.0 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <AdditionalOptions>/D_WINDOWS %(AdditionalOptions)</AdditionalOptions>
       <ControlFlowGuard>Guard</ControlFlowGuard>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\source\arborgvt;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalOptions>/SUBSYSTEM:WINDOWS,6.0 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -169,22 +221,26 @@
       <AdditionalOptions>/D_WINDOWS %(AdditionalOptions)</AdditionalOptions>
       <EnablePREfast>false</EnablePREfast>
       <ControlFlowGuard>Guard</ControlFlowGuard>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\source\arborgvt;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalOptions>/SUBSYSTEM:WINDOWS,6.0 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <AdditionalOptions>/D_WINDOWS %(AdditionalOptions)</AdditionalOptions>
       <ControlFlowGuard>Guard</ControlFlowGuard>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\source\arborgvt;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalOptions>/SUBSYSTEM:WINDOWS,6.0 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

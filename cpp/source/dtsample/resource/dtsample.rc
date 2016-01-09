@@ -1,0 +1,75 @@
+#include "resource.h"
+#include <VerRsrc.h>
+#include <winuser.h>
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+IDR_THE_APPLICATION ICON "dtsample.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION    1,0,0,0
+PRODUCTVERSION 1,0,0,0
+FILEFLAGSMASK VS_FFI_FILEFLAGSMASK
+#ifdef _DEBUG
+FILEFLAGS VS_FF_DEBUG
+#else
+FILEFLAGS 0x0L
+#endif
+FILEOS VOS_NT_WINDOWS32
+FILETYPE VFT_APP
+FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904e4"
+        BEGIN
+            VALUE "CompanyName", "ruslangaripov, Serg-Norseman"
+            VALUE "FileDescription", "Arbor GVT desktop sample"
+            VALUE "FileVersion", "1.0.0.0"
+            VALUE "InternalName", "dtsample"
+            VALUE "LegalCopyright", "2016 (c) ruslangaripov, Serg-Norseman."
+            VALUE "OriginalFilename", "dtsample.exe"
+            VALUE "ProductName", "Arbor GVT"
+            VALUE "ProductVersion", "1.0.0.0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x0409, 1252
+    END
+END
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+IDR_THE_APPLICATION MENU
+BEGIN
+POPUP L"&Sample"
+BEGIN
+MENUITEM L"&Exit\tCtrl+Q", ID_APP_EXIT
+END
+POPUP L"&View"
+BEGIN
+MENUITEM L"&Update\tF5", ID_REFRESH
+END
+POPUP L"&Help"
+BEGIN
+MENUITEM L"&About dtsample...", ID_APP_ABOUT
+END
+END
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Accelerator
+//
+IDR_THE_APPLICATION ACCELERATORS
+{
+    "Q", ID_APP_EXIT, VIRTKEY, CONTROL
+    VK_F5, ID_REFRESH, VIRTKEY
+}

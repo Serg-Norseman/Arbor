@@ -13,5 +13,192 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="header files\namespaces">
+      <UniqueIdentifier>{b7740c63-574d-4e94-8ecb-d49589ce6054}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="header files\service">
+      <UniqueIdentifier>{1f20ee46-1594-4daf-a40b-e63b6e90def3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="header files\service\com">
+      <UniqueIdentifier>{83a8d680-803e-4475-bb4a-5ca3d92dc4d5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="header files\application layer">
+      <UniqueIdentifier>{a90b4996-425f-4b56-8abd-a011076c65f2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source files\application layer">
+      <UniqueIdentifier>{7d6922ab-8343-437e-a6be-639de4024cda}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="header files\_untagged">
+      <UniqueIdentifier>{de3dcb35-2e4d-44ef-8f90-2f5516885ba3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="resource files\manifests">
+      <UniqueIdentifier>{6948ad0a-3279-42f1-93c0-3b0d3af1e788}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="resource files\pictures">
+      <UniqueIdentifier>{52101bbb-a58c-4b36-a219-62d3d12a325d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="resource files\pictures\icon">
+      <UniqueIdentifier>{81649fd8-d603-4298-9715-b72255a51e0b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="header files\ui">
+      <UniqueIdentifier>{c8b82743-de7a-4ce1-bedf-286c94e0a821}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source files\ui">
+      <UniqueIdentifier>{d5f5dbf2-09f1-4387-ba49-0da23fca581d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="header files\ui\windowed">
+      <UniqueIdentifier>{1ee777da-c1c7-4a76-a42a-628981b5aa2a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source files\ui\windowed">
+      <UniqueIdentifier>{e1a1b442-ae73-4218-94af-28e112e8b9d4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source files\ui\windowed\top">
+      <UniqueIdentifier>{2da2ab0a-0f3a-4cd8-888f-0620d1571f45}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source files\ui\windowed\top\onscreen">
+      <UniqueIdentifier>{26023a7b-98b8-4bbc-882d-2fd18623346a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="header files\ui\windowed\top">
+      <UniqueIdentifier>{4c9310ca-a667-4d52-8172-b663e22b546c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="header files\ui\windowed\top\onscreen">
+      <UniqueIdentifier>{5d14200b-baab-4a42-b3f5-b741661c19c5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="header files\service\winapi">
+      <UniqueIdentifier>{9f492b79-66f9-491e-a753-06d49831f916}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="header files\service\winapi\directs">
+      <UniqueIdentifier>{d8f5c281-5441-495b-a7c8-38e8788b286c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="header files\service\winapi\windows animation manager">
+      <UniqueIdentifier>{0ce65fda-9894-4624-ba33-29d94ad487e1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source files\service">
+      <UniqueIdentifier>{444bbeb7-d5c8-4228-bcad-f1944a75958a}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\source\dtsample\ns\atladd.h">
+      <Filter>header files\namespaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\dtsample\service\com\comptr.h">
+      <Filter>header files\service\com</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\dtsample\sdkver.h">
+      <Filter>header files\_untagged</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\dtsample\resource.h">
+      <Filter>header files\_untagged</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\dtsample\ui\window\wi.h">
+      <Filter>header files\ui\windowed</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\dtsample\ui\window\top\twinimpl.h">
+      <Filter>header files\ui\windowed\top</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\dtsample\ui\window\top\onscreen\dtsmpwnd.h">
+      <Filter>header files\ui\windowed\top\onscreen</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\dtsample\service\winapi\wam\animatio.h">
+      <Filter>header files\service\winapi\windows animation manager</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\dtsample\service\winapi\directx\dx.h">
+      <Filter>header files\service\winapi\directs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\dtsample\ns\dxu.h">
+      <Filter>header files\namespaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\dtsample\ns\wapi.h">
+      <Filter>header files\namespaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\dtsample\service\functype.h">
+      <Filter>header files\service</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\dtsample\service\strgutil.h">
+      <Filter>header files\service</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\dtsample\ns\stladd.h">
+      <Filter>header files\namespaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\dtsample\service\stladdon.h">
+      <Filter>header files\service</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\dtsample\service\memmgti.h">
+      <Filter>header files\service</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\dtsample\service\memorymg.h">
+      <Filter>header files\service</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\dtsample\service\winapi\srwlock.h">
+      <Filter>header files\service\winapi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\dtsample\service\winapi\heap.h">
+      <Filter>header files\service\winapi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\dtsample\service\winapi\uh.h">
+      <Filter>header files\service\winapi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\dtsample\service\miscutil.h">
+      <Filter>header files\service</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\dtsample\ns\miscutil.h">
+      <Filter>header files\namespaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\dtsample\service\winapi\theme.h">
+      <Filter>header files\service\winapi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\dtsample\service\winapi\icon.h">
+      <Filter>header files\service\winapi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\dtsample\service\winapi\menu.h">
+      <Filter>header files\service\winapi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\dtsample\service\winapi\chkerror.h">
+      <Filter>header files\service\winapi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\dtsample\ui\window\appmsg.h">
+      <Filter>header files\ui\windowed</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\source\dtsample\applayer\dtsample.cpp">
+      <Filter>source files\application layer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\dtsample\ui\window\wi.cpp">
+      <Filter>source files\ui\windowed</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\dtsample\ui\window\top\twinimpl.cpp">
+      <Filter>source files\ui\windowed\top</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\dtsample\ui\window\top\onscreen\dtsmpwnd.cpp">
+      <Filter>source files\ui\windowed\top\onscreen</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\dtsample\service\strgutil.cpp">
+      <Filter>source files\service</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\dtsample\service\memorymg.cpp">
+      <Filter>source files\service</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\dtsample\service\miscutil.cpp">
+      <Filter>source files\service</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Manifest Include="..\..\source\dtsample\resource\dtsample.exe.amd64.manifest">
+      <Filter>resource files\manifests</Filter>
+    </Manifest>
+    <Manifest Include="..\..\source\dtsample\resource\dtsample.exe.manifest">
+      <Filter>resource files\manifests</Filter>
+    </Manifest>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="..\..\source\dtsample\resource\dtsample.rc">
+      <Filter>resource files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\..\source\dtsample\resource\dtsample.ico">
+      <Filter>resource files\pictures\icon</Filter>
+    </Image>
   </ItemGroup>
 </Project>
