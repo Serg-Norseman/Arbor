@@ -1,2 +1,3 @@
 LIBRARY "arborgvt"
 EXPORTS
+    createArborVisual @1
