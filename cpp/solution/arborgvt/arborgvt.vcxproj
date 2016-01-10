@@ -197,15 +197,41 @@
   <ItemGroup>
     <ClCompile Include="..\..\source\arborgvt\dlllayer\arbor.cpp" />
     <ClCompile Include="..\..\source\arborgvt\dlllayer\dllmain.cpp" />
+    <ClCompile Include="..\..\source\arborgvt\service\memorymg.cpp" />
+    <ClCompile Include="..\..\source\arborgvt\service\miscutil.cpp" />
+    <ClCompile Include="..\..\source\arborgvt\service\strgutil.cpp" />
     <ClCompile Include="..\..\source\arborgvt\ui\nowindow\avisimpl.cpp" />
+    <ClCompile Include="..\..\source\arborgvt\ui\window\child\onscreen\graphwnd.cpp" />
+    <ClCompile Include="..\..\source\arborgvt\ui\window\wi.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\source\arborgvt\dlllayer\arbor.h" />
     <ClInclude Include="..\..\source\arborgvt\dlllayer\arborvis.h" />
     <ClInclude Include="..\..\source\arborgvt\ns\atladd.h" />
+    <ClInclude Include="..\..\source\arborgvt\ns\dxu.h" />
+    <ClInclude Include="..\..\source\arborgvt\ns\miscutil.h" />
+    <ClInclude Include="..\..\source\arborgvt\ns\stladd.h" />
+    <ClInclude Include="..\..\source\arborgvt\ns\wapi.h" />
     <ClInclude Include="..\..\source\arborgvt\sdkver.h" />
+    <ClInclude Include="..\..\source\arborgvt\service\com\comptr.h" />
     <ClInclude Include="..\..\source\arborgvt\service\com\impl.h" />
+    <ClInclude Include="..\..\source\arborgvt\service\functype.h" />
+    <ClInclude Include="..\..\source\arborgvt\service\memmgti.h" />
+    <ClInclude Include="..\..\source\arborgvt\service\memorymg.h" />
+    <ClInclude Include="..\..\source\arborgvt\service\miscutil.h" />
+    <ClInclude Include="..\..\source\arborgvt\service\stladdon.h" />
+    <ClInclude Include="..\..\source\arborgvt\service\strgutil.h" />
+    <ClInclude Include="..\..\source\arborgvt\service\winapi\chkerror.h" />
+    <ClInclude Include="..\..\source\arborgvt\service\winapi\directx\dx.h" />
+    <ClInclude Include="..\..\source\arborgvt\service\winapi\heap.h" />
+    <ClInclude Include="..\..\source\arborgvt\service\winapi\srwlock.h" />
+    <ClInclude Include="..\..\source\arborgvt\service\winapi\theme.h" />
+    <ClInclude Include="..\..\source\arborgvt\service\winapi\uh.h" />
+    <ClInclude Include="..\..\source\arborgvt\service\winapi\wam\animatio.h" />
     <ClInclude Include="..\..\source\arborgvt\ui\nowindow\avisimpl.h" />
+    <ClInclude Include="..\..\source\arborgvt\ui\window\child\cwi.h" />
+    <ClInclude Include="..\..\source\arborgvt\ui\window\child\onscreen\graphwnd.h" />
+    <ClInclude Include="..\..\source\arborgvt\ui\window\wi.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\..\source\arborgvt\resource\arborgvt.rc" />

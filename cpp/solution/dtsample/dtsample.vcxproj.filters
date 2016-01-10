@@ -67,14 +67,14 @@
     <Filter Include="header files\service\winapi">
       <UniqueIdentifier>{9f492b79-66f9-491e-a753-06d49831f916}</UniqueIdentifier>
     </Filter>
-    <Filter Include="header files\service\winapi\directs">
-      <UniqueIdentifier>{d8f5c281-5441-495b-a7c8-38e8788b286c}</UniqueIdentifier>
-    </Filter>
     <Filter Include="header files\service\winapi\windows animation manager">
       <UniqueIdentifier>{0ce65fda-9894-4624-ba33-29d94ad487e1}</UniqueIdentifier>
     </Filter>
     <Filter Include="source files\service">
       <UniqueIdentifier>{444bbeb7-d5c8-4228-bcad-f1944a75958a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="header files\service\winapi\directx">
+      <UniqueIdentifier>{d8f5c281-5441-495b-a7c8-38e8788b286c}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -103,7 +103,7 @@
       <Filter>header files\service\winapi\windows animation manager</Filter>
     </ClInclude>
     <ClInclude Include="..\..\source\dtsample\service\winapi\directx\dx.h">
-      <Filter>header files\service\winapi\directs</Filter>
+      <Filter>header files\service\winapi\directx</Filter>
     </ClInclude>
     <ClInclude Include="..\..\source\dtsample\ns\dxu.h">
       <Filter>header files\namespaces</Filter>
@@ -159,6 +159,9 @@
     <ClInclude Include="..\..\source\dtsample\ui\window\appmsg.h">
       <Filter>header files\ui\windowed</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\source\dtsample\service\winapi\handle.h">
+      <Filter>header files\service\winapi</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\dtsample\applayer\dtsample.cpp">
@@ -184,14 +187,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Manifest Include="..\..\source\dtsample\resource\dtsample.exe.amd64.manifest">
-      <Filter>resource files\manifests</Filter>
-    </Manifest>
-    <Manifest Include="..\..\source\dtsample\resource\dtsample.exe.manifest">
-      <Filter>resource files\manifests</Filter>
-    </Manifest>
-  </ItemGroup>
-  <ItemGroup>
     <ResourceCompile Include="..\..\source\dtsample\resource\dtsample.rc">
       <Filter>resource files</Filter>
     </ResourceCompile>
@@ -200,5 +195,13 @@
     <Image Include="..\..\source\dtsample\resource\dtsample.ico">
       <Filter>resource files\pictures\icon</Filter>
     </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\source\dtsample\resource\dtsample.exe.amd64.manifest">
+      <Filter>resource files\manifests</Filter>
+    </None>
+    <None Include="..\..\source\dtsample\resource\dtsample.exe.manifest">
+      <Filter>resource files\manifests</Filter>
+    </None>
   </ItemGroup>
 </Project>

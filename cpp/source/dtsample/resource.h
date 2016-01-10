@@ -4,3 +4,5 @@
 #define ID_APP_EXIT                 100
 #define ID_REFRESH                  101
 #define ID_APP_ABOUT                102
+#define ID_ZOOMIN                   103
+#define ID_ZOOMOUT                  104

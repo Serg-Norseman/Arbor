@@ -35,6 +35,7 @@
     <ClInclude Include="..\..\source\dtsample\service\strgutil.h" />
     <ClInclude Include="..\..\source\dtsample\service\winapi\chkerror.h" />
     <ClInclude Include="..\..\source\dtsample\service\winapi\directx\dx.h" />
+    <ClInclude Include="..\..\source\dtsample\service\winapi\handle.h" />
     <ClInclude Include="..\..\source\dtsample\service\winapi\heap.h" />
     <ClInclude Include="..\..\source\dtsample\service\winapi\icon.h" />
     <ClInclude Include="..\..\source\dtsample\service\winapi\menu.h" />

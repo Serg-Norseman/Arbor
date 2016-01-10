@@ -2,8 +2,6 @@
 #include "ui\window\appmsg.h"
 #include "ui\window\top\twinimpl.h"
 
-#pragma comment(lib, "dwrite.lib")
-
 ATLADD_BEGIN
 #pragma region top_window_impl
 /**

@@ -53,6 +53,30 @@
     <Filter Include="header files\_untagged">
       <UniqueIdentifier>{29a354dc-f63b-468f-b466-9af4f2ca8fe2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="header files\ui\windowed\child">
+      <UniqueIdentifier>{d3c5af6b-aef1-4f45-a8d6-50f8fb6b3882}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="header files\ui\windowed\child\onscreen">
+      <UniqueIdentifier>{f90b7759-9994-4617-90ba-cf4b63a079d3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source files\ui\windowed\child">
+      <UniqueIdentifier>{3fc0bb13-94a6-49cb-a129-16cfc61fa244}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source files\ui\windowed\child\onscreen">
+      <UniqueIdentifier>{79a92b05-8446-4af8-8d37-c3b2c1243432}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="header files\service\winapi">
+      <UniqueIdentifier>{ebb32fa1-9011-4349-97fc-fa36c8554435}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="header files\service\winapi\directx">
+      <UniqueIdentifier>{4b738cc5-27f5-4be0-987d-a00925513814}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="header files\service\winapi\windows animation manager">
+      <UniqueIdentifier>{e5f836c8-5929-46a5-8b47-de946bc51161}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source files\service">
+      <UniqueIdentifier>{c61ae1a4-e523-4fe3-88a8-d42a45fe87fa}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\source\arborgvt\exports\arborgvt.def">
@@ -68,6 +92,21 @@
     </ClCompile>
     <ClCompile Include="..\..\source\arborgvt\ui\nowindow\avisimpl.cpp">
       <Filter>source files\ui\non-windowed</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\arborgvt\ui\window\wi.cpp">
+      <Filter>source files\ui\windowed</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\arborgvt\service\memorymg.cpp">
+      <Filter>source files\service</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\arborgvt\service\strgutil.cpp">
+      <Filter>source files\service</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\arborgvt\service\miscutil.cpp">
+      <Filter>source files\service</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\arborgvt\ui\window\child\onscreen\graphwnd.cpp">
+      <Filter>source files\ui\windowed\child\onscreen</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -88,6 +127,69 @@
     </ClInclude>
     <ClInclude Include="..\..\source\arborgvt\sdkver.h">
       <Filter>header files\_untagged</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\ui\window\wi.h">
+      <Filter>header files\ui\windowed</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\ui\window\child\cwi.h">
+      <Filter>header files\ui\windowed\child</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\service\com\comptr.h">
+      <Filter>header files\service\com</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\ns\dxu.h">
+      <Filter>header files\namespaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\service\winapi\directx\dx.h">
+      <Filter>header files\service\winapi\directx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\service\winapi\wam\animatio.h">
+      <Filter>header files\service\winapi\windows animation manager</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\service\functype.h">
+      <Filter>header files\service</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\service\memmgti.h">
+      <Filter>header files\service</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\service\memorymg.h">
+      <Filter>header files\service</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\service\strgutil.h">
+      <Filter>header files\service</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\service\stladdon.h">
+      <Filter>header files\service</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\service\winapi\heap.h">
+      <Filter>header files\service\winapi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\service\winapi\uh.h">
+      <Filter>header files\service\winapi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\ns\wapi.h">
+      <Filter>header files\namespaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\service\winapi\srwlock.h">
+      <Filter>header files\service\winapi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\ns\stladd.h">
+      <Filter>header files\namespaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\service\miscutil.h">
+      <Filter>header files\service</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\ns\miscutil.h">
+      <Filter>header files\namespaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\service\winapi\theme.h">
+      <Filter>header files\service\winapi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\service\winapi\chkerror.h">
+      <Filter>header files\service\winapi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\ui\window\child\onscreen\graphwnd.h">
+      <Filter>header files\ui\windowed\child\onscreen</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

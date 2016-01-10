@@ -1,9 +1,9 @@
 #define OEMRESOURCE
-#include "dlllayer\arbor.h"
 #include "resource.h"
 #include "service\miscutil.h"
 #include "service\stladdon.h"
 #include "service\winapi\directx\dx.h"
+#include "ui\window\appmsg.h"
 #include "ui\window\top\onscreen\dtsmpwnd.h"
 #include <memory>
 #include <wincodec.h>
@@ -50,6 +50,7 @@ _Check_return_ HWND desktop_sample_window::create(_In_ const HWND hParent)
             {
                 CenterWindow();
             }
+            m_visualSize = D2D1::SizeU(rect.right >> 1, rect.bottom >> 1);
         }
     }
     return hWnd;
@@ -186,6 +187,10 @@ BOOL desktop_sample_window::ProcessWindowMessage(
  */
 LRESULT desktop_sample_window::createHandler()
 {
+    typedef ATL::CWinTraits<WS_CHILD | WS_CLIPSIBLINGS | WS_TABSTOP | WS_VISIBLE, WS_EX_NOPARENTNOTIFY> style_traits_t;
+    // The parent window of this window owned by another thread; nobody needs a deadlock, therefore
+    // 'WS_EX_NOPARENTNOTIFY' required.
+
     LRESULT nResult = base_class_t::createHandler();
     if (!nResult)
     {
@@ -193,12 +198,17 @@ LRESULT desktop_sample_window::createHandler()
         m_hAppStartingCursor = static_cast<HCURSOR> (
             LoadImage(nullptr, MAKEINTRESOURCE(OCR_APPSTARTING), IMAGE_CURSOR, 0, 0, LR_SHARED));
         // Create graph rendering window asynchronously.
-        ATLADD com_ptr<IArborVisual> visual {};
-        HRESULT hr = createArborVisual(visual.getAddressOf());
+        HRESULT hr = createArborVisual(m_visual.getAddressOf());
         if (SUCCEEDED(hr))
         {
-            HWND hwnd;
-            hr = visual->createWindow(&hwnd);
+            m_visualCreated.reset(MISCUTIL windows_system::createEvent(nullptr));
+            m_threads.push_back(m_visualCreated.get());
+            hr = m_visual->createWindow(
+                m_hWnd,
+                style_traits_t::GetWndStyle(0),
+                style_traits_t::GetWndExStyle(0),
+                m_visualCreated.get(),
+                WM_NOTIFY_DPICHANGED);
         }
     }
     return nResult;
@@ -216,7 +226,6 @@ LRESULT desktop_sample_window::createHandler()
  */
 void desktop_sample_window::destroyHandler()
 {
-    // TODO: destroy here child window rendering the graph ('cos it's owned by other thread).
     /*
      * Stop all threads owned by this window.
      */
@@ -284,12 +293,80 @@ _Check_return_ bool desktop_sample_window::commandHandler(_In_ const UINT nId)
         }
         break;
 
+        case ID_ZOOMIN:
+        {
+            float fDPIX;
+            float fDPIY;
+            if (SUCCEEDED(getDpiForMonitor(m_hWnd, &fDPIX, &fDPIY)))
+            {
+                m_visualSize.width += static_cast<UINT> (logicalToPhysical(m_cZoomFactor, fDPIX));
+                m_visualSize.height += static_cast<UINT> (logicalToPhysical(m_cZoomFactor, fDPIY));
+                resizeVisual();
+            }
+        }
+        break;
+
+        case ID_ZOOMOUT:
+        {
+            float fDPIX;
+            float fDPIY;
+            if (SUCCEEDED(getDpiForMonitor(m_hWnd, &fDPIX, &fDPIY)))
+            {
+                m_visualSize.width = max(
+                    static_cast<UINT> (GetSystemMetrics(SM_CXMIN)),
+                    m_visualSize.width - static_cast<UINT> (logicalToPhysical(m_cZoomFactor, fDPIX)));
+                m_visualSize.height = max(
+                    static_cast<UINT> (GetSystemMetrics(SM_CYMIN)),
+                    m_visualSize.height - static_cast<UINT> (logicalToPhysical(m_cZoomFactor, fDPIY)));
+                resizeVisual();
+            }
+        }
+        break;
+
         default:
         {
             bResult = false;
         }
     }
     return bResult;
+}
+
+
+/**
+ * Resize the graph window.
+ *
+ * Parameters:
+ * None.
+ *
+ * Returns:
+ * N/A.
+ */
+void desktop_sample_window::resizeVisual()
+{
+    RECT rect;
+    GetClientRect(&rect);
+    HWND visualHWND;
+    if (m_visual && (S_OK == m_visual->getHWND(&visualHWND)))
+    {
+        float fDPIX;
+        float fDPIY;
+        if (SUCCEEDED(getDpiForMonitor(m_hWnd, &fDPIX, &fDPIY)))
+        {
+            D2D1_SIZE_F size = D2D1::SizeF(
+                logicalToPhysical(m_visualSize.width, fDPIX), logicalToPhysical(m_visualSize.height, fDPIY));
+            D2D1_POINT_2L origin = D2D1::Point2L(
+                max(0, (rect.right - (static_cast<int> (size.width))) >> 1),
+                max(0, (rect.bottom - (static_cast<int> (size.height))) >> 1));
+            ::SetWindowPos(
+                visualHWND,
+                nullptr,
+                origin.x,
+                origin.y,
+                static_cast<int> (size.width),
+                static_cast<int> (size.height),
+                SWP_NOACTIVATE | SWP_NOZORDER);
+        }
+    }
 }
 
 
@@ -349,6 +426,17 @@ void desktop_sample_window::handleThreadTermination(_In_ const HANDLE hObject)
      */
     auto objIt = std::find(m_threads.begin(), m_threads.end(), hObject);
     m_threads.erase(objIt);
+    if (m_visualCreated.get() == hObject)
+    {
+        // The graph visual got an HWND. We can enable some graph-window-aware controls here, for example.
+    }
+    if (0 == m_threads.size())
+    {
+        if (m_taskbarList3)
+        {
+            m_taskbarList3->SetProgressState(m_hWnd, TBPF_NOPROGRESS);
+        }
+    }
 }
 #pragma endregion desktop_sample_window implementation
 ATLADD_END

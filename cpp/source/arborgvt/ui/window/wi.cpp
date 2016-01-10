@@ -1,7 +1,7 @@
 #include "service\functype.h"
 #include "service\strgutil.h"
 #include "service\winapi\theme.h"
-#include "ui\window\top\twinimpl.h"
+#include "ui\window\child\onscreen\\graphwnd.h"
 #include "ui\window\wi.h"
 #include <Uxtheme.h>
 #include <vsstyle.h>
@@ -607,7 +607,8 @@ void directx_render::render(_In_ const HWND hWnd, _In_ ID2D1Factory1* pDirect2DF
         {
             DXU direct2d_factory_lock lock {pDirect2DFactory};
             DXGI_PRESENT_PARAMETERS presentParameters = {};
-            hr = m_swapChain->Present1(1, 0, &presentParameters);
+            // Turn VSync off; shift the blame on DWM.
+            hr = m_swapChain->Present1(0, 0, &presentParameters);
             if (DXGI_ERROR_DEVICE_REMOVED == hr)
             {
                 releaseDevice();
@@ -650,7 +651,7 @@ HRESULT directx_render::createDeviceSwapChainBitmap()
 #pragma endregion directx_render definition
 
 #pragma region window_impl template classes
-template class window_impl<top_window_impl>;
+template class window_impl<graph_window>;
 #pragma endregion window_impl template classes instantiation
 
 #pragma region window_impl
