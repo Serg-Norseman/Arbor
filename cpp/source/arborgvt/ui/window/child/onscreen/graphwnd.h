@@ -13,7 +13,7 @@ public:
     }
 
     _Check_return_ virtual HWND create(_In_ const HWND hParent) override;
-    _Check_return_ virtual HWND create(_In_ const HWND parent, _In_ DWORD style, _In_ DWORD exStyle);
+    _Check_return_ virtual HWND create(_In_opt_ const HWND parent, _In_ DWORD style, _In_ DWORD exStyle);
     virtual BOOL ProcessWindowMessage(
         _In_ HWND hWnd,
         _In_ UINT nMessage,

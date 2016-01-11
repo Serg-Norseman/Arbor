@@ -33,7 +33,7 @@ _Check_return_ HWND graph_window::create(_In_ const HWND hParent)
  * Returns:
  * Handle to this window.
  */
-_Check_return_ HWND graph_window::create(_In_ const HWND parent, _In_ DWORD style, _In_ DWORD exStyle)
+_Check_return_ HWND graph_window::create(_In_opt_ const HWND parent, _In_ DWORD style, _In_ DWORD exStyle)
 {
     return Create(parent, ATL::_U_RECT {nullptr}, nullptr, style, exStyle, 0U, nullptr);
 }
@@ -271,20 +271,29 @@ void graph_window::draw() const
     }
     m_ellipseBrush->SetColor(m_color);
     m_direct2DContext->FillGeometry(m_ellipse.get(), m_ellipseBrush.get());
+    // C++ overloaded function template `wcscpy_s` doesn't have `_Out_writes_z_` SAL annotation. Therefore to shut the
+    // `C6054' warning down I have to make `sz` zero-terminated explicitly.
     _tcscpy_s(sz, L"\u2190click!");
+    // This is a sample code so I can accept such code here.
+    sz[_countof(L"\u2190click!") - 1] = L'\x00';
     size_t nLength = _tcscnlen(sz, _countof(sz));
-    D2D1_ELLIPSE ellipse;
-    m_ellipse->GetEllipse(&ellipse);
-    D2D1_POINT_2F origin = D2D1::Point2F(
-        ellipse.point.x + ellipse.radiusX * cos(atan(1.0f)),
-        ellipse.point.y + ellipse.radiusY * cos(atan(1.0f)));
-    D2D1_SIZE_F size = m_direct2DContext->GetSize();
-    m_direct2DContext->DrawText(
-        sz,
-        static_cast<UINT32> (nLength),
-        m_tf.get(),
-        D2D1::RectF(origin.x, origin.y, size.width, size.height),
-        m_brush.get());
+    // Shut the `C6385' warning down with the following, very silly code. It's definitely prefast noise. This and above
+    // "fixes" made for MSVC 2015 Update 1.
+    if (0 < nLength)
+    {
+        D2D1_ELLIPSE ellipse;
+        m_ellipse->GetEllipse(&ellipse);
+        D2D1_POINT_2F origin = D2D1::Point2F(
+            ellipse.point.x + ellipse.radiusX * cos(atan(1.0f)),
+            ellipse.point.y + ellipse.radiusY * cos(atan(1.0f)));
+        D2D1_SIZE_F size = m_direct2DContext->GetSize();
+        m_direct2DContext->DrawText(
+            sz,
+            static_cast<UINT32> (nLength),
+            m_tf.get(),
+            D2D1::RectF(origin.x, origin.y, size.width, size.height),
+            m_brush.get());
+    }
 }
 
 
