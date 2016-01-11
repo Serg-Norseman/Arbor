@@ -24,7 +24,8 @@ ATLADD_BEGIN
  */
 _Check_return_ HWND desktop_sample_window::create(_In_ const HWND hParent)
 {
-    typedef ATL::CWinTraits<WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN, WS_EX_CONTROLPARENT> style_traits_t;
+    typedef ATL::CWinTraits<WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN | WS_HSCROLL | WS_VSCROLL, WS_EX_CONTROLPARENT>
+        style_traits_t;
 
     HWND hWnd = nullptr;
     float fDPIX;
@@ -161,6 +162,19 @@ BOOL desktop_sample_window::ProcessWindowMessage(
                     bHandled =
                         base_class_t::ProcessWindowMessage(hWnd, nMessage, nWParam, nLParam, nLResult, nMsgMapID);
                 }
+            }
+            break;
+
+            case WM_HSCROLL:
+            case WM_VSCROLL:
+            {
+                HWND visualHWND;
+                if (m_visual && (S_OK == m_visual->getHWND(&visualHWND)))
+                {
+                    ::SendNotifyMessage(visualHWND, nMessage, nWParam, nLParam);
+                }
+                nLResult = 0;
+                bHandled = TRUE;
             }
             break;
 
@@ -333,44 +347,6 @@ _Check_return_ bool desktop_sample_window::commandHandler(_In_ const UINT nId)
 
 
 /**
- * Resize the graph window.
- *
- * Parameters:
- * None.
- *
- * Returns:
- * N/A.
- */
-void desktop_sample_window::resizeVisual()
-{
-    RECT rect;
-    GetClientRect(&rect);
-    HWND visualHWND;
-    if (m_visual && (S_OK == m_visual->getHWND(&visualHWND)))
-    {
-        float fDPIX;
-        float fDPIY;
-        if (SUCCEEDED(getDpiForMonitor(m_hWnd, &fDPIX, &fDPIY)))
-        {
-            D2D1_SIZE_F size = D2D1::SizeF(
-                logicalToPhysical(m_visualSize.width, fDPIX), logicalToPhysical(m_visualSize.height, fDPIY));
-            D2D1_POINT_2L origin = D2D1::Point2L(
-                max(0, (rect.right - (static_cast<int> (size.width))) >> 1),
-                max(0, (rect.bottom - (static_cast<int> (size.height))) >> 1));
-            ::SetWindowPos(
-                visualHWND,
-                nullptr,
-                origin.x,
-                origin.y,
-                static_cast<int> (size.width),
-                static_cast<int> (size.height),
-                SWP_NOACTIVATE | SWP_NOZORDER);
-        }
-    }
-}
-
-
-/**
  * Changes window text.
  *
  * Parameters:
@@ -435,6 +411,67 @@ void desktop_sample_window::handleThreadTermination(_In_ const HANDLE hObject)
         if (m_taskbarList3)
         {
             m_taskbarList3->SetProgressState(m_hWnd, TBPF_NOPROGRESS);
+        }
+    }
+}
+
+
+/**
+ * Resize the graph window.
+ *
+ * Parameters:
+ * None.
+ *
+ * Returns:
+ * N/A.
+ */
+void desktop_sample_window::resizeVisual()
+{
+    HWND visualHWND;
+    if (m_visual && (S_OK == m_visual->getHWND(&visualHWND)))
+    {
+        float fDPIX;
+        float fDPIY;
+        if (SUCCEEDED(getDpiForMonitor(m_hWnd, &fDPIX, &fDPIY)))
+        {
+            RECT rect;
+            GetClientRect(&rect);
+            D2D1_SIZE_F size = D2D1::SizeF(
+                logicalToPhysical(m_visualSize.width, fDPIX), logicalToPhysical(m_visualSize.height, fDPIY));
+            D2D1_POINT_2L origin = D2D1::Point2L(
+                max(0, (rect.right - (static_cast<int> (size.width))) >> 1),
+                max(0, (rect.bottom - (static_cast<int> (size.height))) >> 1));
+            /*
+             * Initialize scroll bars.
+             * Member of the SCROLLINFO structure must be initialized with _PHYSICAL_ coordinates.
+             */
+            SCROLLINFO si;
+            si.cbSize = sizeof(si);
+            si.fMask = SIF_PAGE | SIF_RANGE;
+            si.nMin = 0;
+            si.nPage = rect.right;
+            si.nMax = max(rect.right, origin.x + static_cast<LONG> (size.width)) - 1;
+            if (si.nMax < (static_cast<int> (si.nPage)))
+            {
+                ::SendNotifyMessage(visualHWND, WM_HSCROLL, MAKELONG(SB_LEFT, 0), 0);
+            }
+            SetScrollInfo(SB_HORZ, &si, TRUE);
+            si.nPage = rect.bottom;
+            si.nMax = max(rect.bottom, origin.y + static_cast<LONG> (size.height)) - 1;
+            if (si.nMax < (static_cast<int> (si.nPage)))
+            {
+                ::SendNotifyMessage(visualHWND, WM_VSCROLL, MAKELONG(SB_TOP, 0), 0);
+            }
+            SetScrollInfo(SB_VERT, &si, TRUE);
+
+            ::SetWindowPos(
+                visualHWND,
+                nullptr,
+                origin.x,
+                origin.y,
+                static_cast<int> (size.width),
+                static_cast<int> (size.height),
+                SWP_NOACTIVATE | SWP_NOZORDER);
         }
     }
 }

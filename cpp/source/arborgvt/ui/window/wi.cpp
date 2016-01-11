@@ -1,7 +1,7 @@
 #include "service\functype.h"
 #include "service\strgutil.h"
 #include "service\winapi\theme.h"
-#include "ui\window\child\onscreen\\graphwnd.h"
+#include "ui\window\child\onscreen\graphwnd.h"
 #include "ui\window\wi.h"
 #include <Uxtheme.h>
 #include <vsstyle.h>

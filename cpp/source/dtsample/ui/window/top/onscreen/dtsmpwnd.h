@@ -69,7 +69,7 @@ protected:
         resizeVisual();
     }
 
-    virtual void draw() override
+    virtual void draw() const override
     {
 //        m_direct2DContext->Clear(D2D1::ColorF {GetSysColor(COLOR_WINDOW), 1.0f});
         m_direct2DContext->Clear(D2D1::ColorF {D2D1::ColorF::GreenYellow, 1.0f});
