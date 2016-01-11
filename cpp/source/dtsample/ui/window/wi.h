@@ -121,7 +121,7 @@ private:
 class directx_render abstract: protected directx_toolkit
 {
 protected:
-    virtual void draw() = 0;
+    virtual void draw() const = 0;
 
     virtual void createDeviceResources()
     {
