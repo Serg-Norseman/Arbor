@@ -1,4 +1,5 @@
 # Arbor
-ArborGVT - the graph vizualization toolkit.
-This is a fork of the project Arbor.js (Copyright 2011 · Samizdat Drafting Co.).
-In march-april 2012 was done porting from JavaScript to C# (Copyright 2012 by Serg V. Zhdanovskih).
+ArborGVT is the graph vizualization toolkit.  
+This is a fork of the `Arbor.js' project (Copyright 2011 Samizdat Drafting Co.).  
+Ported to C# language from JavaScript in March-April 2012 (Copyright 2012 by Serg V. Zhdanovskih).  
+Currently (from the beginning of 2016) native C++ version is being developed ([@ruslangaripov](https://github.com/ruslangaripov)).
