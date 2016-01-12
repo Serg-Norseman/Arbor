@@ -178,6 +178,83 @@ BOOL desktop_sample_window::ProcessWindowMessage(
             }
             break;
 
+            case WM_KEYDOWN:
+            {
+                switch (nWParam)
+                {
+                    // Make this window WS_TABSTOP'd to handle the keys.
+                    case VK_UP:
+                    {
+                        SendMessage(WM_VSCROLL, MAKELONG(SB_LINEUP, 0), 0);
+                        nLResult = 0;
+                        bHandled = TRUE;
+                    }
+                    break;
+
+                    case VK_DOWN:
+                    {
+                        SendMessage(WM_VSCROLL, MAKELONG(SB_LINEDOWN, 0), 0);
+                        nLResult = 0;
+                        bHandled = TRUE;
+                    }
+                    break;
+
+                    case VK_PRIOR:
+                    {
+                        SendMessage(WM_VSCROLL, MAKELONG(SB_PAGEUP, 0), 0);
+                        nLResult = 0;
+                        bHandled = TRUE;
+                    }
+                    break;
+
+                    case VK_NEXT:
+                    {
+                        SendMessage(WM_VSCROLL, MAKELONG(SB_PAGEDOWN, 0), 0);
+                        nLResult = 0;
+                        bHandled = TRUE;
+                    }
+                    break;
+
+                    case VK_HOME:
+                    {
+                        SendMessage(WM_VSCROLL, MAKELONG(SB_TOP, 0), 0);
+                        nLResult = 0;
+                        bHandled = TRUE;
+                    }
+                    break;
+
+                    case VK_END:
+                    {
+                        SendMessage(WM_VSCROLL, MAKELONG(SB_BOTTOM, 0), 0);
+                        nLResult = 0;
+                        bHandled = TRUE;
+                    }
+                    break;
+
+                    default:
+                    {
+                        bHandled =
+                            base_class_t::ProcessWindowMessage(hWnd, nMessage, nWParam, nLParam, nLResult, nMsgMapID);
+                    }
+                }
+            }
+            break;
+
+            case WM_GETDLGCODE:
+            {
+                if ((VK_UP == nWParam) || (VK_DOWN == nWParam))
+                {
+                    nLResult = DLGC_WANTARROWS;
+                    bHandled = TRUE;
+                }
+                else
+                {
+                    bHandled =
+                        base_class_t::ProcessWindowMessage(hWnd, nMessage, nWParam, nLParam, nLResult, nMsgMapID);
+                }
+            }
+            break;
+
             default:
             {
                 bHandled = base_class_t::ProcessWindowMessage(hWnd, nMessage, nWParam, nLParam, nLResult, nMsgMapID);
