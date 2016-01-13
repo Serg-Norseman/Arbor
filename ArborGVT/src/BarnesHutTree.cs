@@ -151,17 +151,17 @@ namespace ArborGVT
         {
             try
             {
-                List<object> f = new List<object>();
-                f.Add(root);
-                while (f.Count > 0) {
-                    object node = f[0];
-                    f.RemoveAt(0); //shift();
+                Queue<object> f = new Queue<object>();
 
+                f.Enqueue(root);
+                while (f.Count > 0)
+                {
+                    object node = f.Dequeue();
                     if (node == null || node == m) continue;
 
-                    ArborPoint k;
+                    ArborPoint i, k;
                     double l;
-                    ArborPoint i;
+
                     if (node is ArborNode) {
                         ArborNode p_node = (node as ArborNode);
                         k = m.Pt.sub(p_node.Pt);
@@ -173,10 +173,10 @@ namespace ArborGVT
                         double j = m.Pt.sub(b_node.pt.div(b_node.mass)).magnitude();
                         double h = Math.Sqrt(b_node.size.x * b_node.size.y);
                         if (h / j > d) {
-                            f.Add(b_node.q[q_ne]);
-                            f.Add(b_node.q[q_nw]);
-                            f.Add(b_node.q[q_se]);
-                            f.Add(b_node.q[q_sw]);
+                            f.Enqueue(b_node.q[q_ne]);
+                            f.Enqueue(b_node.q[q_nw]);
+                            f.Enqueue(b_node.q[q_se]);
+                            f.Enqueue(b_node.q[q_sw]);
                         } else {
                             k = m.Pt.sub(b_node.pt.div(b_node.mass));
                             l = Math.Max(1, k.magnitude());
