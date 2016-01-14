@@ -152,7 +152,7 @@ namespace ArborGVT
             fTimer = new System.Timers.Timer();
             fTimer.AutoReset = true;
             fTimer.Interval = param_timeout;
-            fTimer.Elapsed += new System.Timers.ElapsedEventHandler(this.physicsUpdate);
+            fTimer.Elapsed += new System.Timers.ElapsedEventHandler(this.tickTimer);
             fTimer.Start();
         }
 
@@ -340,13 +340,13 @@ namespace ArborGVT
             }
         }
 
-        private void physicsUpdate(object sender, System.Timers.ElapsedEventArgs e)
+        private void tickTimer(object sender, System.Timers.ElapsedEventArgs e)
         {
             if (this.fBusy) return;
             this.fBusy = true;
             try
             {
-                this.tick();
+                this.updatePhysics();
                 this.updateBounds();
 
                 if (fRenderer != null) {
@@ -369,12 +369,12 @@ namespace ArborGVT
             }
             catch (Exception ex)
             {
-                Debug.WriteLine("ArborSystem.physicsUpdate(): " + ex.Message);
+                Debug.WriteLine("ArborSystem.tickTimer(): " + ex.Message);
             }
             this.fBusy = false;
         }
 
-        private void tick()
+        private void updatePhysics()
         {
             try
             {
@@ -384,36 +384,31 @@ namespace ArborGVT
                     p.v.y = 0;
                 }
 
-                this.eulerIntegrator();
+                // euler integrator
+                if (param_repulsion > 0) {
+                    if (theta > 0) {
+                        this.applyBarnesHutRepulsion();
+                    } else {
+                        this.applyBruteForceRepulsion();
+                    }
+                }
+
+                if (param_stiffness > 0) {
+                    this.applySprings();
+                }
+
+                this.applyCenterDrift();
+
+                if (param_gravity) {
+                    this.applyCenterGravity();
+                }
+
+                this.updateVelocityAndPosition(param_dt);
             }
             catch (Exception ex)
             {
-                Debug.WriteLine("ArborSystem.tick(): " + ex.Message);
+                Debug.WriteLine("ArborSystem.updatePhysics(): " + ex.Message);
             }
-        }
-
-        private void eulerIntegrator()
-        {
-            if (param_repulsion > 0) {
-                if (theta > 0) {
-                    this.applyBarnesHutRepulsion();
-                } else {
-                    this.applyBruteForceRepulsion();
-                }
-            }
-
-            if (param_stiffness > 0) {
-                this.applySprings();
-            }
-
-            this.applyCenterDrift();
-
-            if (param_gravity) {
-                this.applyCenterGravity();
-            }
-
-            this.updateVelocity(param_dt);
-            this.updatePosition(param_dt);
         }
 
         private void applyBruteForceRepulsion()
@@ -435,82 +430,76 @@ namespace ArborGVT
         {
             BarnesHutTree bht = new BarnesHutTree(o_bnd.topleft, o_bnd.bottomright, theta);
 
-            foreach (ArborNode r in fNodes) {
-                bht.insert(r);
+            foreach (ArborNode node in fNodes) {
+                bht.insert(node);
             }
 
-            foreach (ArborNode r in fNodes) {
-                bht.applyForces(r, param_repulsion);
+            foreach (ArborNode node in fNodes) {
+                bht.applyForces(node, param_repulsion);
             }
         }
 
         private void applySprings()
         {
-            foreach (ArborEdge spr in fEdges) {
-                ArborPoint s = spr.Target.Pt.sub(spr.Source.Pt);
+            foreach (ArborEdge edge in fEdges) {
+                ArborPoint s = edge.Target.Pt.sub(edge.Source.Pt);
 
-                double q = spr.Length - s.magnitude();
+                double q = edge.Length - s.magnitude();
                 ArborPoint r = ((s.magnitude() > 0) ? s : ArborPoint.newRnd(1)).normalize();
 
-                spr.Source.applyForce(r.mul(spr.Stiffness * q * -0.5));
-                spr.Target.applyForce(r.mul(spr.Stiffness * q * 0.5));
+                edge.Source.applyForce(r.mul(edge.Stiffness * q * -0.5));
+                edge.Target.applyForce(r.mul(edge.Stiffness * q * 0.5));
             }
         }
 
         private void applyCenterDrift()
         {
-            double q = 0.0;
+            int size = fNodes.Count;
+            if (size == 0) return;
+
             ArborPoint r = new ArborPoint(0, 0);
-            foreach (ArborNode s in fNodes) {
-                r = r.add(s.Pt);
-                q++;
+            foreach (ArborNode node in fNodes) {
+                r = r.add(node.Pt);
             }
 
-            if (q == 0) return;
-
-            ArborPoint p = r.div(-q);
-            foreach (ArborNode s in fNodes) {
-                s.applyForce(p);
+            ArborPoint p = r.div(-size);
+            foreach (ArborNode node in fNodes) {
+                node.applyForce(p);
             }
         }
 
         private void applyCenterGravity()
         {
-            foreach (ArborNode p in fNodes) {
-                ArborPoint q = p.Pt.mul(-1);
-                p.applyForce(q.mul(param_repulsion / 100));
+            foreach (ArborNode node in fNodes) {
+                ArborPoint q = node.Pt.mul(-1);
+                node.applyForce(q.mul(param_repulsion / 100));
             }
         }
 
-        private void updateVelocity(double p)
-        {
-            foreach (ArborNode q in fNodes) {
-                if (q.Fixed) {
-                    q.v = new ArborPoint(0, 0);
-                    q.f = new ArborPoint(0, 0);
-                    continue;
-                }
-
-                q.v = q.v.add(q.f.mul(p));
-                q.v = q.v.mul(1 - param_friction);
-
-                q.f.x = q.f.y = 0;
-                double r = q.v.magnitude();
-                if (r > 1000) {
-                    q.v = q.v.div(r * r);
-                }
-            }
-        }
-
-        private void updatePosition(double q)
+        private void updateVelocityAndPosition(double dt)
         {
             double eSum = 0;
             double eMax = 0;
 
-            foreach (ArborNode v in fNodes)
-            {
-                v.Pt = v.Pt.add(v.v.mul(q));
-                double x = v.v.magnitude();
+            foreach (ArborNode node in fNodes) {
+                // update velocities
+                if (node.Fixed) {
+                    node.v = new ArborPoint(0, 0);
+                    node.f = new ArborPoint(0, 0);
+                } else {
+                    node.v = node.v.add(node.f.mul(dt));
+                    node.v = node.v.mul(1 - param_friction);
+
+                    node.f.x = node.f.y = 0;
+                    double r = node.v.magnitude();
+                    if (r > 1000) {
+                        node.v = node.v.div(r * r);
+                    }
+                }
+
+                // update positions
+                node.Pt = node.Pt.add(node.v.mul(dt));
+                double x = node.v.magnitude();
                 double z = x * x;
                 eSum += z;
                 eMax = Math.Max(z, eMax);
