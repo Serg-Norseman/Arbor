@@ -124,7 +124,7 @@ namespace ArborGVT
                 }
 
                 if (this.fEnergyDebug) {
-                    string energy = "max=" + fSys.energy_max.ToString("0.00000") + ", mean=" + fSys.energy_mean.ToString("0.00000") + ", thres=" + fSys.energy_threshold.ToString("0.00000");
+                    string energy = "max=" + fSys.energy_max.ToString("0.00000") + ", mean=" + fSys.energy_mean.ToString("0.00000");
                     gfx.DrawString(energy, fDrawFont, new SolidBrush(Color.Black), 10, 10);
                 }
             } catch (Exception ex) {

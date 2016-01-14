@@ -49,15 +49,11 @@ namespace ArborGVT
         private int[] margins = new int[4] {20, 20, 20, 20};
         private PSBounds n_bnd = null;
         private PSBounds o_bnd = null;
-
-        private ArborPoint gdt_topleft = new ArborPoint(-1, -1);
-        private ArborPoint gdt_bottomright = new ArborPoint(1, 1);
         private double theta = 0.4;
 
         public double energy_sum = 0;
         public double energy_max = 0;
         public double energy_mean = 0;
-        public double energy_threshold = 0;
 
         public double param_repulsion = 1000; // отражение, отвращение
         public double param_stiffness = 600; // церемонность :)
@@ -144,40 +140,6 @@ namespace ArborGVT
             }
         }
 
-        private void physicsUpdate(object sender, System.Timers.ElapsedEventArgs e)
-        {
-            if (this.fBusy) return;
-            this.fBusy = true;
-            try
-            {
-                this.tick();
-                this.updateBounds();
-
-                if (fRenderer != null) {
-                    fRenderer.Invalidate();
-                }
-
-                if (this.fAutoStop) {
-                    if (energy_threshold <= this.fStopThreshold) {
-                        if (fPrevTime == DateTime.FromBinary(0)) {
-                            fPrevTime = DateTime.Now;
-                        }
-                        TimeSpan ts = DateTime.Now - fPrevTime;
-                        if (ts.TotalMilliseconds > 1000) {
-                            this.stop();
-                        }
-                    } else {
-                        fPrevTime = DateTime.FromBinary(0);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine("ArborSystem.physicsUpdate(): " + ex.Message);
-            }
-            this.fBusy = false;
-        }
-
         public void start()
         {
             if (fOnStart != null) fOnStart(this, new EventArgs());
@@ -224,8 +186,8 @@ namespace ArborGVT
 
         public ArborNode addNode(string sign)
         {
-            double xx = gdt_topleft.x + (gdt_bottomright.x - gdt_topleft.x) * ArborSystem.NextRndDouble();
-            double yy = gdt_topleft.y + (gdt_bottomright.y - gdt_topleft.y) * ArborSystem.NextRndDouble();
+            double xx = o_bnd.topleft.x + (o_bnd.bottomright.x - o_bnd.topleft.x) * ArborSystem.NextRndDouble();
+            double yy = o_bnd.topleft.y + (o_bnd.bottomright.y - o_bnd.topleft.y) * ArborSystem.NextRndDouble();
 
             return this.addNode(sign, xx, yy);
         }
@@ -319,6 +281,29 @@ namespace ArborGVT
             }
         }
 
+        private PSBounds getActualBounds()
+        {
+            ArborPoint tl = new ArborPoint(-1, -1);
+            ArborPoint br = new ArborPoint(1, 1);
+
+            foreach (ArborNode node in this.fNodes)
+            {
+                ArborPoint pt = node.Pt;
+                if (pt.exploded()) continue;
+
+                if (pt.x < tl.x) tl.x = pt.x;
+                if (pt.y < tl.y) tl.y = pt.y;
+                if (pt.x > br.x) br.x = pt.x;
+                if (pt.y > br.y) br.y = pt.y;
+            }
+
+            tl.x -= 1.2;
+            tl.y -= 1.2;
+            br.x += 1.2;
+            br.y += 1.2;
+            return new PSBounds(tl, br);
+        }
+
         private void updateBounds()
         {
             try
@@ -327,15 +312,13 @@ namespace ArborGVT
 
                 o_bnd = this.getActualBounds();
 
-                ArborPoint obr = new ArborPoint(o_bnd.bottomright.x, o_bnd.bottomright.y);
-                ArborPoint otl = new ArborPoint(o_bnd.topleft.x, o_bnd.topleft.y);
-                ArborPoint sz = obr.sub(otl);
-                ArborPoint cent = otl.add(sz.div(2));
+                ArborPoint sz = o_bnd.bottomright.sub(o_bnd.topleft);
+                ArborPoint cent = o_bnd.topleft.add(sz.div(2));
 
                 double x = 4.0;
-                ArborPoint D = new ArborPoint(Math.Max(sz.x, x), Math.Max(sz.y, x));
-                o_bnd.topleft = cent.sub(D.div(2));
-                o_bnd.bottomright = cent.add(D.div(2));
+                ArborPoint D = new ArborPoint(Math.Max(sz.x, x), Math.Max(sz.y, x)).div(2);
+                o_bnd.topleft = cent.sub(D);
+                o_bnd.bottomright = cent.add(D);
 
                 if (n_bnd == null) {
                     n_bnd = o_bnd;
@@ -349,9 +332,6 @@ namespace ArborGVT
 
                 if (A.x * usz.Width > 1 || A.y * usz.Height > 1) {
                     n_bnd = new PSBounds(_nb_TL, _nb_BR);
-                    return;
-                } else {
-                    return;
                 }
             }
             catch (Exception ex)
@@ -360,37 +340,38 @@ namespace ArborGVT
             }
         }
 
-        private PSBounds getActualBounds()
+        private void physicsUpdate(object sender, System.Timers.ElapsedEventArgs e)
         {
-            ArborPoint tl = ArborPoint.Null;
-            ArborPoint br = ArborPoint.Null;
-
-            foreach (ArborNode node in this.fNodes)
+            if (this.fBusy) return;
+            this.fBusy = true;
+            try
             {
-                ArborPoint pt = node.Pt;
-                if (pt.exploded()) continue;
+                this.tick();
+                this.updateBounds();
 
-                if (br.isNull()) {
-                    br = new ArborPoint(pt.x, pt.y);
-                    tl = new ArborPoint(pt.x, pt.y);
-                    continue;
+                if (fRenderer != null) {
+                    fRenderer.Invalidate();
                 }
 
-                if (pt.x < tl.x) tl.x = pt.x;
-                if (pt.y < tl.y) tl.y = pt.y;
-                if (pt.x > br.x) br.x = pt.x;
-                if (pt.y > br.y) br.y = pt.y;
+                if (this.fAutoStop) {
+                    if (energy_mean <= this.fStopThreshold) {
+                        if (fPrevTime == DateTime.FromBinary(0)) {
+                            fPrevTime = DateTime.Now;
+                        }
+                        TimeSpan ts = DateTime.Now - fPrevTime;
+                        if (ts.TotalMilliseconds > 1000) {
+                            this.stop();
+                        }
+                    } else {
+                        fPrevTime = DateTime.FromBinary(0);
+                    }
+                }
             }
-
-            if (!br.isNull() && !tl.isNull()) {
-                tl.x -= 1.2;
-                tl.y -= 1.2;
-                br.x += 1.2;
-                br.y += 1.2;
-                return new PSBounds(tl, br);
-            } else {
-                return new PSBounds(new ArborPoint(-1, -1), new ArborPoint(1, 1));
+            catch (Exception ex)
+            {
+                Debug.WriteLine("ArborSystem.physicsUpdate(): " + ex.Message);
             }
+            this.fBusy = false;
         }
 
         private void tick()
@@ -452,7 +433,7 @@ namespace ArborGVT
 
         private void applyBarnesHutRepulsion()
         {
-            BarnesHutTree bht = new BarnesHutTree(gdt_topleft, gdt_bottomright, theta);
+            BarnesHutTree bht = new BarnesHutTree(o_bnd.topleft, o_bnd.bottomright, theta);
 
             foreach (ArborNode r in fNodes) {
                 bht.insert(r);
@@ -523,43 +504,21 @@ namespace ArborGVT
 
         private void updatePosition(double q)
         {
-            double r = 0;
-            double p = 0;
-            double u = 0;
-            ArborPoint br = ArborPoint.Null;
-            ArborPoint tl = ArborPoint.Null;
+            double eSum = 0;
+            double eMax = 0;
 
             foreach (ArborNode v in fNodes)
             {
                 v.Pt = v.Pt.add(v.v.mul(q));
                 double x = v.v.magnitude();
                 double z = x * x;
-                r += z;
-                p = Math.Max(z, p);
-                u++;
-
-                if (br.isNull()) {
-                    br = new ArborPoint(v.Pt.x, v.Pt.y);
-                    tl = new ArborPoint(v.Pt.x, v.Pt.y);
-                    continue;
-                }
-
-                ArborPoint y = v.Pt;
-                if (y.exploded()) continue;
-
-                if (y.x > br.x) br.x = y.x;
-                if (y.y > br.y) br.y = y.y;
-                if (y.x < tl.x) tl.x = y.x;
-                if (y.y < tl.y) tl.y = y.y;
+                eSum += z;
+                eMax = Math.Max(z, eMax);
             }
 
-            energy_sum = r;
-            energy_max = p;
-            energy_mean = r / u;
-            energy_threshold = (energy_mean) /* + energy_max) / 2*/;
-
-            gdt_topleft = (!tl.isNull()) ? tl : new ArborPoint(-1, -1);
-            gdt_bottomright = (!br.isNull()) ? br : new ArborPoint(1, 1);
+            energy_sum = eSum;
+            energy_max = eMax;
+            energy_mean = eSum / fNodes.Count;
         }
 
         internal static double NextRndDouble()
