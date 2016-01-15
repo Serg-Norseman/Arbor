@@ -18,6 +18,7 @@ namespace ArborGVT
 
         public bool Fixed;
         public double Mass;
+        // `Pt` is the central point of this node.
         public ArborPoint Pt;
 
         public Color Color;
@@ -42,7 +43,7 @@ namespace ArborGVT
 
         internal void applyForce(ArborPoint a)
         {
-            this.f = this.f.add(a.div(this.Mass));
+            f += a / Mass;
         }
     }
 }
