@@ -115,10 +115,14 @@ namespace ArborGVT
                         ArborPoint pt2 = fSys.toScreen(tgtNode.Pt);
 
                         ArborPoint tail = intersect_line_box(pt1, pt2, srcNode.Box);
-                        ArborPoint head = (tail.isNull()) ? ArborPoint.Null : intersect_line_box(tail, pt2, tgtNode.Box);
+                        // OMG! C# really sucks! I have to do EXPLICIT bool convertion INSIDE conditional statements.
+                        ArborPoint head =
+                            ((bool) (tail)) ? intersect_line_box(tail, pt2, tgtNode.Box) : ArborPoint.Null;
 
-                        if (!head.isNull() && !tail.isNull()) {
-                            gfx.DrawLine(grayPen, (int)tail.x, (int)tail.y, (int)head.x, (int)head.y);
+                        if (((bool) head) && ((bool) (tail)))
+                        {
+                            gfx.DrawLine(
+                                grayPen, (float) (tail.x), (float) (tail.y), (float) (head.x), (float) (head.y));
                         }
                     }
                 }
@@ -160,16 +164,16 @@ namespace ArborGVT
             ArborPoint pt;
 
             pt = intersect_line_line(p1, p2, tl, tr);
-            if (!pt.isNull()) return pt;
+            if ((bool) (pt)) return pt;
 
             pt = intersect_line_line(p1, p2, tr, br);
-            if (!pt.isNull()) return pt;
+            if ((bool) (pt)) return pt;
 
             pt = intersect_line_line(p1, p2, br, bl);
-            if (!pt.isNull()) return pt;
+            if ((bool) (pt)) return pt;
 
             pt = intersect_line_line(p1, p2, bl, tl);
-            if (!pt.isNull()) return pt;
+            if ((bool) (pt)) return pt;
 
             return ArborPoint.Null;
         }

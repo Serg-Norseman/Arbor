@@ -37,7 +37,7 @@ namespace ArborGVT
             this.d = d;
             this.root = new Branch();
             root.origin = origin;
-            root.size = h.sub(origin);
+            root.size = h - origin;
         }
 
         private static int getQuad(ArborNode i, Branch f)
@@ -47,8 +47,8 @@ namespace ArborGVT
                 if (i.Pt.exploded()) {
                     return q_none;
                 }
-                ArborPoint h = i.Pt.sub(f.origin);
-                ArborPoint g = f.size.div(2);
+                ArborPoint h = i.Pt - f.origin;
+                ArborPoint g = f.size / 2;
                 if (h.y < g.y) {
                     if (h.x < g.x) {
                         return q_nw;
@@ -89,25 +89,31 @@ namespace ArborGVT
                         f.q[p] = h;
 
                         f.mass += m;
-                        if (!f.pt.isNull()) {
-                            f.pt = f.pt.add(h.Pt.mul(m));
-                        } else {
-                            f.pt = h.Pt.mul(m);
+                        if ((bool) (f.pt))
+                        {
+                            f.pt += h.Pt * m;
+                        }
+                        else
+                        {
+                            f.pt = h.Pt * m;
                         }
                     } else {
                         if (fp is Branch) {
                             f.mass += (m);
-                            if (!f.pt.isNull()) {
-                                f.pt = f.pt.add(h.Pt.mul(m));
-                            } else {
-                                f.pt = h.Pt.mul(m);
+                            if ((bool) (f.pt))
+                            {
+                                f.pt += h.Pt * m;
+                            }
+                            else
+                            {
+                                f.pt = h.Pt * m;
                             }
 
                             f = fp as Branch;
 
                             gst.Insert(0, h);
                         } else {
-                            ArborPoint l = f.size.div(2);
+                            ArborPoint l = f.size / 2;
                             ArborPoint n = new ArborPoint(f.origin.x, f.origin.y);
 
                             if (p == q_se || p == q_sw) {
@@ -124,7 +130,7 @@ namespace ArborGVT
                             f.q[p] = fp;
 
                             f.mass = m;
-                            f.pt = h.Pt.mul(m);
+                            f.pt = h.Pt * m;
 
                             f = fp as Branch;
 
@@ -159,18 +165,19 @@ namespace ArborGVT
                     object node = f.Dequeue();
                     if (node == null || node == m) continue;
 
-                    ArborPoint i, k;
+                    ArborPoint i;
+                    ArborPoint k;
                     double l;
 
                     if (node is ArborNode) {
                         ArborNode p_node = (node as ArborNode);
-                        k = m.Pt.sub(p_node.Pt);
+                        k = m.Pt - p_node.Pt;
                         l = Math.Max(1, k.magnitude());
                         i = ((k.magnitude() > 0) ? k : ArborPoint.newRnd(1)).normalize();
-                        m.applyForce(i.mul(g * p_node.Mass).div(l * l));
+                        m.applyForce((i * (g * p_node.Mass)) / (l * l));
                     } else {
                         Branch b_node = (node as Branch);
-                        double j = m.Pt.sub(b_node.pt.div(b_node.mass)).magnitude();
+                        double j = (m.Pt - (b_node.pt / b_node.mass)).magnitude();
                         double h = Math.Sqrt(b_node.size.x * b_node.size.y);
                         if (h / j > d) {
                             f.Enqueue(b_node.q[q_ne]);
@@ -178,10 +185,10 @@ namespace ArborGVT
                             f.Enqueue(b_node.q[q_se]);
                             f.Enqueue(b_node.q[q_sw]);
                         } else {
-                            k = m.Pt.sub(b_node.pt.div(b_node.mass));
+                            k = m.Pt - (b_node.pt / b_node.mass);
                             l = Math.Max(1, k.magnitude());
                             i = ((k.magnitude() > 0) ? k : ArborPoint.newRnd(1)).normalize();
-                            m.applyForce(i.mul(g * (b_node.mass)).div(l * l));
+                            m.applyForce((i * (g * b_node.mass)) / (l * l));
                         }
                     }
                 }

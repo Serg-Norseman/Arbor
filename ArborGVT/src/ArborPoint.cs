@@ -23,39 +23,33 @@ namespace ArborGVT
             this.y = y;
         }
 
-        public bool isNull()
+        public static ArborPoint operator +(ArborPoint left, ArborPoint right) =>
+            new ArborPoint(left.x + right.x, left.y + right.y);
+
+        public static ArborPoint operator -(ArborPoint left, ArborPoint right) =>
+            new ArborPoint(left.x - right.x, left.y - right.y);
+
+        public static ArborPoint operator *(ArborPoint left, double right) =>
+            new ArborPoint(left.x * right, left.y * right);
+
+        public static ArborPoint operator /(ArborPoint left, double right) =>
+            new ArborPoint(left.x / right, left.y / right);
+
+        public static explicit operator bool(ArborPoint value)
         {
-            return (double.IsNaN(this.x) && double.IsNaN(this.y));
+            return !(double.IsNaN(value.x) && double.IsNaN(value.y));
         }
 
         public static ArborPoint newRnd(double a = 5)
         {
-            return new ArborPoint(2 * a * (ArborSystem.NextRndDouble() - 0.5), 2 * a * (ArborSystem.NextRndDouble() - 0.5));
+            return new ArborPoint(
+                2 * a * (ArborSystem.NextRndDouble() - 0.5),
+                2 * a * (ArborSystem.NextRndDouble() - 0.5));
         }
 
         public bool exploded()
         {
             return (double.IsNaN(this.x) || double.IsNaN(this.y));
-        }
-
-        public ArborPoint add(ArborPoint a)
-        {
-            return new ArborPoint(this.x + a.x, this.y + a.y);
-        }
-
-        public ArborPoint sub(ArborPoint a)
-        {
-            return new ArborPoint(this.x - a.x, this.y - a.y);
-        }
-
-        public ArborPoint mul(double a)
-        {
-            return new ArborPoint(this.x * a, this.y * a);
-        }
-
-        public ArborPoint div(double a)
-        {
-            return new ArborPoint(this.x / a, this.y / a);
         }
 
         public double magnitude()
@@ -65,13 +59,7 @@ namespace ArborGVT
 
         public ArborPoint normalize()
         {
-            return this.div(this.magnitude());
+            return this / magnitude();
         }
-
-        // not used
-        /*public ArborPoint normal()
-		{
-            return new ArborPoint(-this.y, this.x);
-        }*/
     }
 }

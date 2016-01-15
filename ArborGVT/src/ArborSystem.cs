@@ -233,21 +233,21 @@ namespace ArborGVT
         {
             if (n_bnd == null) return ArborPoint.Null;
 
-            ArborPoint v = n_bnd.bottomright.sub(n_bnd.topleft);
-            double sx = margins[3] + pt.sub(n_bnd.topleft).div(v.x).x * (usz.Width - (margins[1] + margins[3]));
-            double sy = margins[0] + pt.sub(n_bnd.topleft).div(v.y).y * (usz.Height - (margins[0] + margins[2]));
+            ArborPoint v = n_bnd.bottomright - n_bnd.topleft;
+            double sx = margins[3] + ((pt - n_bnd.topleft) / (v.x)).x * (usz.Width - (margins[1] + margins[3]));
+            double sy = margins[0] + ((pt - n_bnd.topleft) / (v.y)).y * (usz.Height - (margins[0] + margins[2]));
             return new ArborPoint(sx, sy);
         }
 
         public ArborPoint fromScreen(double sx, double sy)
-		{
-			if (n_bnd == null) return ArborPoint.Null;
+        {
+            if (n_bnd == null) return ArborPoint.Null;
 
-			ArborPoint x = n_bnd.bottomright.sub(n_bnd.topleft);
-			double w = (sx - margins[3]) / (usz.Width - (margins[1] + margins[3])) * x.x + n_bnd.topleft.x;
-			double v = (sy - margins[0]) / (usz.Height - (margins[0] + margins[2])) * x.y + n_bnd.topleft.y;
-			return new ArborPoint(w, v);
-		}
+            ArborPoint x = n_bnd.bottomright - n_bnd.topleft;
+            double w = (sx - margins[3]) / (usz.Width - (margins[1] + margins[3])) * x.x + n_bnd.topleft.x;
+            double v = (sy - margins[0]) / (usz.Height - (margins[0] + margins[2])) * x.y + n_bnd.topleft.y;
+            return new ArborPoint(w, v);
+        }
 
         public ArborNode nearest(int sx, int sy)
         {
@@ -264,7 +264,7 @@ namespace ArborGVT
                     continue;
                 }
 
-                double A = z.sub(x).magnitude();
+                double A = (z - x).magnitude();
                 if (A < w_distance) {
                     w_node = y;
                     w_point = z;
@@ -273,13 +273,19 @@ namespace ArborGVT
             }
 
             if (w_node != null) {
-                w_distance = this.toScreen(w_node.Pt).sub(this.toScreen(x)).magnitude();
+                w_distance = (toScreen(w_node.Pt) - toScreen(x)).magnitude();
                 return w_node;
             } else {
                 return null;
             }
         }
 
+        /**
+         * Gets bounding rectangle that contains all nodes.
+         *
+         * Returns:
+         * Bounding rectangle as `PSBounds` instance.
+         */
         private PSBounds getActualBounds()
         {
             ArborPoint tl = new ArborPoint(-1, -1);
@@ -287,13 +293,15 @@ namespace ArborGVT
 
             foreach (ArborNode node in this.fNodes)
             {
-                ArborPoint pt = node.Pt;
-                if (pt.exploded()) continue;
+                if (node.Pt.exploded())
+                {
+                    continue;
+                }
 
-                if (pt.x < tl.x) tl.x = pt.x;
-                if (pt.y < tl.y) tl.y = pt.y;
-                if (pt.x > br.x) br.x = pt.x;
-                if (pt.y > br.y) br.y = pt.y;
+                if (node.Pt.x < tl.x) tl.x = node.Pt.x;
+                if (node.Pt.y < tl.y) tl.y = node.Pt.y;
+                if (node.Pt.x > br.x) br.x = node.Pt.x;
+                if (node.Pt.y > br.y) br.y = node.Pt.y;
             }
 
             tl.x -= 1.2;
@@ -311,23 +319,24 @@ namespace ArborGVT
 
                 o_bnd = this.getActualBounds();
 
-                ArborPoint sz = o_bnd.bottomright.sub(o_bnd.topleft);
-                ArborPoint cent = o_bnd.topleft.add(sz.div(2));
+                ArborPoint size = o_bnd.bottomright - o_bnd.topleft;
+                ArborPoint center = o_bnd.topleft + size / 2;
 
                 double x = 4.0;
-                ArborPoint D = new ArborPoint(Math.Max(sz.x, x), Math.Max(sz.y, x)).div(2);
-                o_bnd.topleft = cent.sub(D);
-                o_bnd.bottomright = cent.add(D);
+                ArborPoint D = (new ArborPoint(Math.Max(size.x, x), Math.Max(size.y, x))) / 2;
+                o_bnd.topleft = center - D;
+                o_bnd.bottomright = center + D;
 
                 if (n_bnd == null) {
                     n_bnd = o_bnd;
                     return;
                 }
 
-                ArborPoint _nb_BR = n_bnd.bottomright.add(o_bnd.bottomright.sub(n_bnd.bottomright).mul(mag));
-                ArborPoint _nb_TL = n_bnd.topleft.add(o_bnd.topleft.sub(n_bnd.topleft).mul(mag));
+                ArborPoint _nb_BR = n_bnd.bottomright + (o_bnd.bottomright - n_bnd.bottomright) * mag;
+                ArborPoint _nb_TL = n_bnd.topleft + (o_bnd.topleft - n_bnd.topleft) * mag;
 
-                ArborPoint A = new ArborPoint(n_bnd.topleft.sub(_nb_TL).magnitude(), n_bnd.bottomright.sub(_nb_BR).magnitude());
+                ArborPoint A =
+                    new ArborPoint((n_bnd.topleft - _nb_TL).magnitude(), (n_bnd.bottomright - _nb_BR).magnitude());
 
                 if (A.x * usz.Width > 1 || A.y * usz.Height > 1) {
                     n_bnd = new PSBounds(_nb_TL, _nb_BR);
@@ -409,11 +418,11 @@ namespace ArborGVT
             foreach (ArborNode p in fNodes) {
                 foreach (ArborNode r in fNodes) {
                     if (p != r) {
-                        ArborPoint u = p.Pt.sub(r.Pt);
+                        ArborPoint u = p.Pt - r.Pt;
                         double v = Math.Max(1, u.magnitude());
                         ArborPoint t = ((u.magnitude() > 0) ? u : ArborPoint.newRnd(1)).normalize();
-                        p.applyForce(t.mul(param_repulsion * r.Mass * 0.5).div(v * v * 0.5));
-                        r.applyForce(t.mul(param_repulsion * p.Mass * 0.5).div(v * v * -0.5));
+                        p.applyForce((t * (param_repulsion * r.Mass * 0.5)) / (v * v * 0.5));
+                        r.applyForce((t * (param_repulsion * p.Mass * 0.5)) / (v * v * -0.5));
                     }
                 }
             }
@@ -435,13 +444,13 @@ namespace ArborGVT
         private void applySprings()
         {
             foreach (ArborEdge edge in fEdges) {
-                ArborPoint s = edge.Target.Pt.sub(edge.Source.Pt);
+                ArborPoint s = edge.Target.Pt - edge.Source.Pt;
 
                 double q = edge.Length - s.magnitude();
                 ArborPoint r = ((s.magnitude() > 0) ? s : ArborPoint.newRnd(1)).normalize();
 
-                edge.Source.applyForce(r.mul(edge.Stiffness * q * -0.5));
-                edge.Target.applyForce(r.mul(edge.Stiffness * q * 0.5));
+                edge.Source.applyForce(r * (edge.Stiffness * q * -0.5));
+                edge.Target.applyForce(r * (edge.Stiffness * q * 0.5));
             }
         }
 
@@ -457,9 +466,9 @@ namespace ArborGVT
             if (hasCenterDrift) {
                 ArborPoint r = new ArborPoint(0, 0);
                 foreach (ArborNode node in fNodes) {
-                    r = r.add(node.Pt);
+                    r += node.Pt;
                 }
-                drift = r.div(-size);
+                drift = r / -size;
             }
 
             foreach (ArborNode node in fNodes) {
@@ -470,8 +479,8 @@ namespace ArborGVT
 
                 // apply center gravity
                 if (param_gravity) {
-                    ArborPoint q = node.Pt.mul(-1);
-                    node.applyForce(q.mul(param_repulsion / 100));
+                    ArborPoint q = node.Pt * (-1);
+                    node.applyForce(q * (param_repulsion / 100));
                 }
 
                 // update velocities
@@ -479,18 +488,18 @@ namespace ArborGVT
                     node.v = new ArborPoint(0, 0);
                     node.f = new ArborPoint(0, 0);
                 } else {
-                    node.v = node.v.add(node.f.mul(dt));
-                    node.v = node.v.mul(1 - param_friction);
-
-                    node.f.x = node.f.y = 0;
+                    node.v += node.f * dt;
+                    node.v *= 1 - param_friction;
                     double r = node.v.magnitude();
                     if (r > 1000) {
-                        node.v = node.v.div(r * r);
+                        node.v /= r * r;
                     }
+                    node.f.x = 0;
+                    node.f.y = 0;
                 }
 
                 // update positions
-                node.Pt = node.Pt.add(node.v.mul(dt));
+                node.Pt += node.v * dt;
 
                 // update energy
                 double x = node.v.magnitude();
