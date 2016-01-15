@@ -55,8 +55,8 @@ namespace ArborGVT
         public double energy_max = 0;
         public double energy_mean = 0;
 
-        public double param_repulsion = 1000; // отражение, отвращение
-        public double param_stiffness = 600; // церемонность :)
+        public double param_repulsion = 1000; // отражение, отвращение, отталкивание
+        public double param_stiffness = 600; // церемонность, тугоподвижность
         public double param_friction = 0.5; // трение
         public double param_dt = 0.01; // 0.02;
         public bool param_gravity = false;
@@ -113,7 +113,6 @@ namespace ArborGVT
 
         #endregion
 
-        // repulsion - отталкивание, stiffness - тугоподвижность, friction - сила трения
         public ArborSystem(double repulsion, double stiffness, double friction, IArborRenderer renderer)
         {
             this.fAutoStop = true;
@@ -397,12 +396,6 @@ namespace ArborGVT
                     this.applySprings();
                 }
 
-                this.applyCenterDrift();
-
-                if (param_gravity) {
-                    this.applyCenterGravity();
-                }
-
                 this.updateVelocityAndPosition(param_dt);
             }
             catch (Exception ex)
@@ -452,36 +445,35 @@ namespace ArborGVT
             }
         }
 
-        private void applyCenterDrift()
-        {
-            int size = fNodes.Count;
-            if (size == 0) return;
-
-            ArborPoint r = new ArborPoint(0, 0);
-            foreach (ArborNode node in fNodes) {
-                r = r.add(node.Pt);
-            }
-
-            ArborPoint p = r.div(-size);
-            foreach (ArborNode node in fNodes) {
-                node.applyForce(p);
-            }
-        }
-
-        private void applyCenterGravity()
-        {
-            foreach (ArborNode node in fNodes) {
-                ArborPoint q = node.Pt.mul(-1);
-                node.applyForce(q.mul(param_repulsion / 100));
-            }
-        }
-
         private void updateVelocityAndPosition(double dt)
         {
             double eSum = 0;
             double eMax = 0;
 
+            // calc center drift
+            int size = fNodes.Count;
+            bool hasCenterDrift = (size != 0);
+            ArborPoint drift = new ArborPoint(0, 0);
+            if (hasCenterDrift) {
+                ArborPoint r = new ArborPoint(0, 0);
+                foreach (ArborNode node in fNodes) {
+                    r = r.add(node.Pt);
+                }
+                drift = r.div(-size);
+            }
+
             foreach (ArborNode node in fNodes) {
+                // apply center drift
+                if (hasCenterDrift) {
+                    node.applyForce(drift);
+                }
+
+                // apply center gravity
+                if (param_gravity) {
+                    ArborPoint q = node.Pt.mul(-1);
+                    node.applyForce(q.mul(param_repulsion / 100));
+                }
+
                 // update velocities
                 if (node.Fixed) {
                     node.v = new ArborPoint(0, 0);
@@ -499,6 +491,8 @@ namespace ArborGVT
 
                 // update positions
                 node.Pt = node.Pt.add(node.v.mul(dt));
+
+                // update energy
                 double x = node.v.magnitude();
                 double z = x * x;
                 eSum += z;
@@ -507,7 +501,7 @@ namespace ArborGVT
 
             energy_sum = eSum;
             energy_max = eMax;
-            energy_mean = eSum / fNodes.Count;
+            energy_mean = (size > 0) ? eSum / size : 0;
         }
 
         internal static double NextRndDouble()
