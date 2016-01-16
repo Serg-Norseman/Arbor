@@ -14,18 +14,18 @@ namespace ArborGVT
     {
         public static readonly ArborPoint Null = new ArborPoint(double.NaN, double.NaN);
         
-        public double x;
-        public double y;
+        public double X;
+        public double Y;
 
         public ArborPoint(double x, double y)
         {
-            this.x = x;
-            this.y = y;
+            this.X = x;
+            this.Y = y;
         }
 
         public bool isNull()
         {
-            return (double.IsNaN(this.x) && double.IsNaN(this.y));
+            return (double.IsNaN(this.X) && double.IsNaN(this.Y));
         }
 
         public static ArborPoint newRnd(double a = 5)
@@ -35,43 +35,37 @@ namespace ArborGVT
 
         public bool exploded()
         {
-            return (double.IsNaN(this.x) || double.IsNaN(this.y));
+            return (double.IsNaN(this.X) || double.IsNaN(this.Y));
         }
 
         public ArborPoint add(ArborPoint a)
         {
-            return new ArborPoint(this.x + a.x, this.y + a.y);
+            return new ArborPoint(this.X + a.X, this.Y + a.Y);
         }
 
         public ArborPoint sub(ArborPoint a)
         {
-            return new ArborPoint(this.x - a.x, this.y - a.y);
+            return new ArborPoint(this.X - a.X, this.Y - a.Y);
         }
 
         public ArborPoint mul(double a)
         {
-            return new ArborPoint(this.x * a, this.y * a);
+            return new ArborPoint(this.X * a, this.Y * a);
         }
 
         public ArborPoint div(double a)
         {
-            return new ArborPoint(this.x / a, this.y / a);
+            return new ArborPoint(this.X / a, this.Y / a);
         }
 
         public double magnitude()
         {
-            return Math.Sqrt(this.x * this.x + this.y * this.y);
+            return Math.Sqrt(this.X * this.X + this.Y * this.Y);
         }
 
         public ArborPoint normalize()
         {
             return this.div(this.magnitude());
         }
-
-        // not used
-        /*public ArborPoint normal()
-		{
-            return new ArborPoint(-this.y, this.x);
-        }*/
     }
 }

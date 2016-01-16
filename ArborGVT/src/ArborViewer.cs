@@ -22,6 +22,7 @@ namespace ArborGVT
         private bool fNodesDragging;
         private readonly StringFormat fStrFormat;
         private readonly ArborSystem fSys;
+        private readonly SolidBrush fBlackBrush;
         private readonly SolidBrush fWhiteBrush;
 
         public bool EnergyDebug
@@ -63,6 +64,7 @@ namespace ArborGVT
             this.fStrFormat.Alignment = StringAlignment.Center;
             this.fStrFormat.LineAlignment = StringAlignment.Center;
 
+            this.fBlackBrush = new SolidBrush(Color.Black);
             this.fWhiteBrush = new SolidBrush(Color.White);
             this.fDragged = null;
             this.fNodesDragging = false;
@@ -74,6 +76,9 @@ namespace ArborGVT
             {
                 this.fSys.Dispose();
                 this.fDrawFont.Dispose();
+                this.fWhiteBrush.Dispose();
+                this.fBlackBrush.Dispose();
+                this.fStrFormat.Dispose();
             }
             base.Dispose(disposing);
         }
@@ -118,14 +123,14 @@ namespace ArborGVT
                         ArborPoint head = (tail.isNull()) ? ArborPoint.Null : intersect_line_box(tail, pt2, tgtNode.Box);
 
                         if (!head.isNull() && !tail.isNull()) {
-                            gfx.DrawLine(grayPen, (int)tail.x, (int)tail.y, (int)head.x, (int)head.y);
+                            gfx.DrawLine(grayPen, (int)tail.X, (int)tail.Y, (int)head.X, (int)head.Y);
                         }
                     }
                 }
 
                 if (this.fEnergyDebug) {
-                    string energy = "max=" + fSys.energy_max.ToString("0.00000") + ", mean=" + fSys.energy_mean.ToString("0.00000");
-                    gfx.DrawString(energy, fDrawFont, new SolidBrush(Color.Black), 10, 10);
+                    string energy = "max=" + fSys.EnergyMax.ToString("0.00000") + ", mean=" + fSys.EnergyMean.ToString("0.00000");
+                    gfx.DrawString(energy, fDrawFont, this.fBlackBrush, 10, 10);
                 }
             } catch (Exception ex) {
                 Debug.WriteLine("ArborViewer.OnPaint(): " + ex.Message);
@@ -134,15 +139,15 @@ namespace ArborGVT
 
         public static ArborPoint intersect_line_line(ArborPoint p1, ArborPoint p2, ArborPoint p3, ArborPoint p4)
         {
-            double denom = ((p4.y - p3.y) * (p2.x - p1.x) - (p4.x - p3.x) * (p2.y - p1.y));
+            double denom = ((p4.Y - p3.Y) * (p2.X - p1.X) - (p4.X - p3.X) * (p2.Y - p1.Y));
             if (denom == 0) return ArborPoint.Null; // lines are parallel
 
-            double ua = ((p4.x - p3.x) * (p1.y - p3.y) - (p4.y - p3.y) * (p1.x - p3.x)) / denom;
-            double ub = ((p2.x - p1.x) * (p1.y - p3.y) - (p2.y - p1.y) * (p1.x - p3.x)) / denom;
+            double ua = ((p4.X - p3.X) * (p1.Y - p3.Y) - (p4.Y - p3.Y) * (p1.X - p3.X)) / denom;
+            double ub = ((p2.X - p1.X) * (p1.Y - p3.Y) - (p2.Y - p1.Y) * (p1.X - p3.X)) / denom;
 
             if (ua < 0 || ua > 1 || ub < 0 || ub > 1) return ArborPoint.Null;
 
-            return new ArborPoint(p1.x + ua * (p2.x - p1.x), p1.y + ua * (p2.y - p1.y));
+            return new ArborPoint(p1.X + ua * (p2.X - p1.X), p1.Y + ua * (p2.Y - p1.Y));
         }
 
         public ArborPoint intersect_line_box(ArborPoint p1, ArborPoint p2, RectangleF boxTuple)
@@ -219,10 +224,10 @@ namespace ArborGVT
             float w = tsz.Width + 10;
             float h = tsz.Height + 4;
             ArborPoint pt = fSys.toScreen(node.Pt);
-            pt.x = Math.Floor(pt.x);
-            pt.y = Math.Floor(pt.y);
+            pt.X = Math.Floor(pt.X);
+            pt.Y = Math.Floor(pt.Y);
 
-            return new RectangleF((float)pt.x - w / 2, (float)pt.y - h / 2, w, h);
+            return new RectangleF((float)pt.X - w / 2, (float)pt.Y - h / 2, w, h);
         }
 
         public ArborNode getNodeByCoord(int x, int y)

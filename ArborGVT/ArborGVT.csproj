@@ -52,12 +52,12 @@
     <Compile Include="src\ArborNode.cs" />
     <Compile Include="src\ArborPoint.cs" />
     <Compile Include="src\ArborSystem.cs" />
-    <Compile Include="src\ArborViewer.cs" />
+    <Compile Include="src\ArborViewer.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="src\BarnesHutTree.cs" />
     <Compile Include="src\IArborRenderer.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="src" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

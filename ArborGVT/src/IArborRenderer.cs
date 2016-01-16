@@ -6,8 +6,6 @@
 //  Physics code derived from springy.js, copyright (c) 2010 Dennis Hotson
 // 
 
-using System;
-
 namespace ArborGVT
 {
     public interface IArborRenderer

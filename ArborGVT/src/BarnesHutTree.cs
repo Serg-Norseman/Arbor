@@ -12,22 +12,22 @@ using System.Diagnostics;
 
 namespace ArborGVT
 {
-    public class Branch
+    internal class Branch
     {
-        public ArborPoint origin = ArborPoint.Null;
-        public ArborPoint size = ArborPoint.Null;
-        public object[] q = new object[4] { null, null, null, null };
-        public double mass = 0.0;
-        public ArborPoint pt = ArborPoint.Null;
+        public ArborPoint Origin = ArborPoint.Null;
+        public ArborPoint Size = ArborPoint.Null;
+        public object[] Q = new object[4] { null, null, null, null };
+        public double Mass = 0.0;
+        public ArborPoint Pt = ArborPoint.Null;
     }
 
-    public class BarnesHutTree
+    internal class BarnesHutTree
     {
-        private const int q_ne = 0;
-        private const int q_nw = 1;
-        private const int q_se = 2;
-        private const int q_sw = 3;
-        private const int q_none = 4;
+        private const int QNe = 0;
+        private const int QNw = 1;
+        private const int QSe = 2;
+        private const int QSw = 3;
+        private const int QNone = 4;
 
         private readonly Branch root;
         private readonly double d = 0.5;
@@ -36,8 +36,8 @@ namespace ArborGVT
         {
             this.d = d;
             this.root = new Branch();
-            root.origin = origin;
-            root.size = h.sub(origin);
+            root.Origin = origin;
+            root.Size = h.sub(origin);
         }
 
         private static int getQuad(ArborNode i, Branch f)
@@ -45,28 +45,20 @@ namespace ArborGVT
             try
             {
                 if (i.Pt.exploded()) {
-                    return q_none;
+                    return QNone;
                 }
-                ArborPoint h = i.Pt.sub(f.origin);
-                ArborPoint g = f.size.div(2);
-                if (h.y < g.y) {
-                    if (h.x < g.x) {
-                        return q_nw;
-                    } else {
-                        return q_ne;
-                    }
+                ArborPoint h = i.Pt.sub(f.Origin);
+                ArborPoint g = f.Size.div(2);
+                if (h.Y < g.Y) {
+                    return (h.X < g.X) ? QNw : QNe;
                 } else {
-                    if (h.x < g.x) {
-                        return q_sw;
-                    } else {
-                        return q_se;
-                    }
+                    return (h.X < g.X) ? QSw : QSe;
                 }
             }
             catch (Exception ex)
             {
                 Debug.WriteLine("BarnesHutTree.getQuad(): " + ex.Message);
-                return q_none;
+                return QNone;
             }
         }
 
@@ -83,56 +75,56 @@ namespace ArborGVT
 
                     double m = h.Mass;
                     int p = getQuad(h, f);
-                    object fp = f.q[p];
+                    object fp = f.Q[p];
 
                     if (fp == null) {
-                        f.q[p] = h;
+                        f.Q[p] = h;
 
-                        f.mass += m;
-                        if (!f.pt.isNull()) {
-                            f.pt = f.pt.add(h.Pt.mul(m));
+                        f.Mass += m;
+                        if (!f.Pt.isNull()) {
+                            f.Pt = f.Pt.add(h.Pt.mul(m));
                         } else {
-                            f.pt = h.Pt.mul(m);
+                            f.Pt = h.Pt.mul(m);
                         }
                     } else {
                         if (fp is Branch) {
-                            f.mass += (m);
-                            if (!f.pt.isNull()) {
-                                f.pt = f.pt.add(h.Pt.mul(m));
+                            f.Mass += (m);
+                            if (!f.Pt.isNull()) {
+                                f.Pt = f.Pt.add(h.Pt.mul(m));
                             } else {
-                                f.pt = h.Pt.mul(m);
+                                f.Pt = h.Pt.mul(m);
                             }
 
                             f = fp as Branch;
 
                             gst.Insert(0, h);
                         } else {
-                            ArborPoint l = f.size.div(2);
-                            ArborPoint n = new ArborPoint(f.origin.x, f.origin.y);
+                            ArborPoint l = f.Size.div(2);
+                            ArborPoint n = new ArborPoint(f.Origin.X, f.Origin.Y);
 
-                            if (p == q_se || p == q_sw) {
-                                n.y += l.y;
+                            if (p == QSe || p == QSw) {
+                                n.Y += l.Y;
                             }
-                            if (p == q_ne || p == q_se) {
-                                n.x += l.x;
+                            if (p == QNe || p == QSe) {
+                                n.X += l.X;
                             }
 
                             ArborNode o = fp as ArborNode;
                             fp = new Branch();
-                            (fp as Branch).origin = n;
-                            (fp as Branch).size = l;
-                            f.q[p] = fp;
+                            (fp as Branch).Origin = n;
+                            (fp as Branch).Size = l;
+                            f.Q[p] = fp;
 
-                            f.mass = m;
-                            f.pt = h.Pt.mul(m);
+                            f.Mass = m;
+                            f.Pt = h.Pt.mul(m);
 
                             f = fp as Branch;
 
-                            if (o.Pt.x == h.Pt.x && o.Pt.y == h.Pt.y) {
-                                double k = l.x * 0.08;
-                                double i = l.y * 0.08;
-                                o.Pt.x = Math.Min(n.x + l.x, Math.Max(n.x, o.Pt.x - k / 2 + ArborSystem.NextRndDouble() * k));
-                                o.Pt.y = Math.Min(n.y + l.y, Math.Max(n.y, o.Pt.y - i / 2 + ArborSystem.NextRndDouble() * i));
+                            if (o.Pt.X == h.Pt.X && o.Pt.Y == h.Pt.Y) {
+                                double k = l.X * 0.08;
+                                double i = l.Y * 0.08;
+                                o.Pt.X = Math.Min(n.X + l.X, Math.Max(n.X, o.Pt.X - k / 2 + ArborSystem.NextRndDouble() * k));
+                                o.Pt.Y = Math.Min(n.Y + l.Y, Math.Max(n.Y, o.Pt.Y - i / 2 + ArborSystem.NextRndDouble() * i));
                             }
 
                             gst.Add(o);
@@ -170,18 +162,18 @@ namespace ArborGVT
                         m.applyForce(i.mul(g * p_node.Mass).div(l * l));
                     } else {
                         Branch b_node = (node as Branch);
-                        double j = m.Pt.sub(b_node.pt.div(b_node.mass)).magnitude();
-                        double h = Math.Sqrt(b_node.size.x * b_node.size.y);
+                        double j = m.Pt.sub(b_node.Pt.div(b_node.Mass)).magnitude();
+                        double h = Math.Sqrt(b_node.Size.X * b_node.Size.Y);
                         if (h / j > d) {
-                            f.Enqueue(b_node.q[q_ne]);
-                            f.Enqueue(b_node.q[q_nw]);
-                            f.Enqueue(b_node.q[q_se]);
-                            f.Enqueue(b_node.q[q_sw]);
+                            f.Enqueue(b_node.Q[QNe]);
+                            f.Enqueue(b_node.Q[QNw]);
+                            f.Enqueue(b_node.Q[QSe]);
+                            f.Enqueue(b_node.Q[QSw]);
                         } else {
-                            k = m.Pt.sub(b_node.pt.div(b_node.mass));
+                            k = m.Pt.sub(b_node.Pt.div(b_node.Mass));
                             l = Math.Max(1, k.magnitude());
                             i = ((k.magnitude() > 0) ? k : ArborPoint.newRnd(1)).normalize();
-                            m.applyForce(i.mul(g * (b_node.mass)).div(l * l));
+                            m.applyForce(i.mul(g * (b_node.Mass)).div(l * l));
                         }
                     }
                 }

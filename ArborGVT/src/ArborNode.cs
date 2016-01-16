@@ -6,7 +6,6 @@
 //  Physics code derived from springy.js, copyright (c) 2010 Dennis Hotson
 // 
 
-using System;
 using System.Drawing;
 
 namespace ArborGVT
@@ -23,8 +22,8 @@ namespace ArborGVT
         public Color Color;
         public RectangleF Box;
 
-        internal ArborPoint v;
-        internal ArborPoint f;
+        internal ArborPoint V;
+        internal ArborPoint F;
 
         public ArborNode(string sign)
         {
@@ -36,13 +35,13 @@ namespace ArborGVT
 
             this.Color = Color.Gray;
 
-            this.v = new ArborPoint(0, 0);
-            this.f = new ArborPoint(0, 0);
+            this.V = new ArborPoint(0, 0);
+            this.F = new ArborPoint(0, 0);
         }
 
         internal void applyForce(ArborPoint a)
         {
-            this.f = this.f.add(a.div(this.Mass));
+            this.F = this.F.add(a.div(this.Mass));
         }
     }
 }
