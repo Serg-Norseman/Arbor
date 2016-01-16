@@ -10,7 +10,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Drawing;
 using System.Timers;
 
 namespace ArborGVT
@@ -45,10 +44,11 @@ namespace ArborGVT
         private EventHandler fOnStop;
         private readonly IArborRenderer fRenderer;
         private DateTime fPrevTime;
+        private int fScreenHeight;
+        private int fScreenWidth;
         private double fStopThreshold;
         private Timer fTimer;
 
-        private Size usz;
         private PSBounds n_bnd = null;
         private PSBounds o_bnd = null;
 
@@ -225,8 +225,8 @@ namespace ArborGVT
 
         public void setScreenSize(int width, int height)
         {
-            usz.Width = width;
-            usz.Height = height;
+            this.fScreenWidth = width;
+            this.fScreenHeight = height;
             this.updateBounds();
         }
 
@@ -235,8 +235,8 @@ namespace ArborGVT
             if (n_bnd == null) return ArborPoint.Null;
 
             ArborPoint v = n_bnd.RightBottom.sub(n_bnd.LeftTop);
-            double sx = margins[3] + pt.sub(n_bnd.LeftTop).div(v.X).X * (usz.Width - (margins[1] + margins[3]));
-            double sy = margins[0] + pt.sub(n_bnd.LeftTop).div(v.Y).Y * (usz.Height - (margins[0] + margins[2]));
+            double sx = margins[3] + pt.sub(n_bnd.LeftTop).div(v.X).X * (this.fScreenWidth - (margins[1] + margins[3]));
+            double sy = margins[0] + pt.sub(n_bnd.LeftTop).div(v.Y).Y * (this.fScreenHeight - (margins[0] + margins[2]));
             return new ArborPoint(sx, sy);
         }
 
@@ -245,8 +245,8 @@ namespace ArborGVT
 			if (n_bnd == null) return ArborPoint.Null;
 
 			ArborPoint x = n_bnd.RightBottom.sub(n_bnd.LeftTop);
-			double w = (sx - margins[3]) / (usz.Width - (margins[1] + margins[3])) * x.X + n_bnd.LeftTop.X;
-			double v = (sy - margins[0]) / (usz.Height - (margins[0] + margins[2])) * x.Y + n_bnd.LeftTop.Y;
+			double w = (sx - margins[3]) / (this.fScreenWidth - (margins[1] + margins[3])) * x.X + n_bnd.LeftTop.X;
+			double v = (sy - margins[0]) / (this.fScreenHeight - (margins[0] + margins[2])) * x.Y + n_bnd.LeftTop.Y;
 			return new ArborPoint(w, v);
 		}
 
@@ -322,7 +322,7 @@ namespace ArborGVT
 
                 ArborPoint a = new ArborPoint(n_bnd.LeftTop.sub(nbLT).magnitude(), n_bnd.RightBottom.sub(nbRB).magnitude());
 
-                if (a.X * usz.Width > 1 || a.Y * usz.Height > 1) {
+                if (a.X * this.fScreenWidth > 1 || a.Y * this.fScreenHeight > 1) {
                     n_bnd = new PSBounds(nbLT, nbRB);
                 }
             }
@@ -440,26 +440,28 @@ namespace ArborGVT
 
         private void updateVelocityAndPosition(double dt)
         {
+            int size = fNodes.Count;
+            if (size == 0) {
+                EnergySum = 0;
+                EnergyMax = 0;
+                EnergyMean = 0;
+                return;
+            }
+
             double eSum = 0;
             double eMax = 0;
 
             // calc center drift
-            int size = fNodes.Count;
-            bool hasCenterDrift = (size != 0);
-            ArborPoint drift = new ArborPoint(0, 0);
-            if (hasCenterDrift) {
-                ArborPoint r = new ArborPoint(0, 0);
-                foreach (ArborNode node in fNodes) {
-                    r = r.add(node.Pt);
-                }
-                drift = r.div(-size);
+            ArborPoint rr = new ArborPoint(0, 0);
+            foreach (ArborNode node in fNodes) {
+                rr = rr.add(node.Pt);
             }
+            ArborPoint drift = rr.div(-size);
 
+            // main updates loop
             foreach (ArborNode node in fNodes) {
                 // apply center drift
-                if (hasCenterDrift) {
-                    node.applyForce(drift);
-                }
+                node.applyForce(drift);
 
                 // apply center gravity
                 if (ParamGravity) {
@@ -494,7 +496,7 @@ namespace ArborGVT
 
             EnergySum = eSum;
             EnergyMax = eMax;
-            EnergyMean = (size > 0) ? eSum / size : 0;
+            EnergyMean = eSum / size;
         }
 
         internal static double NextRndDouble()
