@@ -28,16 +28,19 @@ namespace ArborGVT
 
     public sealed class ArborSystem : IDisposable
     {
+        private static readonly int DEBUG_PROFILER_LIMIT = 0;//2000;
+
         private static readonly Random _random = new Random();
 
         private readonly int[] margins = new int[4] { 20, 20, 20, 20 };
         private const double Mag = 0.04;
-        private const double Theta = 0.4;
 
         private bool fAutoStop;
         private bool fBusy;
         private bool fDisposed;
         private readonly List<ArborEdge> fEdges;
+        private PSBounds fGraphBounds;
+        private int fIterationsCounter;
         private readonly Hashtable fNames;
         private readonly List<ArborNode> fNodes;
         private EventHandler fOnStart;
@@ -48,9 +51,7 @@ namespace ArborGVT
         private int fScreenWidth;
         private double fStopThreshold;
         private Timer fTimer;
-
-        private PSBounds n_bnd = null;
-        private PSBounds o_bnd = null;
+        private PSBounds fViewBounds;
 
         public double EnergySum = 0;
         public double EnergyMax = 0;
@@ -63,6 +64,7 @@ namespace ArborGVT
         public bool ParamGravity = false;
         public double ParamPrecision = 0.6;
         public double ParamTimeout = 1000 / 100;
+        public double ParamTheta = 0.4;
 
         #region Properties
 
@@ -156,6 +158,8 @@ namespace ArborGVT
             }
             fPrevTime = DateTime.FromBinary(0);
 
+            fIterationsCounter = 0;
+
             fTimer = new System.Timers.Timer();
             fTimer.AutoReset = true;
             fTimer.Interval = ParamTimeout;
@@ -178,27 +182,23 @@ namespace ArborGVT
         public ArborNode addNode(string sign, double x, double y)
         {
             ArborNode node = this.getNode(sign);
+            if (node != null) return node;
 
-            if (node != null)
-            {
-                return node;
-            }
-            else
-            {
-                node = new ArborNode(sign);
-                node.Pt = new ArborPoint(x, y);
+            node = new ArborNode(sign);
+            node.Pt = new ArborPoint(x, y);
 
-                fNames.Add(sign, node);
-                fNodes.Add(node);
+            fNames.Add(sign, node);
+            fNodes.Add(node);
 
-                return node;
-            }
+            return node;
         }
 
         public ArborNode addNode(string sign)
         {
-            double xx = o_bnd.LeftTop.X + (o_bnd.RightBottom.X - o_bnd.LeftTop.X) * ArborSystem.NextRndDouble();
-            double yy = o_bnd.LeftTop.Y + (o_bnd.RightBottom.Y - o_bnd.LeftTop.Y) * ArborSystem.NextRndDouble();
+            ArborPoint lt = this.fGraphBounds.LeftTop;
+            ArborPoint rb = this.fGraphBounds.RightBottom;
+            double xx = lt.X + (rb.X - lt.X) * ArborSystem.NextRndDouble();
+            double yy = lt.Y + (rb.Y - lt.Y) * ArborSystem.NextRndDouble();
 
             return this.addNode(sign, xx, yy);
         }
@@ -247,22 +247,22 @@ namespace ArborGVT
 
         public ArborPoint toScreen(ArborPoint pt)
         {
-            if (n_bnd == null) return ArborPoint.Null;
+            if (fViewBounds == null) return ArborPoint.Null;
 
-            ArborPoint v = n_bnd.RightBottom.sub(n_bnd.LeftTop);
-            double sx = margins[3] + pt.sub(n_bnd.LeftTop).div(v.X).X * (this.fScreenWidth - (margins[1] + margins[3]));
-            double sy = margins[0] + pt.sub(n_bnd.LeftTop).div(v.Y).Y * (this.fScreenHeight - (margins[0] + margins[2]));
+            ArborPoint vd = fViewBounds.RightBottom.sub(fViewBounds.LeftTop);
+            double sx = margins[3] + pt.sub(fViewBounds.LeftTop).div(vd.X).X * (this.fScreenWidth - (margins[1] + margins[3]));
+            double sy = margins[0] + pt.sub(fViewBounds.LeftTop).div(vd.Y).Y * (this.fScreenHeight - (margins[0] + margins[2]));
             return new ArborPoint(sx, sy);
         }
 
         public ArborPoint fromScreen(double sx, double sy)
         {
-            if (n_bnd == null) return ArborPoint.Null;
+            if (fViewBounds == null) return ArborPoint.Null;
 
-            ArborPoint x = n_bnd.RightBottom.sub(n_bnd.LeftTop);
-            double w = (sx - margins[3]) / (this.fScreenWidth - (margins[1] + margins[3])) * x.X + n_bnd.LeftTop.X;
-            double v = (sy - margins[0]) / (this.fScreenHeight - (margins[0] + margins[2])) * x.Y + n_bnd.LeftTop.Y;
-            return new ArborPoint(w, v);
+            ArborPoint vd = fViewBounds.RightBottom.sub(fViewBounds.LeftTop);
+            double x = (sx - margins[3]) / (this.fScreenWidth - (margins[1] + margins[3])) * vd.X + fViewBounds.LeftTop.X;
+            double y = (sy - margins[0]) / (this.fScreenHeight - (margins[0] + margins[2])) * vd.Y + fViewBounds.LeftTop.Y;
+            return new ArborPoint(x, y);
         }
 
         public ArborNode nearest(int sx, int sy)
@@ -292,57 +292,54 @@ namespace ArborGVT
             return resNode;
         }
 
-        private PSBounds getActualBounds()
+        private void updateGraphBounds()
         {
-            ArborPoint tl = new ArborPoint(-1, -1);
-            ArborPoint br = new ArborPoint(1, 1);
+            ArborPoint lt = new ArborPoint(-1, -1);
+            ArborPoint rb = new ArborPoint(1, 1);
 
             foreach (ArborNode node in this.fNodes)
             {
                 ArborPoint pt = node.Pt;
                 if (pt.exploded()) continue;
 
-                if (pt.X < tl.X) tl.X = pt.X;
-                if (pt.Y < tl.Y) tl.Y = pt.Y;
-                if (pt.X > br.X) br.X = pt.X;
-                if (pt.Y > br.Y) br.Y = pt.Y;
+                if (pt.X < lt.X) lt.X = pt.X;
+                if (pt.Y < lt.Y) lt.Y = pt.Y;
+                if (pt.X > rb.X) rb.X = pt.X;
+                if (pt.Y > rb.Y) rb.Y = pt.Y;
             }
 
-            tl.X -= 1.2;
-            tl.Y -= 1.2;
-            br.X += 1.2;
-            br.Y += 1.2;
-            return new PSBounds(tl, br);
+            lt.X -= 1.2;
+            lt.Y -= 1.2;
+            rb.X += 1.2;
+            rb.Y += 1.2;
+            
+            ArborPoint sz = rb.sub(lt);
+            ArborPoint cent = lt.add(sz.div(2));
+            ArborPoint d = new ArborPoint(Math.Max(sz.X, 4.0), Math.Max(sz.Y, 4.0)).div(2);
+
+            this.fGraphBounds = new PSBounds(cent.sub(d), cent.add(d));
         }
 
         private void updateBounds()
         {
             try
             {
-                o_bnd = this.getActualBounds();
+                this.updateGraphBounds();
 
-                ArborPoint sz = o_bnd.RightBottom.sub(o_bnd.LeftTop);
-                ArborPoint cent = o_bnd.LeftTop.add(sz.div(2));
-
-                const double x = 4.0;
-                ArborPoint d = new ArborPoint(Math.Max(sz.X, x), Math.Max(sz.Y, x)).div(2);
-                o_bnd.LeftTop = cent.sub(d);
-                o_bnd.RightBottom = cent.add(d);
-
-                if (n_bnd == null)
+                if (fViewBounds == null)
                 {
-                    n_bnd = o_bnd;
+                    fViewBounds = fGraphBounds;
                     return;
                 }
 
-                ArborPoint nbRB = n_bnd.RightBottom.add(o_bnd.RightBottom.sub(n_bnd.RightBottom).mul(Mag));
-                ArborPoint nbLT = n_bnd.LeftTop.add(o_bnd.LeftTop.sub(n_bnd.LeftTop).mul(Mag));
+                ArborPoint nbLT = fViewBounds.LeftTop.add(fGraphBounds.LeftTop.sub(fViewBounds.LeftTop).mul(Mag));
+                ArborPoint nbRB = fViewBounds.RightBottom.add(fGraphBounds.RightBottom.sub(fViewBounds.RightBottom).mul(Mag));
 
-                ArborPoint a = new ArborPoint(n_bnd.LeftTop.sub(nbLT).magnitude(), n_bnd.RightBottom.sub(nbRB).magnitude());
+                ArborPoint a = new ArborPoint(fViewBounds.LeftTop.sub(nbLT).magnitude(), fViewBounds.RightBottom.sub(nbRB).magnitude());
 
                 if (a.X * this.fScreenWidth > 1 || a.Y * this.fScreenHeight > 1)
                 {
-                    n_bnd = new PSBounds(nbLT, nbRB);
+                    fViewBounds = new PSBounds(nbLT, nbRB);
                 }
             }
             catch (Exception ex)
@@ -353,6 +350,18 @@ namespace ArborGVT
 
         private void tickTimer(object sender, ElapsedEventArgs e)
         {
+            if (DEBUG_PROFILER_LIMIT > 0)
+            {
+                if (fIterationsCounter >= DEBUG_PROFILER_LIMIT)
+                {
+                    return;
+                }
+                else
+                {
+                    fIterationsCounter++;
+                }
+            }
+
             if (this.fBusy) return;
             this.fBusy = true;
             try
@@ -406,7 +415,7 @@ namespace ArborGVT
                 // euler integrator
                 if (ParamRepulsion > 0)
                 {
-                    if (Theta > 0)
+                    if (ParamTheta > 0)
                     {
                         this.applyBarnesHutRepulsion();
                     }
@@ -439,7 +448,7 @@ namespace ArborGVT
                     {
                         ArborPoint u = p.Pt.sub(r.Pt);
                         double v = Math.Max(1, u.magnitude());
-                        ArborPoint t = ((u.magnitude() > 0) ? u : ArborPoint.newRnd(1)).normalize();
+                        ArborPoint t = u.checkMagnitude();
                         p.applyForce(t.mul(ParamRepulsion * r.Mass * 0.5).div(v * v * 0.5));
                         r.applyForce(t.mul(ParamRepulsion * p.Mass * 0.5).div(v * v * -0.5));
                     }
@@ -449,7 +458,7 @@ namespace ArborGVT
 
         private void applyBarnesHutRepulsion()
         {
-            BarnesHutTree bht = new BarnesHutTree(o_bnd.LeftTop, o_bnd.RightBottom, Theta);
+            BarnesHutTree bht = new BarnesHutTree(fGraphBounds.LeftTop, fGraphBounds.RightBottom, ParamTheta);
 
             foreach (ArborNode node in fNodes)
             {
@@ -469,7 +478,7 @@ namespace ArborGVT
                 ArborPoint s = edge.Target.Pt.sub(edge.Source.Pt);
 
                 double q = edge.Length - s.magnitude();
-                ArborPoint r = ((s.magnitude() > 0) ? s : ArborPoint.newRnd(1)).normalize();
+                ArborPoint r = s.checkMagnitude();
 
                 edge.Source.applyForce(r.mul(edge.Stiffness * q * -0.5));
                 edge.Target.applyForce(r.mul(edge.Stiffness * q * 0.5));

@@ -179,7 +179,7 @@ namespace ArborGVT
                         ArborNode p_node = (node as ArborNode);
                         k = m.Pt.sub(p_node.Pt);
                         l = Math.Max(1, k.magnitude());
-                        i = ((k.magnitude() > 0) ? k : ArborPoint.newRnd(1)).normalize();
+                        i = k.checkMagnitude();
                         m.applyForce(i.mul(g * p_node.Mass).div(l * l));
                     }
                     else
@@ -198,7 +198,7 @@ namespace ArborGVT
                         {
                             k = m.Pt.sub(b_node.Pt.div(b_node.Mass));
                             l = Math.Max(1, k.magnitude());
-                            i = ((k.magnitude() > 0) ? k : ArborPoint.newRnd(1)).normalize();
+                            i = k.checkMagnitude();
                             m.applyForce(i.mul(g * (b_node.Mass)).div(l * l));
                         }
                     }

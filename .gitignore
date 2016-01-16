@@ -4,6 +4,8 @@
 /ArborSample/bin/
 /ArborSample/obj/
 
+/gource-arbor.cmd
+
 /cpp/solution/.vs/
 /cpp/solution/arbor.desktop.2015.VC.VC.opendb
 /cpp/solution/arbor.desktop.2015.VC.db

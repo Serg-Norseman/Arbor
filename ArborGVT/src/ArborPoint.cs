@@ -67,5 +67,10 @@ namespace ArborGVT
         {
             return this.div(this.magnitude());
         }
+
+        public ArborPoint checkMagnitude()
+        {
+            return ((this.magnitude() > 0) ? this : ArborPoint.newRnd(1)).normalize();
+        }
     }
 }
