@@ -122,17 +122,21 @@ namespace ArborGVT
                         ArborPoint tail = intersect_line_box(pt1, pt2, srcNode.Box);
                         ArborPoint head = (tail.isNull()) ? ArborPoint.Null : intersect_line_box(tail, pt2, tgtNode.Box);
 
-                        if (!head.isNull() && !tail.isNull()) {
+                        if (!head.isNull() && !tail.isNull())
+                        {
                             gfx.DrawLine(grayPen, (int)tail.X, (int)tail.Y, (int)head.X, (int)head.Y);
                         }
                     }
                 }
 
-                if (this.fEnergyDebug) {
+                if (this.fEnergyDebug)
+                {
                     string energy = "max=" + fSys.EnergyMax.ToString("0.00000") + ", mean=" + fSys.EnergyMean.ToString("0.00000");
                     gfx.DrawString(energy, fDrawFont, this.fBlackBrush, 10, 10);
                 }
-            } catch (Exception ex) {
+            }
+            catch (Exception ex)
+            {
                 Debug.WriteLine("ArborViewer.OnPaint(): " + ex.Message);
             }
         }
@@ -189,10 +193,12 @@ namespace ArborGVT
             base.OnMouseDown(e);
             if (!this.Focused) base.Focus();
 
-            if (this.fNodesDragging) {
+            if (this.fNodesDragging)
+            {
                 this.fDragged = fSys.nearest(e.X, e.Y);
 
-                if (this.fDragged != null) {
+                if (this.fDragged != null)
+                {
                     this.fDragged.Fixed = true;
                 }
             }
@@ -202,7 +208,8 @@ namespace ArborGVT
         {
             base.OnMouseUp(e);
 
-            if (this.fNodesDragging && this.fDragged != null) {
+            if (this.fNodesDragging && this.fDragged != null)
+            {
                 this.fDragged.Fixed = false;
                 //this.fDragged.Mass = 1000;
                 this.fDragged = null;
@@ -213,7 +220,8 @@ namespace ArborGVT
         {
             base.OnMouseMove(e);
 
-            if (this.fNodesDragging && this.fDragged != null) {
+            if (this.fNodesDragging && this.fDragged != null)
+            {
                 this.fDragged.Pt = fSys.fromScreen(e.X, e.Y);
             }
         }

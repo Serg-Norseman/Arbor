@@ -25,7 +25,8 @@ namespace ArborGVT
             this.Stiffness = stiffness;
         }
 
-        public ArborEdge(ArborNode src, ArborNode tgt, double len, double stiffness, bool directed) : this(src, tgt, len, stiffness)
+        public ArborEdge(ArborNode src, ArborNode tgt, double len, double stiffness, bool directed)
+            : this(src, tgt, len, stiffness)
         {
             this.Directed = directed;
         }

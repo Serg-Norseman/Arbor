@@ -18,7 +18,7 @@ namespace ArborGVT
     {
         public ArborPoint LeftTop = ArborPoint.Null;
         public ArborPoint RightBottom = ArborPoint.Null;
-        
+
         public PSBounds(ArborPoint leftTop, ArborPoint rightBottom)
         {
             this.LeftTop = leftTop;
@@ -84,11 +84,14 @@ namespace ArborGVT
 
         public event EventHandler OnStart
         {
-            add {
+            add
+            {
                 this.fOnStart = value;
             }
-            remove {
-                if (this.fOnStart == value) {
+            remove
+            {
+                if (this.fOnStart == value)
+                {
                     this.fOnStart = null;
                 }
             }
@@ -96,11 +99,14 @@ namespace ArborGVT
 
         public event EventHandler OnStop
         {
-            add {
+            add
+            {
                 this.fOnStop = value;
             }
-            remove {
-                if (this.fOnStop == value) {
+            remove
+            {
+                if (this.fOnStop == value)
+                {
                     this.fOnStop = null;
                 }
             }
@@ -144,7 +150,8 @@ namespace ArborGVT
         {
             if (fOnStart != null) fOnStart(this, new EventArgs());
 
-            if (fTimer != null) {
+            if (fTimer != null)
+            {
                 return;
             }
             fPrevTime = DateTime.FromBinary(0);
@@ -158,7 +165,8 @@ namespace ArborGVT
 
         public void stop()
         {
-            if (fTimer != null) {
+            if (fTimer != null)
+            {
                 fTimer.Stop();
                 fTimer.Dispose();
                 fTimer = null;
@@ -171,12 +179,15 @@ namespace ArborGVT
         {
             ArborNode node = this.getNode(sign);
 
-            if (node != null) {
+            if (node != null)
+            {
                 return node;
-            } else {
+            }
+            else
+            {
                 node = new ArborNode(sign);
                 node.Pt = new ArborPoint(x, y);
-                
+
                 fNames.Add(sign, node);
                 fNodes.Add(node);
 
@@ -206,16 +217,20 @@ namespace ArborGVT
             tgt = (tgt != null) ? tgt : this.addNode(tgtSign);
 
             ArborEdge x = null;
-            if (src != null && tgt != null) {
-                foreach (ArborEdge edge in fEdges) {
-                    if (edge.Source == src && edge.Target == tgt) {
+            if (src != null && tgt != null)
+            {
+                foreach (ArborEdge edge in fEdges)
+                {
+                    if (edge.Source == src && edge.Target == tgt)
+                    {
                         x = edge;
                         break;
                     }
                 }
             }
 
-            if (x == null) {
+            if (x == null)
+            {
                 x = new ArborEdge(src, tgt, len, ParamStiffness);
                 fEdges.Add(x);
             }
@@ -241,31 +256,33 @@ namespace ArborGVT
         }
 
         public ArborPoint fromScreen(double sx, double sy)
-		{
-			if (n_bnd == null) return ArborPoint.Null;
+        {
+            if (n_bnd == null) return ArborPoint.Null;
 
-			ArborPoint x = n_bnd.RightBottom.sub(n_bnd.LeftTop);
-			double w = (sx - margins[3]) / (this.fScreenWidth - (margins[1] + margins[3])) * x.X + n_bnd.LeftTop.X;
-			double v = (sy - margins[0]) / (this.fScreenHeight - (margins[0] + margins[2])) * x.Y + n_bnd.LeftTop.Y;
-			return new ArborPoint(w, v);
-		}
+            ArborPoint x = n_bnd.RightBottom.sub(n_bnd.LeftTop);
+            double w = (sx - margins[3]) / (this.fScreenWidth - (margins[1] + margins[3])) * x.X + n_bnd.LeftTop.X;
+            double v = (sy - margins[0]) / (this.fScreenHeight - (margins[0] + margins[2])) * x.Y + n_bnd.LeftTop.Y;
+            return new ArborPoint(w, v);
+        }
 
         public ArborNode nearest(int sx, int sy)
         {
             ArborPoint x = this.fromScreen(sx, sy);
-            
+
             ArborNode resNode = null;
             double minDist = +1.0;
 
             foreach (ArborNode node in this.fNodes)
             {
                 ArborPoint z = node.Pt;
-                if (z.exploded()) {
+                if (z.exploded())
+                {
                     continue;
                 }
 
                 double dist = z.sub(x).magnitude();
-                if (dist < minDist) {
+                if (dist < minDist)
+                {
                     resNode = node;
                     minDist = dist;
                 }
@@ -312,7 +329,8 @@ namespace ArborGVT
                 o_bnd.LeftTop = cent.sub(d);
                 o_bnd.RightBottom = cent.add(d);
 
-                if (n_bnd == null) {
+                if (n_bnd == null)
+                {
                     n_bnd = o_bnd;
                     return;
                 }
@@ -322,7 +340,8 @@ namespace ArborGVT
 
                 ArborPoint a = new ArborPoint(n_bnd.LeftTop.sub(nbLT).magnitude(), n_bnd.RightBottom.sub(nbRB).magnitude());
 
-                if (a.X * this.fScreenWidth > 1 || a.Y * this.fScreenHeight > 1) {
+                if (a.X * this.fScreenWidth > 1 || a.Y * this.fScreenHeight > 1)
+                {
                     n_bnd = new PSBounds(nbLT, nbRB);
                 }
             }
@@ -341,20 +360,27 @@ namespace ArborGVT
                 this.updatePhysics();
                 this.updateBounds();
 
-                if (fRenderer != null) {
+                if (fRenderer != null)
+                {
                     fRenderer.Invalidate();
                 }
 
-                if (this.fAutoStop) {
-                    if (EnergyMean <= this.fStopThreshold) {
-                        if (fPrevTime == DateTime.FromBinary(0)) {
+                if (this.fAutoStop)
+                {
+                    if (EnergyMean <= this.fStopThreshold)
+                    {
+                        if (fPrevTime == DateTime.FromBinary(0))
+                        {
                             fPrevTime = DateTime.Now;
                         }
                         TimeSpan ts = DateTime.Now - fPrevTime;
-                        if (ts.TotalMilliseconds > 1000) {
+                        if (ts.TotalMilliseconds > 1000)
+                        {
                             this.stop();
                         }
-                    } else {
+                    }
+                    else
+                    {
                         fPrevTime = DateTime.FromBinary(0);
                     }
                 }
@@ -371,21 +397,27 @@ namespace ArborGVT
             try
             {
                 // tend particles
-                foreach (ArborNode p in fNodes) {
+                foreach (ArborNode p in fNodes)
+                {
                     p.V.X = 0;
                     p.V.Y = 0;
                 }
 
                 // euler integrator
-                if (ParamRepulsion > 0) {
-                    if (Theta > 0) {
+                if (ParamRepulsion > 0)
+                {
+                    if (Theta > 0)
+                    {
                         this.applyBarnesHutRepulsion();
-                    } else {
+                    }
+                    else
+                    {
                         this.applyBruteForceRepulsion();
                     }
                 }
 
-                if (ParamStiffness > 0) {
+                if (ParamStiffness > 0)
+                {
                     this.applySprings();
                 }
 
@@ -399,9 +431,12 @@ namespace ArborGVT
 
         private void applyBruteForceRepulsion()
         {
-            foreach (ArborNode p in fNodes) {
-                foreach (ArborNode r in fNodes) {
-                    if (p != r) {
+            foreach (ArborNode p in fNodes)
+            {
+                foreach (ArborNode r in fNodes)
+                {
+                    if (p != r)
+                    {
                         ArborPoint u = p.Pt.sub(r.Pt);
                         double v = Math.Max(1, u.magnitude());
                         ArborPoint t = ((u.magnitude() > 0) ? u : ArborPoint.newRnd(1)).normalize();
@@ -416,18 +451,21 @@ namespace ArborGVT
         {
             BarnesHutTree bht = new BarnesHutTree(o_bnd.LeftTop, o_bnd.RightBottom, Theta);
 
-            foreach (ArborNode node in fNodes) {
+            foreach (ArborNode node in fNodes)
+            {
                 bht.insert(node);
             }
 
-            foreach (ArborNode node in fNodes) {
+            foreach (ArborNode node in fNodes)
+            {
                 bht.applyForces(node, ParamRepulsion);
             }
         }
 
         private void applySprings()
         {
-            foreach (ArborEdge edge in fEdges) {
+            foreach (ArborEdge edge in fEdges)
+            {
                 ArborPoint s = edge.Target.Pt.sub(edge.Source.Pt);
 
                 double q = edge.Length - s.magnitude();
@@ -441,7 +479,8 @@ namespace ArborGVT
         private void updateVelocityAndPosition(double dt)
         {
             int size = fNodes.Count;
-            if (size == 0) {
+            if (size == 0)
+            {
                 EnergySum = 0;
                 EnergyMax = 0;
                 EnergyMean = 0;
@@ -453,33 +492,40 @@ namespace ArborGVT
 
             // calc center drift
             ArborPoint rr = new ArborPoint(0, 0);
-            foreach (ArborNode node in fNodes) {
+            foreach (ArborNode node in fNodes)
+            {
                 rr = rr.add(node.Pt);
             }
             ArborPoint drift = rr.div(-size);
 
             // main updates loop
-            foreach (ArborNode node in fNodes) {
+            foreach (ArborNode node in fNodes)
+            {
                 // apply center drift
                 node.applyForce(drift);
 
                 // apply center gravity
-                if (ParamGravity) {
+                if (ParamGravity)
+                {
                     ArborPoint q = node.Pt.mul(-1);
                     node.applyForce(q.mul(ParamRepulsion / 100));
                 }
 
                 // update velocities
-                if (node.Fixed) {
+                if (node.Fixed)
+                {
                     node.V = new ArborPoint(0, 0);
                     node.F = new ArborPoint(0, 0);
-                } else {
+                }
+                else
+                {
                     node.V = node.V.add(node.F.mul(dt));
                     node.V = node.V.mul(1 - ParamFriction);
 
                     node.F.X = node.F.Y = 0;
                     double r = node.V.magnitude();
-                    if (r > 1000) {
+                    if (r > 1000)
+                    {
                         node.V = node.V.div(r * r);
                     }
                 }

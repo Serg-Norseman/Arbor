@@ -13,7 +13,7 @@ namespace ArborGVT
     public struct ArborPoint
     {
         public static readonly ArborPoint Null = new ArborPoint(double.NaN, double.NaN);
-        
+
         public double X;
         public double Y;
 
