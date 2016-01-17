@@ -1,10 +1,11 @@
-﻿//
-//  Arbor - version 0.91
-//  a graph vizualization toolkit
-//
-//  Copyright (c) 2011 Samizdat Drafting Co.
-//  Physics code derived from springy.js, copyright (c) 2010 Dennis Hotson
-// 
+﻿/*
+ *  ArborGVT - a graph vizualization toolkit
+ *
+ *  Physics code derived from springy.js, copyright (c) 2010 Dennis Hotson
+ *  JavaScript library, copyright (c) 2011 Samizdat Drafting Co.
+ *
+ *  Fork and C# implementation, copyright (c) 2012,2016 by Serg V. Zhdanovskih.
+ */
 
 using System;
 
@@ -66,11 +67,6 @@ namespace ArborGVT
         public ArborPoint normalize()
         {
             return this.div(this.magnitude());
-        }
-
-        public ArborPoint checkMagnitude()
-        {
-            return ((this.magnitude() > 0) ? this : ArborPoint.newRnd(1)).normalize();
         }
     }
 }

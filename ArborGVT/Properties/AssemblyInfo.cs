@@ -14,7 +14,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("ArborGVT")]
-[assembly: AssemblyCopyright("Copyright © 2016, Serg V. Zhdanovskih")]
+[assembly: AssemblyCopyright("Copyright © 2012,2016 by Serg V. Zhdanovskih")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

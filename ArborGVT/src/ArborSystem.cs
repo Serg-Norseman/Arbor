@@ -1,10 +1,11 @@
-﻿//
-//  Arbor - version 0.91
-//  a graph vizualization toolkit
-//
-//  Copyright (c) 2011 Samizdat Drafting Co.
-//  Physics code derived from springy.js, copyright (c) 2010 Dennis Hotson
-// 
+﻿/*
+ *  ArborGVT - a graph vizualization toolkit
+ *
+ *  Physics code derived from springy.js, copyright (c) 2010 Dennis Hotson
+ *  JavaScript library, copyright (c) 2011 Samizdat Drafting Co.
+ *
+ *  Fork and C# implementation, copyright (c) 2012,2016 by Serg V. Zhdanovskih.
+ */
 
 using System;
 using System.Collections;
@@ -242,7 +243,7 @@ namespace ArborGVT
         {
             this.fScreenWidth = width;
             this.fScreenHeight = height;
-            this.updateBounds();
+            this.updateViewBounds();
         }
 
         public ArborPoint toScreen(ArborPoint pt)
@@ -320,7 +321,7 @@ namespace ArborGVT
             this.fGraphBounds = new PSBounds(cent.sub(d), cent.add(d));
         }
 
-        private void updateBounds()
+        private void updateViewBounds()
         {
             try
             {
@@ -335,16 +336,17 @@ namespace ArborGVT
                 ArborPoint nbLT = fViewBounds.LeftTop.add(fGraphBounds.LeftTop.sub(fViewBounds.LeftTop).mul(Mag));
                 ArborPoint nbRB = fViewBounds.RightBottom.add(fGraphBounds.RightBottom.sub(fViewBounds.RightBottom).mul(Mag));
 
-                ArborPoint a = new ArborPoint(fViewBounds.LeftTop.sub(nbLT).magnitude(), fViewBounds.RightBottom.sub(nbRB).magnitude());
+                double aX = fViewBounds.LeftTop.sub(nbLT).magnitude() * this.fScreenWidth;
+                double aY = fViewBounds.RightBottom.sub(nbRB).magnitude() * this.fScreenHeight;
 
-                if (a.X * this.fScreenWidth > 1 || a.Y * this.fScreenHeight > 1)
+                if (aX > 1 || aY > 1)
                 {
                     fViewBounds = new PSBounds(nbLT, nbRB);
                 }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine("ArborSystem.updateBounds(): " + ex.Message);
+                Debug.WriteLine("ArborSystem.updateViewBounds(): " + ex.Message);
             }
         }
 
@@ -367,7 +369,7 @@ namespace ArborGVT
             try
             {
                 this.updatePhysics();
-                this.updateBounds();
+                this.updateViewBounds();
 
                 if (fRenderer != null)
                 {
@@ -412,22 +414,15 @@ namespace ArborGVT
                     p.V.Y = 0;
                 }
 
-                // euler integrator
-                if (ParamRepulsion > 0)
-                {
-                    if (ParamTheta > 0)
-                    {
-                        this.applyBarnesHutRepulsion();
-                    }
-                    else
-                    {
-                        this.applyBruteForceRepulsion();
-                    }
-                }
-
                 if (ParamStiffness > 0)
                 {
                     this.applySprings();
+                }
+
+                // euler integrator
+                if (ParamRepulsion > 0)
+                {
+                    this.applyBarnesHutRepulsion();
                 }
 
                 this.updateVelocityAndPosition(ParamDt);
@@ -435,24 +430,6 @@ namespace ArborGVT
             catch (Exception ex)
             {
                 Debug.WriteLine("ArborSystem.updatePhysics(): " + ex.Message);
-            }
-        }
-
-        private void applyBruteForceRepulsion()
-        {
-            foreach (ArborNode p in fNodes)
-            {
-                foreach (ArborNode r in fNodes)
-                {
-                    if (p != r)
-                    {
-                        ArborPoint u = p.Pt.sub(r.Pt);
-                        double v = Math.Max(1, u.magnitude());
-                        ArborPoint t = u.checkMagnitude();
-                        p.applyForce(t.mul(ParamRepulsion * r.Mass * 0.5).div(v * v * 0.5));
-                        r.applyForce(t.mul(ParamRepulsion * p.Mass * 0.5).div(v * v * -0.5));
-                    }
-                }
             }
         }
 
@@ -476,12 +453,13 @@ namespace ArborGVT
             foreach (ArborEdge edge in fEdges)
             {
                 ArborPoint s = edge.Target.Pt.sub(edge.Source.Pt);
+                double sMag = s.magnitude();
 
-                double q = edge.Length - s.magnitude();
-                ArborPoint r = s.checkMagnitude();
+                ArborPoint r = ((sMag > 0) ? s : ArborPoint.newRnd(1)).normalize();
+                double q = edge.Stiffness * (edge.Length - sMag);
 
-                edge.Source.applyForce(r.mul(edge.Stiffness * q * -0.5));
-                edge.Target.applyForce(r.mul(edge.Stiffness * q * 0.5));
+                edge.Source.applyForce(r.mul(q * -0.5));
+                edge.Target.applyForce(r.mul(q * 0.5));
             }
         }
 

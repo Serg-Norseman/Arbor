@@ -1,10 +1,11 @@
-﻿//
-//  Arbor - version 0.91
-//  a graph vizualization toolkit
-//
-//  Copyright (c) 2011 Samizdat Drafting Co.
-//  Physics code derived from springy.js, copyright (c) 2010 Dennis Hotson
-// 
+﻿/*
+ *  ArborGVT - a graph vizualization toolkit
+ *
+ *  Physics code derived from springy.js, copyright (c) 2010 Dennis Hotson
+ *  JavaScript library, copyright (c) 2011 Samizdat Drafting Co.
+ *
+ *  Fork and C# implementation, copyright (c) 2012,2016 by Serg V. Zhdanovskih.
+ */
 
 using System;
 using System.Collections.Generic;
@@ -29,15 +30,15 @@ namespace ArborGVT
         private const int QSw = 3;
         private const int QNone = 4;
 
-        private readonly Branch root;
-        private readonly double d = 0.5;
+        private readonly double fDist; // default = 0.5
+        private readonly Branch fRoot;
 
-        public BarnesHutTree(ArborPoint origin, ArborPoint h, double d)
+        public BarnesHutTree(ArborPoint origin, ArborPoint h, double dist)
         {
-            this.d = d;
-            this.root = new Branch();
-            root.Origin = origin;
-            root.Size = h.sub(origin);
+            this.fDist = dist;
+            this.fRoot = new Branch();
+            this.fRoot.Origin = origin;
+            this.fRoot.Size = h.sub(origin);
         }
 
         private static int getQuad(ArborNode i, Branch f)
@@ -70,7 +71,7 @@ namespace ArborGVT
         {
             try
             {
-                Branch f = root;
+                Branch f = fRoot;
                 List<ArborNode> gst = new List<ArborNode>();
                 gst.Add(j);
                 while (gst.Count > 0)
@@ -165,41 +166,50 @@ namespace ArborGVT
             {
                 Queue<object> f = new Queue<object>();
 
-                f.Enqueue(root);
+                f.Enqueue(fRoot);
                 while (f.Count > 0)
                 {
-                    object node = f.Dequeue();
-                    if (node == null || node == m) continue;
+                    object obj = f.Dequeue();
+                    if (obj == null || obj == m) continue;
 
-                    ArborPoint i, k;
-                    double l;
+                    ArborPoint ptx, i, k;
+                    double l, kMag, massx;
 
-                    if (node is ArborNode)
+                    if (obj is ArborNode)
                     {
-                        ArborNode p_node = (node as ArborNode);
-                        k = m.Pt.sub(p_node.Pt);
-                        l = Math.Max(1, k.magnitude());
-                        i = k.checkMagnitude();
-                        m.applyForce(i.mul(g * p_node.Mass).div(l * l));
+                        ArborNode node = (obj as ArborNode);
+                        massx = node.Mass;
+                        ptx = node.Pt;
+
+                        k = m.Pt.sub(ptx);
+                        kMag = k.magnitude();
+
+                        l = Math.Max(1, kMag);
+                        i = ((kMag > 0) ? k : ArborPoint.newRnd(1)).normalize();
+                        m.applyForce(i.mul(g * massx).div(l * l));
                     }
                     else
                     {
-                        Branch b_node = (node as Branch);
-                        double j = m.Pt.sub(b_node.Pt.div(b_node.Mass)).magnitude();
-                        double h = Math.Sqrt(b_node.Size.X * b_node.Size.Y);
-                        if (h / j > d)
+                        Branch branch = (obj as Branch);
+                        massx = branch.Mass;
+                        ptx = branch.Pt.div(massx);
+
+                        k = m.Pt.sub(ptx);
+                        kMag = k.magnitude();
+
+                        double h = Math.Sqrt(branch.Size.X * branch.Size.Y);
+                        if (h / kMag > fDist)
                         {
-                            f.Enqueue(b_node.Q[QNe]);
-                            f.Enqueue(b_node.Q[QNw]);
-                            f.Enqueue(b_node.Q[QSe]);
-                            f.Enqueue(b_node.Q[QSw]);
+                            f.Enqueue(branch.Q[QNe]);
+                            f.Enqueue(branch.Q[QNw]);
+                            f.Enqueue(branch.Q[QSe]);
+                            f.Enqueue(branch.Q[QSw]);
                         }
                         else
                         {
-                            k = m.Pt.sub(b_node.Pt.div(b_node.Mass));
-                            l = Math.Max(1, k.magnitude());
-                            i = k.checkMagnitude();
-                            m.applyForce(i.mul(g * (b_node.Mass)).div(l * l));
+                            l = Math.Max(1, kMag);
+                            i = ((kMag > 0) ? k : ArborPoint.newRnd(1)).normalize();
+                            m.applyForce(i.mul(g * massx).div(l * l));
                         }
                     }
                 }
