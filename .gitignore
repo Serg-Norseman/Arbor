@@ -8,7 +8,8 @@
 
 /gource-arbor.cmd
 
-/cpp/solution/.vs/
+# Added by ruslangaripov
+/**/.vs/
 /cpp/solution/arbor.desktop.2015.VC.VC.opendb
 /cpp/solution/arbor.desktop.2015.VC.db
 /cpp/solution/arborgvt/arborgvt.vcxproj.user

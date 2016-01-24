@@ -5,8 +5,6 @@
     <PlatformModName Condition="'32' == $(PlatformArchitecture)">$(PROCESSOR_ARCHITECTURE)</PlatformModName>
     <PlatformModName Condition="'64' == $(PlatformArchitecture)">$(PROCESSOR_ARCHITECTURE)-$(PlatformArchitecture)</PlatformModName>
   </PropertyGroup>
-  <PropertyGroup />
-  <ItemDefinitionGroup />
   <ItemGroup>
     <BuildMacro Include="PlatformModName">
       <Value>$(PlatformModName)</Value>

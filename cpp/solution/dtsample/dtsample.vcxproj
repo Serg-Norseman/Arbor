@@ -104,85 +104,26 @@
   </ImportGroup>
   <ImportGroup Label="Shared">
   </ImportGroup>
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+  <ImportGroup Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="..\properties\macros.props" />
-    <Import Project="..\properties\manifest x86-86.props" />
+    <Import Project="..\properties\manifest.props" />
     <Import Project="..\properties\windows sdk versions defines.props" />
     <Import Project="..\properties\output directories.props" />
     <Import Project="..\properties\include directories.props" />
     <Import Project="..\properties\warning level.props" />
     <Import Project="..\properties\multi-processor compilation.props" />
-    <Import Project="..\properties\cl general debug.props" />
-    <Import Project="..\properties\cl optimization debug.props" />
-    <Import Project="..\properties\cl code generation debug.props" />
-    <Import Project="..\properties\cl command line debug x86-86.props" />
-    <Import Project="..\properties\linker general debug.props" />
-    <Import Project="..\properties\linker debugging debug.props" />
+    <Import Project="..\properties\cl general.props" />
+    <Import Project="..\properties\cl optimization.props" />
+    <Import Project="..\properties\cl code generation.props" />
+    <Import Project="..\properties\cl command line.props" />
+    <Import Project="..\properties\linker general.props" />
+    <Import Project="..\properties\linker debugging.props" />
     <Import Project="..\properties\linker system.props" />
-    <Import Project="..\properties\linker command line debug x86-86.props" />
-    <Import Project="..\properties\prefast debug.props" />
+    <Import Project="..\properties\linker advanced.props" />
+    <Import Project="..\properties\linker command line.props" />
+    <Import Project="..\properties\prefast.props" />
   </ImportGroup>
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="..\properties\macros.props" />
-    <Import Project="..\properties\manifest x86-86.props" />
-    <Import Project="..\properties\windows sdk versions defines.props" />
-    <Import Project="..\properties\output directories.props" />
-    <Import Project="..\properties\include directories.props" />
-    <Import Project="..\properties\warning level.props" />
-    <Import Project="..\properties\multi-processor compilation.props" />
-    <Import Project="..\properties\cl general release.props" />
-    <Import Project="..\properties\cl optimization release.props" />
-    <Import Project="..\properties\cl code generation release.props" />
-    <Import Project="..\properties\cl command line release x86-86.props" />
-    <Import Project="..\properties\linker general release.props" />
-    <Import Project="..\properties\linker debugging release.props" />
-    <Import Project="..\properties\linker system.props" />
-    <Import Project="..\properties\linker advanced release.props" />
-    <Import Project="..\properties\linker command line release x86-86.props" />
-    <Import Project="..\properties\prefast release.props" />
-  </ImportGroup>
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="..\properties\macros.props" />
-    <Import Project="..\properties\manifest x86-64.props" />
-    <Import Project="..\properties\windows sdk versions defines.props" />
-    <Import Project="..\properties\output directories.props" />
-    <Import Project="..\properties\include directories.props" />
-    <Import Project="..\properties\warning level.props" />
-    <Import Project="..\properties\multi-processor compilation.props" />
-    <Import Project="..\properties\cl general debug.props" />
-    <Import Project="..\properties\cl optimization debug.props" />
-    <Import Project="..\properties\cl code generation debug.props" />
-    <Import Project="..\properties\cl command line debug x86-64.props" />
-    <Import Project="..\properties\linker general debug.props" />
-    <Import Project="..\properties\linker debugging debug.props" />
-    <Import Project="..\properties\linker system.props" />
-    <Import Project="..\properties\linker command line debug x86-64.props" />
-    <Import Project="..\properties\prefast debug.props" />
-  </ImportGroup>
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="..\properties\macros.props" />
-    <Import Project="..\properties\manifest x86-64.props" />
-    <Import Project="..\properties\windows sdk versions defines.props" />
-    <Import Project="..\properties\output directories.props" />
-    <Import Project="..\properties\include directories.props" />
-    <Import Project="..\properties\warning level.props" />
-    <Import Project="..\properties\multi-processor compilation.props" />
-    <Import Project="..\properties\cl general release.props" />
-    <Import Project="..\properties\cl optimization release.props" />
-    <Import Project="..\properties\cl code generation release.props" />
-    <Import Project="..\properties\cl command line release x86-64.props" />
-    <Import Project="..\properties\linker general release.props" />
-    <Import Project="..\properties\linker debugging release.props" />
-    <Import Project="..\properties\linker system.props" />
-    <Import Project="..\properties\linker advanced release.props" />
-    <Import Project="..\properties\linker command line release x86-64.props" />
-    <Import Project="..\properties\prefast release.props" />
-  </ImportGroup>
-  <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <IncludePath>$(IntDir);$(IncludePath)</IncludePath>
   </PropertyGroup>
@@ -198,7 +139,6 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <AdditionalOptions>/D_WINDOWS %(AdditionalOptions)</AdditionalOptions>
-      <ControlFlowGuard>Guard</ControlFlowGuard>
       <AdditionalIncludeDirectories>$(SolutionDir)..\source\arborgvt;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
@@ -209,7 +149,6 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <AdditionalOptions>/D_WINDOWS %(AdditionalOptions)</AdditionalOptions>
-      <ControlFlowGuard>Guard</ControlFlowGuard>
       <AdditionalIncludeDirectories>$(SolutionDir)..\source\arborgvt;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
@@ -221,7 +160,6 @@
     <ClCompile>
       <AdditionalOptions>/D_WINDOWS %(AdditionalOptions)</AdditionalOptions>
       <EnablePREfast>false</EnablePREfast>
-      <ControlFlowGuard>Guard</ControlFlowGuard>
       <AdditionalIncludeDirectories>$(SolutionDir)..\source\arborgvt;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
@@ -234,7 +172,6 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <AdditionalOptions>/D_WINDOWS %(AdditionalOptions)</AdditionalOptions>
-      <ControlFlowGuard>Guard</ControlFlowGuard>
       <AdditionalIncludeDirectories>$(SolutionDir)..\source\arborgvt;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
