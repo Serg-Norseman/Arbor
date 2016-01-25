@@ -6,6 +6,13 @@
 /SmartGraph/bin/
 /SmartGraph/obj/
 
+/java/JArborGVT/nbproject/private/
+/java/JArborGVT/build/
+/java/JArborGVT/dist/
+/java/JArborSample/nbproject/private/
+/java/JArborSample/build/
+/java/JArborSample/dist/
+
 /gource-arbor.cmd
 
 /cpp/solution/.vs/
