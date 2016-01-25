@@ -30,7 +30,7 @@ namespace SmartGraph
 		public GraphvizWriter(string name)
 		{
             fBuffer = new StringBuilder();
-			fBuffer.AppendLine("digraph " + name.Trim().Replace(' ', '_')+"{");
+			fBuffer.AppendLine("digraph " + name.Trim().Replace(' ', '_') + "{");
 		}
 
 		public GraphvizWriter(string name, string[] Options) : this(name)
@@ -44,12 +44,12 @@ namespace SmartGraph
 
 		public void ConnNode(string From, string To)
 		{
-			fBuffer.AppendLine(string.Format("\"{0}\" -> \"{1}\";",From,To));
+			fBuffer.AppendLine(string.Format("\"{0}\" -> \"{1}\";", From, To));
 		}
 
 		public void ListNode(string ID, string Name, string style, string color, string shape)
 		{
-			fBuffer.AppendLine(string.Format("\"{0}\" [ label=\"{1}\",shape=\"{2}\",style=\"{3}\",color=\"{4}\" ];", ID, Name, shape,style,color));
+			fBuffer.AppendLine(string.Format("\"{0}\" [ label=\"{1}\",shape=\"{2}\",style=\"{3}\",color=\"{4}\" ];", ID, Name, shape, style, color));
 		}
 
 		public void SaveFile(string path)
