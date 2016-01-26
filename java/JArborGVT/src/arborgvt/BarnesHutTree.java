@@ -22,11 +22,20 @@ public final class BarnesHutTree
 {
     private static final class Branch
     {
-        public ArborPoint Origin = ArborPoint.Null;
-        public ArborPoint Size = ArborPoint.Null;
-        public Object[] Q = new Object[]{null, null, null, null};
-        public double Mass = 0.0;
-        public ArborPoint Pt = ArborPoint.Null;
+        public ArborPoint Origin;
+        public ArborPoint Size;
+        public Object[] Q;
+        public double Mass;
+        public ArborPoint Pt;
+
+        public Branch(ArborPoint origin, ArborPoint size)
+        {
+            this.Origin = origin;
+            this.Size = size;
+            this.Q = new Object[]{null, null, null, null};
+            this.Mass = 0.0;
+            this.Pt = ArborPoint.Null;
+        }
     }
 
     private static final int QNe = 0;
@@ -41,9 +50,7 @@ public final class BarnesHutTree
     public BarnesHutTree(ArborPoint origin, ArborPoint h, double dist)
     {
         this.fDist = dist;
-        this.fRoot = new Branch();
-        this.fRoot.Origin = origin;
-        this.fRoot.Size = h.sub(origin);
+        this.fRoot = new Branch(origin, h.sub(origin));
     }
 
     private static int getQuad(ArborNode i, Branch f)
@@ -76,11 +83,11 @@ public final class BarnesHutTree
                 gst.remove(0);
 
                 double m = h.Mass;
-                int p = getQuad(h, f);
-                Object fp = f.Q[p];
+                int qd = getQuad(h, f);
+                Object fp = f.Q[qd];
 
                 if (fp == null) {
-                    f.Q[p] = h;
+                    f.Q[qd] = h;
 
                     f.Mass += m;
                     if (!f.Pt.isNull()) {
@@ -89,7 +96,7 @@ public final class BarnesHutTree
                         f.Pt = h.Pt.mul(m);
                     }
                 } else if (fp instanceof Branch) {
-                    f.Mass += (m);
+                    f.Mass += m;
                     if (!f.Pt.isNull()) {
                         f.Pt = f.Pt.add(h.Pt.mul(m));
                     } else {
@@ -103,18 +110,16 @@ public final class BarnesHutTree
                     ArborPoint l = f.Size.div(2);
                     ArborPoint n = new ArborPoint(f.Origin.X, f.Origin.Y);
 
-                    if (p == QSe || p == QSw) {
+                    if (qd == QSe || qd == QSw) {
                         n.Y += l.Y;
                     }
-                    if (p == QNe || p == QSe) {
+                    if (qd == QNe || qd == QSe) {
                         n.X += l.X;
                     }
 
                     ArborNode o = (ArborNode) fp;
-                    fp = new Branch();
-                    ((Branch) fp).Origin = n;
-                    ((Branch) fp).Size = l;
-                    f.Q[p] = fp;
+                    fp = new Branch(n, l);
+                    f.Q[qd] = fp;
 
                     f.Mass = m;
                     f.Pt = h.Pt.mul(m);
