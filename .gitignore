@@ -1,4 +1,4 @@
-﻿/.gitignore
+**/.vs/
 /ArborGVT/bin/
 /ArborGVT/obj/
 /ArborSample/bin/
@@ -15,7 +15,6 @@
 
 /gource-arbor.cmd
 
-/cpp/solution/.vs/
 /cpp/solution/arbor.desktop.2015.VC.VC.opendb
 /cpp/solution/arbor.desktop.2015.VC.db
 /cpp/solution/arborgvt/arborgvt.vcxproj.user
