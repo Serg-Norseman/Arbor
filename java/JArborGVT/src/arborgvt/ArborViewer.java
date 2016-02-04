@@ -89,7 +89,7 @@ public class ArborViewer extends JPanel implements IArborRenderer
         this.addMouseMotionListener(new MouseMotionAdapter()
         {
             @Override
-            public void mouseMoved(MouseEvent e)
+            public void mouseDragged(MouseEvent e)
             {
                 onMouseMove(e);
             }
@@ -122,9 +122,11 @@ public class ArborViewer extends JPanel implements IArborRenderer
 
                 gfx.setColor(node.Color);
                 gfx.fillRect((int) node.Box.x, (int) node.Box.y, (int) node.Box.width, (int) node.Box.height);
-
+                
                 gfx.setColor(Color.white);
-                gfx.drawString(node.Sign, node.Box.x + (node.Box.width - metrics.stringWidth(node.Sign)) / 2, node.Box.y + (/*node.Box.height - */metrics.getHeight()) / 2);
+                gfx.drawString(node.Sign, 
+                        (int)(node.Box.x + (node.Box.width - metrics.stringWidth(node.Sign)) / 2), 
+                        (int)(node.Box.y + (node.Box.height - metrics.getHeight()) / 2 + metrics.getAscent()));
             }
 
             //using (Pen grayPen = new Pen(Color.Gray, 1))
@@ -152,7 +154,7 @@ public class ArborViewer extends JPanel implements IArborRenderer
             if (this.fEnergyDebug) {
                 gfx.setColor(Color.black);
                 String energy = "max=" + String.format("%.5f", fSys.EnergyMax) + ", mean=" + String.format("%.5f", fSys.EnergyMean);
-                gfx.drawString(energy, 10, 10);
+                gfx.drawString(energy, 10, 10 + metrics.getAscent());
             }
         } catch (Exception ex) {
             System.out.println("ArborViewer.OnPaint(): " + ex.getMessage());
@@ -253,10 +255,8 @@ public class ArborViewer extends JPanel implements IArborRenderer
         float w = tw + 10;
         float h = th + 4;
         ArborPoint pt = fSys.toScreen(node.Pt);
-        pt.X = Math.floor(pt.X);
-        pt.Y = Math.floor(pt.Y);
 
-        return new Rectangle2D.Float((float) pt.X - w / 2, (float) pt.Y - h / 2, w, h);
+        return new Rectangle2D.Float((float) (pt.X - w / 2), (float) (pt.Y - h / 2), w, h);
     }
 
     public ArborNode getNodeByCoord(int x, int y)

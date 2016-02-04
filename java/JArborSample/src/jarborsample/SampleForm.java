@@ -42,13 +42,13 @@ public class SampleForm extends JFrame
 
     private void initializeComponents()
     {
-        this.setLayout(new BorderLayout());
         FramesHelper.setClientSize(this, 894, 587);
 
         this.arborViewer1 = new ArborViewer();
         this.arborViewer1.setBackground(Color.white);
         this.arborViewer1.setPreferredSize(new Dimension(894, 587));
 
+        this.setLayout(new BorderLayout());
         this.add(arborViewer1, BorderLayout.CENTER);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setLocationRelativeTo(null);
