@@ -1,6 +1,15 @@
 #pragma once
 #include "ns\wapi.h"
 #include <sal.h>
+#include <utility>
+
+using std::swap;
+
+template <typename T>
+void swap_with_ADL(_In_ T& left, _In_ T& right) noexcept
+{
+    swap(left, right);
+}
 
 WAPI_BEGIN
 
@@ -49,11 +58,9 @@ public:
         return *this;
     }
 
-    void swap(_In_ unique_handle& right)
+    void swap(_In_ unique_handle& right) noexcept
     {
-        handle_type handle = m_handle;
-        m_handle = right.m_handle;
-        right.m_handle = handle;
+        swap_with_ADL(m_handle, right.m_handle);
     }
 
     explicit operator bool() const noexcept
@@ -124,10 +131,10 @@ public:
     }
 };
 
+WAPI_END
+
 template <typename Traits>
-void swap(_In_ unique_handle<Traits>& left, _In_ unique_handle<Traits>& right) noexcept
+void swap(_In_ WAPI unique_handle<Traits>& left, _In_ WAPI unique_handle<Traits>& right) noexcept
 {
     left.swap(right);
 }
-
-WAPI_END

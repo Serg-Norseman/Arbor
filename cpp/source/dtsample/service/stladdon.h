@@ -3,6 +3,7 @@
 #include "service\memorymg.h"
 #include <functional>
 #include <iterator>
+#include <malloc.h>
 #include <memory>
 #include <mutex>
 #include <regex>
@@ -16,7 +17,7 @@
 STLADD_BEGIN
 
 #pragma region memory
-/*
+/**
  * class default_allocator.
  * Allocator for STL.
  */
@@ -24,89 +25,92 @@ template <typename T>
 class default_allocator
 {
 public:
+    typedef T value_type;
     typedef T* pointer;
     typedef const T* const_pointer;
     typedef T& reference;
-    typedef T&& rvalue_reference;
     typedef const T& const_reference;
-    typedef T value_type;
+    typedef T&& rvalue_reference;
     typedef size_t size_type;
     typedef ptrdiff_t difference_type;
-    template <typename U> struct rebind
+    template <typename U>
+    struct rebind
     {
         typedef default_allocator<U> other;
     };
 
-    default_allocator()
+    default_allocator() noexcept
         :
-        m_nThreadId(GetCurrentThreadId())
+        m_nThreadId {GetCurrentThreadId()}
     {
     }
 
-    default_allocator(_In_ const default_allocator<T>& allocator)
+    default_allocator(_In_ const default_allocator& allocator) noexcept
         :
-        m_nThreadId(allocator.m_nThreadId)
+        m_nThreadId {allocator.m_nThreadId}
     {
     }
 
     template <typename U>
-    default_allocator(_In_ const default_allocator<U>& allocator)
+    default_allocator(_In_ const default_allocator<U>& allocator) noexcept
         :
-        m_nThreadId(allocator.getThreadId())
+        m_nThreadId {allocator.getThreadId()}
     {
     }
 
-    ~default_allocator()
-    {
-    }
-
-    inline pointer address(_In_ reference val) const
-    {
-        return (&val);
-    }
-
-    inline const_pointer address(_In_ const_reference val) const
-    {
-        return (&val);
-    }
-
-    inline size_t max_size() const
-    {
-        return (static_cast<size_t> (-1)) / sizeof(T);
-    }
-
-    default_allocator& operator =(_In_ const default_allocator&)
+    default_allocator& operator =(_In_ const default_allocator&) noexcept
     {
         // Assign from an allocator (do nothing).
         return *this;
     }
 
     template <typename U>
-    inline bool operator ==(_In_ const default_allocator<U>& other) const
+    bool operator ==(_In_ const default_allocator<U>&) const noexcept
     {
-        UNREFERENCED_PARAMETER(other);
         return true;
     }
 
     template <typename U>
-    inline bool operator !=(_In_ const default_allocator<U>& other) const
+    bool operator !=(_In_ const default_allocator<U>& other) const noexcept
     {
         return !(*this == other);
     }
 
-    inline void construct(_In_ pointer const p, _In_ const_reference t) const
+    pointer address(_In_ reference value) const noexcept
     {
-        void* const pv = static_cast<void*> (p);
-        new (pv) T(t);
+        return std::addressof(value);
     }
 
-    inline void construct(_In_ pointer const p, _In_ rvalue_reference t) const
+    const_pointer address(_In_ const_reference value) const noexcept
     {
-        void* const pv = static_cast<void*> (p);
-        new (pv) T(std::forward<T>(t));
+        return std::addressof(value);
     }
 
-    inline void destroy(_In_ pointer const p) const;
+    size_t max_size() const noexcept
+    {
+        return (static_cast<size_type> (~0)) / sizeof(value_type);
+    }
+
+    template <typename U, typename... Args>
+    void construct(_In_ U* p, _In_ Args&&... args) const
+    {
+        void* pv = static_cast<void*> (p);
+        new (pv) U {std::forward<Args>(args)...};
+    }
+
+    template <typename U>
+    void construct(_In_ U* p) const
+    {
+        void* pv = static_cast<void*> (p);
+        new (pv) U {};
+    }
+
+__pragma(warning(push)) __pragma(warning(disable: 4100))
+    void destroy(_In_ const pointer p) const
+    {
+        p->~T();
+    }
+__pragma(warning(pop))
 
     pointer allocate(_In_ const size_type nCount) const throw(...)
     {
@@ -114,33 +118,27 @@ public:
         {
             return nullptr;
         }
-
-        if (nCount > max_size())
+        if (max_size() < nCount)
         {
-            throw std::length_error("default_allocator<T>::allocate() - Length too long.");
+            throw std::length_error {"default_allocator<T>::allocate() - Length too long."};
         }
-
         memory_manager::pointer_t pMemoryManager = memory_manager::getInstance();
-        void* const pPointer = pMemoryManager->mAlloc<void*>(m_nThreadId, nCount * sizeof(T));
-
-        if (!pPointer)
+        void* p = pMemoryManager->mAlloc<void*>(m_nThreadId, nCount * sizeof(value_type));
+        if (!p)
         {
             throw std::bad_alloc();
         }
-
-        return static_cast<T*> (pPointer);
+        return static_cast<pointer> (p);
     }
 
     template <typename U>
-    pointer allocate(_In_ const size_type nCount, _In_ typename U::const_pointer pHint) const
+    pointer allocate(_In_ const size_type nCount, _In_ typename U::const_pointer) const
     {
-        UNREFERENCED_PARAMETER(pHint);
         return allocate(nCount);
     }
 
-    void deallocate(_In_ pointer const p, _In_ const size_type nCount) const
+    void deallocate(_In_ const pointer p, _In_ const size_type) const
     {
-        UNREFERENCED_PARAMETER(nCount);
         memory_manager::pointer_t pMemoryManager = memory_manager::getInstance();
         pMemoryManager->free<void*>(m_nThreadId, p);
     }
@@ -156,21 +154,23 @@ private:
     const DWORD m_nThreadId;
 };
 
-#pragma warning(disable: 4100)
-// >A compiler bug causes it to believe that p->~T() doesn't reference p.
-// Stephan T. Lavavej; Visual C++ libraries developer.
-template <typename T>
-inline void default_allocator<T>::destroy(_In_ pointer const p) const
+
+template<>
+class default_allocator<void>
 {
-    p->~T();
-}
-#pragma warning(default: 4100)
+public:
+    typedef void value_type;
+    typedef void* pointer;
+    typedef const void* const_pointer;
+
+    template<class U>
+    struct rebind
+    {
+        typedef default_allocator<U> other;
+    };
+};
 
 
-
-/*
- * Deleter functors for shared_ptr's/unique_ptr's.
- */
 
 /**
  * smart_ptr_deleter class.
@@ -224,6 +224,22 @@ public:
 protected:
     // Thread whose heap will be used for deallocation.
     DWORD m_nThreadId;
+};
+
+
+
+template <typename T>
+class aligned_deleter
+{
+public:
+    typedef typename std::conditional<std::is_pointer<T>::value, typename std::remove_pointer<T>::type, T>::type
+        element_type;
+    typedef typename std::conditional<std::is_pointer<T>::value, T, typename std::add_pointer<T>::type>::type pointer;
+
+    void operator ()(_In_ pointer p)
+    {
+        _aligned_free(p);
+    }
 };
 
 
@@ -336,7 +352,8 @@ public:
     _When_(this->m_bOwns, _Acquires_exclusive_lock_(this->m_mutex))
     explicit lock_guard_exclusive(_In_ mutex_type& mutex)
         :
-        m_mutex {mutex}
+        m_mutex {mutex},
+        m_bOwns {false}
     {
         m_mutex.lockExclusive();
         m_bOwns = true;
@@ -378,11 +395,6 @@ public:
         return m_bOwns;
     }
 
-    bool ownsLock() const noexcept
-    {
-        return m_bOwns;
-    }
-
 
 private:
     mutex_type& m_mutex;
@@ -398,7 +410,8 @@ public:
     _When_(this->m_bOwns, _Acquires_exclusive_lock_(this->m_mutex))
     explicit lock_guard_shared(_In_ mutex_type& mutex)
         :
-        m_mutex {mutex}
+        m_mutex {mutex},
+        m_bOwns {false}
     {
         m_mutex.lockShared();
         m_bOwns = true;
@@ -434,11 +447,6 @@ public:
     lock_guard_shared& operator =(_In_ const lock_guard_shared&) = delete;
 
     explicit operator bool() const noexcept
-    {
-        return m_bOwns;
-    }
-
-    bool ownsLock() const noexcept
     {
         return m_bOwns;
     }

@@ -10,6 +10,29 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dtsample", "dtsample\dtsamp
 		{A241A2EC-DFE1-438A-B231-B1C8D3EFF13A} = {A241A2EC-DFE1-438A-B231-B1C8D3EFF13A}
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "properties sheets", "properties sheets", "{264F7380-8767-4559-9F98-808D2A7EF9AB}"
+	ProjectSection(SolutionItems) = preProject
+		properties\cl code generation.props = properties\cl code generation.props
+		properties\cl command line.props = properties\cl command line.props
+		properties\cl general.props = properties\cl general.props
+		properties\cl optimization.props = properties\cl optimization.props
+		properties\directxmath.props = properties\directxmath.props
+		properties\include directories.props = properties\include directories.props
+		properties\linker advanced.props = properties\linker advanced.props
+		properties\linker command line.props = properties\linker command line.props
+		properties\linker debugging.props = properties\linker debugging.props
+		properties\linker general.props = properties\linker general.props
+		properties\linker system.props = properties\linker system.props
+		properties\macros.props = properties\macros.props
+		properties\manifest.props = properties\manifest.props
+		properties\multi-processor compilation.props = properties\multi-processor compilation.props
+		properties\output directories.props = properties\output directories.props
+		properties\prefast.props = properties\prefast.props
+		properties\rc defines.props = properties\rc defines.props
+		properties\warning level.props = properties\warning level.props
+		properties\windows sdk versions defines.props = properties\windows sdk versions defines.props
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64

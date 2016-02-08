@@ -15,7 +15,6 @@
 
 /gource-arbor.cmd
 
-/cpp/solution/arbor.desktop.2015.VC.VC.opendb
-/cpp/solution/arbor.desktop.2015.VC.db
+**/*.*db
 /cpp/solution/arborgvt/arborgvt.vcxproj.user
 /cpp/build/

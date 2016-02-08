@@ -1,5 +1,6 @@
 #define OEMRESOURCE
 #include "resource.h"
+#include "service\memorymg.h"
 #include "service\miscutil.h"
 #include "service\stladdon.h"
 #include "service\winapi\directx\dx.h"
@@ -8,7 +9,7 @@
 #include <memory>
 #include <wincodec.h>
 
-#pragma comment(lib, "arborgvt.Lib")
+#pragma comment(lib, "arborgvt.lib")
 
 ATLADD_BEGIN
 #pragma region desktop_sample_window
@@ -279,8 +280,8 @@ BOOL desktop_sample_window::ProcessWindowMessage(
 LRESULT desktop_sample_window::createHandler()
 {
     typedef ATL::CWinTraits<WS_CHILD | WS_CLIPSIBLINGS | WS_TABSTOP | WS_VISIBLE, WS_EX_NOPARENTNOTIFY> style_traits_t;
-    // The parent window of this window owned by another thread; nobody needs a deadlock, therefore
-    // 'WS_EX_NOPARENTNOTIFY' required.
+    // This window and the graph window (`m_visual`'s HWND) are owned by different threads; nobody needs a deadlock,
+    // therefore 'WS_EX_NOPARENTNOTIFY' is required.
 
     LRESULT nResult = base_class_t::createHandler();
     if (!nResult)
@@ -470,6 +471,7 @@ void desktop_sample_window::updateWindowText(_In_opt_ const STLADD string_type* 
  */
 void desktop_sample_window::handleThreadTermination(_In_ const HANDLE hObject)
 {
+    using namespace std::string_literals;
     /*
      * This method is called ONLY by the 'wWinMain' function who calls the method only after the
      * 'MsgWaitForMultipleObjectsEx' was caused to return by some of the threads become signaled. This is the 'hObject'.
@@ -482,6 +484,14 @@ void desktop_sample_window::handleThreadTermination(_In_ const HANDLE hObject)
     if (m_visualCreated.get() == hObject)
     {
         // The graph visual got an HWND. We can enable some graph-window-aware controls here, for example.
+        HRESULT hr = m_visual->addEdge(TEXT("vertex.1"s), TEXT("vertex.2"s), 1.5f);
+        if (SUCCEEDED(hr))
+        {
+            hr = m_visual->addEdge(TEXT("vertex.1"s), TEXT("vertex.3"s), 1.75f);
+            if (SUCCEEDED(hr))
+            {
+            }
+        }
     }
     if (0 == m_threads.size())
     {

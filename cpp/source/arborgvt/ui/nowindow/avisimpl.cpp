@@ -51,8 +51,44 @@ HRESULT arbor_visual_impl::createWindow(
  */
 HRESULT arbor_visual_impl::getHWND(_Out_ HWND* handle)
 {
-    *handle = m_window ? m_window->m_hWnd : nullptr;;
+    *handle = m_window ? m_window->m_hWnd : nullptr;
     return *handle ? S_OK : S_FALSE;
+}
+
+
+/**
+ * Adds a new edge to graph. The new edge connects two specified vertices.
+ *
+ * Parameters:
+ * >tail
+ * Name of the tail vertex, where the new edge begins.
+ * >head
+ * Name of the head vertex, where the new edge ends.
+ * >length
+ * Size of the new edge.
+ *
+ * Returns:
+ * Standard HRESULT code.
+ *
+ * Remarks:
+ * The following problem exists with type of the `tail` and `head` parameters: it must be a type independent from
+ * this library code and caller code. If it will be, for example, `stladd::arbor::string_type`, a caller has to
+ * implement `stladd::arbor::private_heap::createHeap` method, duplicating implementation made by the DLL. If type of
+ * the parameters will be defined by a caller code... that's a stupid idea at all.
+ *
+ * `std::wstring` was selected as the type as implicitly the closest type.
+ */
+HRESULT arbor_visual_impl::addEdge(_In_ std::wstring&& tail, _In_ std::wstring&& head, _In_ float length)
+{
+    if (m_window)
+    {
+        m_window->addEdge({tail.cbegin(), tail.cend()}, {head.cbegin(), head.cend()}, length);
+        return S_OK;
+    }
+    else
+    {
+        return E_POINTER;
+    }
 }
 
 

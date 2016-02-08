@@ -1,6 +1,6 @@
 #include "service\functype.h"
-#include "service\memorymg.h"
 #include "service\miscutil.h"
+#include "service\stladdon.h"
 #include <shellapi.h>
 #include <tchar.h>
 
@@ -21,17 +21,18 @@ MISCUTIL_BEGIN
 std::vector<WORD> version_info::getApplicationExeVersionAsVector()
 {
     std::vector<WORD> result;
-    memory_manager::pointer_t pMemoryManager = memory_manager::getInstance();
-    LPTSTR pszImageFileName = pMemoryManager->mAllocChars<LPTSTR>(MAX_PATH);
-    if (pszImageFileName)
+    STLADD default_allocator<unsigned char> allocator {};
+    STLADD u_char_unique_ptr_t imageFileName {allocator.allocate(MAX_PATH * sizeof(TCHAR))};
+    if (imageFileName)
     {
+        LPTSTR pszImageFileName = reinterpret_cast<LPTSTR> (imageFileName.get());
         DWORD nBytesCopied = GetModuleFileName(nullptr, pszImageFileName, MAX_PATH);
         if (nBytesCopied && (MAX_PATH != nBytesCopied))
         {
             DWORD nVersionInfoSize = GetFileVersionInfoSize(pszImageFileName, &nBytesCopied);
             if (nVersionInfoSize)
             {
-                void* pData = pMemoryManager->mAlloc<void*>(nVersionInfoSize);
+                void* pData = allocator.allocate(nVersionInfoSize);
                 if (pData)
                 {
                     VS_FIXEDFILEINFO* pFileInfo;
@@ -46,11 +47,10 @@ std::vector<WORD> version_info::getApplicationExeVersionAsVector()
                         result[2] = HIWORD(pFileInfo->dwFileVersionLS);
                         result[3] = LOWORD(pFileInfo->dwFileVersionLS);
                     }
-                    pMemoryManager->free(pData);
+                    allocator.deallocate(pData);
                 }
             }
         }
-        pMemoryManager->free(pszImageFileName);
     }
     return result;
 }
@@ -97,10 +97,11 @@ STLADD string_unique_ptr_t version_info::getApplicationExeVersionInfoStringTable
 {
     STLADD string_unique_ptr_t szResult;
 
-    memory_manager::pointer_t pMemoryManager = memory_manager::getInstance();
-    LPTSTR pszPathFileName = pMemoryManager->mAllocChars<LPTSTR>(MAX_PATH);
-    if (pszPathFileName)
+    STLADD default_allocator<unsigned char> allocator {};
+    STLADD u_char_unique_ptr_t pathFileName {allocator.allocate(MAX_PATH * sizeof(TCHAR))};
+    if (pathFileName)
     {
+        LPTSTR pszPathFileName = reinterpret_cast<LPTSTR> (pathFileName.get());
         DWORD nCharsCopied = GetModuleFileName(nullptr, pszPathFileName, MAX_PATH);
         if (nCharsCopied && (MAX_PATH != nCharsCopied))
         {
@@ -108,7 +109,7 @@ STLADD string_unique_ptr_t version_info::getApplicationExeVersionInfoStringTable
             DWORD nVersionInfoSize = GetFileVersionInfoSize(pszPathFileName, &nCharsCopied);
             if (nVersionInfoSize)
             {
-                void* pData = pMemoryManager->mAlloc<void*>(nVersionInfoSize);
+                void* pData = allocator.allocate(nVersionInfoSize);
                 if (pData)
                 {
                     typedef struct
@@ -129,7 +130,8 @@ STLADD string_unique_ptr_t version_info::getApplicationExeVersionInfoStringTable
                     {
                         TCHAR szStringFileInfoFormat[] = TEXT("\\StringFileInfo\\%04x%04x\\%s");
                         size_t nEntryPathLength = _countof(szStringFileInfoFormat) + _tcscnlen(pszName, 32);
-                        LPTSTR pszStringFileInfoEntry = pMemoryManager->mAllocChars<LPTSTR>(nEntryPathLength);
+                        LPTSTR pszStringFileInfoEntry = reinterpret_cast<LPTSTR> (
+                            allocator.allocate(nEntryPathLength * sizeof(TCHAR)));
                         if (pszStringFileInfoEntry)
                         {
                             _stprintf_s(pszStringFileInfoEntry,
@@ -147,14 +149,13 @@ STLADD string_unique_ptr_t version_info::getApplicationExeVersionInfoStringTable
                             {
                                 szResult = std::make_unique<STLADD string_type>(pszFileDescription, nLength - 1);
                             }
-                            pMemoryManager->free(pszStringFileInfoEntry);
+                            allocator.deallocate(pszStringFileInfoEntry);
                         }
                     }
-                    pMemoryManager->free(pData);
+                    allocator.deallocate(pData);
                 }
             }
         }
-        pMemoryManager->free(pszPathFileName);
     }
 
     return szResult;

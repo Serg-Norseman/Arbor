@@ -77,6 +77,12 @@
     <Filter Include="source files\service">
       <UniqueIdentifier>{c61ae1a4-e523-4fe3-88a8-d42a45fe87fa}</UniqueIdentifier>
     </Filter>
+    <Filter Include="header files\graph">
+      <UniqueIdentifier>{744a3c0c-6bec-4c27-9201-414713ba32b3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source files\graph">
+      <UniqueIdentifier>{19433a65-788d-4a4f-9d80-3e34261f85a5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\source\arborgvt\exports\arborgvt.def">
@@ -96,9 +102,6 @@
     <ClCompile Include="..\..\source\arborgvt\ui\window\wi.cpp">
       <Filter>source files\ui\windowed</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\source\arborgvt\service\memorymg.cpp">
-      <Filter>source files\service</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\source\arborgvt\service\strgutil.cpp">
       <Filter>source files\service</Filter>
     </ClCompile>
@@ -107,6 +110,12 @@
     </ClCompile>
     <ClCompile Include="..\..\source\arborgvt\ui\window\child\onscreen\graphwnd.cpp">
       <Filter>source files\ui\windowed\child\onscreen</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\arborgvt\service\stladdon.cpp">
+      <Filter>source files\service</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\arborgvt\graph\graph.cpp">
+      <Filter>source files\graph</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -149,12 +158,6 @@
     <ClInclude Include="..\..\source\arborgvt\service\functype.h">
       <Filter>header files\service</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\source\arborgvt\service\memmgti.h">
-      <Filter>header files\service</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\source\arborgvt\service\memorymg.h">
-      <Filter>header files\service</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\source\arborgvt\service\strgutil.h">
       <Filter>header files\service</Filter>
     </ClInclude>
@@ -190,6 +193,21 @@
     </ClInclude>
     <ClInclude Include="..\..\source\arborgvt\ui\window\child\onscreen\graphwnd.h">
       <Filter>header files\ui\windowed\child\onscreen</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\ns\arbor.h">
+      <Filter>header files\namespaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\graph\vertex.h">
+      <Filter>header files\graph</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\graph\edge.h">
+      <Filter>header files\graph</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\graph\graph.h">
+      <Filter>header files\graph</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\service\ssetype.h">
+      <Filter>header files\service</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
