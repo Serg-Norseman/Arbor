@@ -1,5 +1,4 @@
 #include "service\functype.h"
-#include "service\memorymg.h"
 #include "service\miscutil.h"
 #include "service\stladdon.h"
 #include "service\strgutil.h"
@@ -139,7 +138,7 @@ _Success_(return) bool string_util::loadString(
  *
  * Returns:
  * true value in case of success, false -- otherwise. In the first case caller should free the *ppszResult buffer
- * w/ memory_manager::free<LPTSTR> method.
+ * w/ `default_allocator`.
  */
 _Success_(return) bool string_util::loadString(
     _In_ UINT nStringResourceId,
@@ -159,8 +158,8 @@ _Success_(return) bool string_util::loadString(
         ::LoadString(m_hModuleWithResource, nStringResourceId, reinterpret_cast<LPTSTR> (&pszResourceText), 0);
     if (*pnResourceLength)
     {
-        memory_manager::pointer_t pMemoryManager = memory_manager::getInstance();
-        *ppszResourceString = pMemoryManager->mAllocChars<LPTSTR>(*pnResourceLength + 1);
+        STLADD default_allocator<TCHAR> allocator {};
+        *ppszResourceString = allocator.allocate(*pnResourceLength + 1);
         if (*ppszResourceString)
         {
             _tcsncpy_s(*ppszResourceString, *pnResourceLength + 1, pszResourceText, *pnResourceLength);
@@ -242,16 +241,15 @@ _Success_(return) bool string_util::loadReadOnlyString(
 /**
  * Wrapping method for the convenience of use the string_util class.
  * When one of the string_util methods allocates some memory resource and returns a pointer to that resource,
- * a caller has ability to free the memory w/o getting the memory_manager object singleton instance that has been
- * used by the string_util's member to allocate memory buffer.
+ * a caller has ability to free the memory w/o resorting to the help of `STLADD default_allocator`.
  * For example:
  *     string_util::const_ptr_t pStringUtil = string_util::getInstance();
  *     LPTSTR pszDateTime = pStringUtil->convertSystemTimeToString(...);
  *     if (pszDateTime) { . . .
- * When you don't need the pszDateTime anymore you can free it w/:
+ * When you don't need the pszDateTime anymore you can release it w/:
  * (a)
- *    memory_manager::pointer_t pMemoryManager = memory_manager::getInstance();
- *    pMemoryManager->free(pszDateTime);
+ *    STLADD default_allocator<TCHAR> allocator {};
+ *    allocator.deallocate(pszResourceString);
  * or
  * (b)
  *    pStringUtil->freeString(pszDateTime);
@@ -263,10 +261,10 @@ _Success_(return) bool string_util::loadReadOnlyString(
  * Retuns:
  * N/A.
  */
-void string_util::freeString(__drv_freesMem(Mem) _Frees_ptr_ LPTSTR pszResourceString) const
+void string_util::freeString(_In_ __drv_freesMem(Mem) _Frees_ptr_ LPTSTR pszResourceString) const
 {
-    memory_manager::pointer_t pMemoryManager = memory_manager::getInstance();
-    pMemoryManager->free(pszResourceString);
+    STLADD default_allocator<TCHAR> allocator {};
+    allocator.deallocate(pszResourceString);
 }
 
 
@@ -312,14 +310,14 @@ bool string_util::formatOneStringField(
     *ppszResult = nullptr;
     bool bResult = false;
     LPTSTR pszResultFormat;
-    memory_manager::pointer_t pMemoryManager = memory_manager::getInstance();
     if (loadString(nResultFormatId, &pszResultFormat, pnResultLength))
     {
+        STLADD default_allocator<TCHAR> allocator {};
         const STLADD regex_type regexOfFormat(TEXT("(?:[^%]*)(?:%s){1,1}(?:[^%]*)"));
         if (std::regex_match(pszResultFormat, pszResultFormat + (*pnResultLength), regexOfFormat))
         {
             *pnResultLength += (nArgumentLength - 1);
-            *ppszResult = pMemoryManager->mAllocChars<LPTSTR>(*pnResultLength);
+            *ppszResult = allocator.allocate(*pnResultLength);
             if (*ppszResult)
             {
                 _stprintf_s(*ppszResult, *pnResultLength, pszResultFormat, pszArgument);
@@ -327,7 +325,7 @@ bool string_util::formatOneStringField(
                 bResult = true;
             }
         }
-        pMemoryManager->free(pszResultFormat);
+        allocator.deallocate(pszResultFormat);
     }
     return bResult;
 }
@@ -454,16 +452,15 @@ bool string_util::convertSystemTimeToString(
                             (pGetLocaleInfo)(LOCALE_USER_DEFAULT, nLocaleDateFormat, nullptr, 0));
         if (nFormatLength)
         {
-            memory_manager::pointer_t pMemoryManager = memory_manager::getInstance();
-
-            LPTSTR pszFormat = pMemoryManager->mAllocChars<LPTSTR>(nFormatLength);
+            STLADD default_allocator<TCHAR> allocator {};
+            LPTSTR pszFormat = allocator.allocate(nFormatLength);
             if (nullptr != pszFormat)
             {
                 if (pGetLocaleInfoEx)
                 {
                     if (!(pGetLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT, nLocaleDateFormat, pszFormat, nFormatLength))
                     {
-                        pMemoryManager->free(pszFormat);
+                        allocator.deallocate(pszFormat);
                         pszFormat = nullptr;
                     }
                 }
@@ -471,7 +468,7 @@ bool string_util::convertSystemTimeToString(
                 {
                     if (!(pGetLocaleInfo)(LOCALE_USER_DEFAULT, nLocaleDateFormat, pszFormat, nFormatLength))
                     {
-                        pMemoryManager->free(pszFormat);
+                        allocator.deallocate(pszFormat);
                         pszFormat = nullptr;
                     }
                 }
@@ -485,7 +482,7 @@ bool string_util::convertSystemTimeToString(
                         const STLADD regex_type regexOfFormat(TEXT("(?:^yy[^y].*)|(?:.*[^y]yy[^y].*)|(?:.*[^y]yy$)"));
                         if (!std::regex_match(pszFormat, pszFormat + nFormatLength, regexOfFormat))
                         {
-                            pMemoryManager->free(pszFormat);
+                            allocator.deallocate(pszFormat);
                             pszFormat = nullptr;
                         }
                     }
@@ -507,7 +504,7 @@ bool string_util::convertSystemTimeToString(
                             (pEnumDateFormatsEx)(enumDateFormatsProcEx, LOCALE_USER_DEFAULT, nFlags));
                         if (!bEnumResult && pszFormat)
                         {
-                            pMemoryManager->free(pszFormat);
+                            allocator.deallocate(pszFormat);
                             pszFormat = nullptr;
                         }
                     }
@@ -585,7 +582,7 @@ bool string_util::convertSystemTimeToString(
                 }
                 if (*pnStringLength)
                 {
-                    *ppszString = pMemoryManager->mAllocChars<LPTSTR>(*pnStringLength);
+                    *ppszString = allocator.allocate(*pnStringLength);
                     if (*ppszString)
                     {
                         if (pGetDateFormatEx)
@@ -639,7 +636,7 @@ bool string_util::convertSystemTimeToString(
                         else
                         {
                             // Error has occurred.
-                            pMemoryManager->free(*ppszString);
+                            allocator.deallocate(*ppszString);
                             *ppszString = nullptr;
                             *pnStringLength = 0;
                         }
@@ -648,7 +645,7 @@ bool string_util::convertSystemTimeToString(
 
                 if (nullptr != pszFormat)
                 {
-                    pMemoryManager->free(pszFormat);
+                    allocator.deallocate(pszFormat);
                 }
             }
         }
@@ -763,16 +760,15 @@ bool string_util::convertSystemDateOnlyToString(
                             (pGetLocaleInfo)(LOCALE_USER_DEFAULT, nLocaleDateFormat, nullptr, 0));
         if (nFormatLength)
         {
-            memory_manager::pointer_t pMemoryManager = memory_manager::getInstance();
-
-            LPTSTR pszFormat = pMemoryManager->mAllocChars<LPTSTR>(nFormatLength);
+            STLADD default_allocator<TCHAR> allocator {};
+            LPTSTR pszFormat = allocator.allocate(nFormatLength);
             if (nullptr != pszFormat)
             {
                 if (pGetLocaleInfoEx)
                 {
                     if (!(pGetLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT, nLocaleDateFormat, pszFormat, nFormatLength))
                     {
-                        pMemoryManager->free(pszFormat);
+                        allocator.deallocate(pszFormat);
                         pszFormat = nullptr;
                     }
                 }
@@ -780,7 +776,7 @@ bool string_util::convertSystemDateOnlyToString(
                 {
                     if (!(pGetLocaleInfo)(LOCALE_USER_DEFAULT, nLocaleDateFormat, pszFormat, nFormatLength))
                     {
-                        pMemoryManager->free(pszFormat);
+                        allocator.deallocate(pszFormat);
                         pszFormat = nullptr;
                     }
                 }
@@ -794,7 +790,7 @@ bool string_util::convertSystemDateOnlyToString(
                         const STLADD regex_type regexOfFormat(TEXT("(?:^yy[^y].*)|(?:.*[^y]yy[^y].*)|(?:.*[^y]yy$)"));
                         if (!std::regex_match(pszFormat, pszFormat + nFormatLength, regexOfFormat))
                         {
-                            pMemoryManager->free(pszFormat);
+                            allocator.deallocate(pszFormat);
                             pszFormat = nullptr;
                         }
                     }
@@ -816,7 +812,7 @@ bool string_util::convertSystemDateOnlyToString(
                             (pEnumDateFormatsEx)(enumDateFormatsProcEx, LOCALE_USER_DEFAULT, nFlags));
                         if (!bEnumResult && pszFormat)
                         {
-                            pMemoryManager->free(pszFormat);
+                            allocator.deallocate(pszFormat);
                             pszFormat = nullptr;
                         }
                     }
@@ -845,7 +841,7 @@ bool string_util::convertSystemDateOnlyToString(
                 }
                 if (*pnStringLength)
                 {
-                    *ppszString = pMemoryManager->mAllocChars<LPTSTR>(*pnStringLength);
+                    *ppszString = allocator.allocate(*pnStringLength);
                     if (*ppszString)
                     {
                         if (pGetDateFormatEx)
@@ -876,7 +872,7 @@ bool string_util::convertSystemDateOnlyToString(
                         else
                         {
                             // Error has occurred.
-                            pMemoryManager->free(*ppszString);
+                            allocator.deallocate(*ppszString);
                             *ppszString = nullptr;
                         }
                     }
@@ -884,7 +880,7 @@ bool string_util::convertSystemDateOnlyToString(
 
                 if (nullptr != pszFormat)
                 {
-                    pMemoryManager->free(pszFormat);
+                    allocator.deallocate(pszFormat);
                 }
             }
         }
@@ -952,7 +948,7 @@ bool string_util::convertSystemTimeOnlyToString(
     }
 
     *pnStringLength = 0;
-    memory_manager::pointer_t pMemoryManager = memory_manager::getInstance();
+    STLADD default_allocator<TCHAR> allocator {};
     if (pGetTimeFormatEx)
     {
         *pnStringLength =
@@ -965,7 +961,7 @@ bool string_util::convertSystemTimeOnlyToString(
     }
     if (*pnStringLength)
     {
-        *ppszString = pMemoryManager->mAllocChars<LPTSTR>(*pnStringLength);
+        *ppszString = allocator.allocate(*pnStringLength);
         if (*ppszString)
         {
             if (pGetTimeFormatEx)
@@ -996,7 +992,7 @@ bool string_util::convertSystemTimeOnlyToString(
             else
             {
                 // Error has occurred.
-                pMemoryManager->free(*ppszString);
+                allocator.deallocate(*ppszString);
                 *ppszString = nullptr;
             }
         }
@@ -1331,9 +1327,9 @@ BOOL CALLBACK string_util::enumDateFormatsProcExEx(_In_z_ LPWSTR pszDateFormatSt
         size_t nFormatLength;
         if (SUCCEEDED(StringCchLength(pszDateFormatString, LOCALE_SSHORTDATE_MAX_LENGTH, &nFormatLength)))
         {
-            memory_manager::pointer_t pMemoryManager = memory_manager::getInstance();
+            STLADD default_allocator<TCHAR> allocator {};
             LPTSTR* ppszFormat = reinterpret_cast<LPTSTR*> (nParam);
-            *ppszFormat = pMemoryManager->mAllocChars<LPTSTR>(nFormatLength + 1);
+            *ppszFormat = allocator.allocate(nFormatLength + 1);
             if (*ppszFormat)
             {
                 if (SUCCEEDED(StringCchCopy(*ppszFormat, nFormatLength + 1, pszDateFormatString)))
@@ -1342,7 +1338,7 @@ BOOL CALLBACK string_util::enumDateFormatsProcExEx(_In_z_ LPWSTR pszDateFormatSt
                 }
                 else
                 {
-                    pMemoryManager->free(*ppszFormat);
+                    allocator.deallocate(*ppszFormat);
                     *ppszFormat = nullptr;
                 }
             }
@@ -1415,8 +1411,8 @@ STLADD string_unique_ptr_t string_util::getListSeparator() const
         if (nListSeparatorLength)
         {
             // Allocate memory to store list separator string only.
-            memory_manager::pointer_t pMemoryManager = memory_manager::getInstance();
-            LPTSTR pszResult = pMemoryManager->mAllocChars<LPTSTR>(nListSeparatorLength);
+            STLADD default_allocator<TCHAR> allocator {};
+            LPTSTR pszResult = allocator.allocate(nListSeparatorLength);
             if (pszResult)
             {
                 if (pGetLocaleInfoEx)
@@ -1447,7 +1443,7 @@ STLADD string_unique_ptr_t string_util::getListSeparator() const
                             std::make_unique<STLADD string_type>(pszResult, pszResult + nListSeparatorLength - 1);
                     }
                 }
-                pMemoryManager->free(pszResult);
+                allocator.deallocate(pszResult);
             }
         }
     }
@@ -1507,8 +1503,8 @@ _Check_return_ STLADD string_unique_ptr_t string_util::getCurrentUserLocale() co
         if (nLength)
         {
             // Allocate memory to store list separator string only.
-            memory_manager::pointer_t pMemoryManager = memory_manager::getInstance();
-            LPTSTR pszResult = pMemoryManager->mAllocChars<LPTSTR>(nLength);
+            STLADD default_allocator<TCHAR> allocator {};
+            LPTSTR pszResult = allocator.allocate(nLength);
             if (pszResult)
             {
                 if (pGetLocaleInfoEx)
@@ -1525,7 +1521,7 @@ _Check_return_ STLADD string_unique_ptr_t string_util::getCurrentUserLocale() co
                 {
                     szResult = std::make_unique<STLADD string_type>(pszResult, pszResult + nLength - 1);
                 }
-                pMemoryManager->free(pszResult);
+                allocator.deallocate(pszResult);
             }
         }
     }

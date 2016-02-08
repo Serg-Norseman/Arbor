@@ -24,6 +24,8 @@ public:
         _In_ HANDLE hwndReadyEvent,
         _In_ UINT dpiChangedMessage) override;
     virtual HRESULT STDMETHODCALLTYPE getHWND(_Out_ HWND* handle) override;
+    virtual HRESULT STDMETHODCALLTYPE addEdge(
+        _In_ std::wstring&& tail, _In_ std::wstring&& head, _In_ float length) override;
 
 
 private:

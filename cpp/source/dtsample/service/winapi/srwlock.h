@@ -58,8 +58,9 @@ public:
      * The second version of code is very silly so I stuck with the first version. Ignore two C26135 warnings -- it's a
      * compiler "feature".
      * VC 2013 RTM (18.00.31101 for x86, VS 2013 Update 4).
-     * P.S. VC 2015 Update 1 RTM shows two THE SAME C26135 WARNINGS FOR THE SAME LINE NUMBER where VC 2015 RTM showed
-     * one. That's a bug in Update 1 I believe.
+     * P.S. VC 2015 Update 1 RTM shows the same C26135 warnings TWICE FOR THE SAME LINE NUMBER in the "Error List" where
+     * VC 2015 RTM showed only one warning. But the "Output" window still has one warning per line. That's a bug in
+     * Update 1 I believe.
      */
     _When_(0 != return, _Acquires_exclusive_lock_(this->m_lock))
     bool tryLockExclusive()

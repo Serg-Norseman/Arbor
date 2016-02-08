@@ -33,7 +33,7 @@ public:
         _In_ UINT nStringResourceId,
         _Outptr_result_z_ LPCTSTR* ppszResourceString,
         _Out_ size_t* pnResourceLength) const;
-    void freeString(__drv_freesMem(Mem) _Frees_ptr_ LPTSTR pszResourceString) const;
+    void freeString(_In_ __drv_freesMem(Mem) _Frees_ptr_ LPTSTR pszResourceString) const;
 
     _Success_(return) bool formatOneStringField(
         _In_ UINT nResultFormatId,

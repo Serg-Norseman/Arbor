@@ -538,7 +538,7 @@ HRESULT directx_render::createDevice(_In_ const HWND hWnd, _In_ ID2D1Factory1* p
                         m_direct3DDevice.get(), hWnd, &swapChainDesc, nullptr, nullptr, m_swapChain.getAddressOf());
                     if (SUCCEEDED(hr))
                     {
-                        hr = dxgiDevice->SetMaximumFrameLatency(5);
+                        hr = dxgiDevice->SetMaximumFrameLatency(1);
                         if (SUCCEEDED(hr))
                         {
                             hr = createDirect2DDevice(pDirect2DFactory);
@@ -601,14 +601,11 @@ void directx_render::render(_In_ const HWND hWnd, _In_ ID2D1Factory1* pDirect2DF
         m_direct2DContext->BeginDraw();
         draw();
         m_direct2DContext->EndDraw();
-
-        // I'm accessing D3D resources directly without Direct2D's knowledge, so I must acquire and apply the Direct2D
-        // factory lock.
         {
-            DXU direct2d_factory_lock lock {pDirect2DFactory};
+//            DXU direct2d_factory_lock lock {pDirect2DFactory};
             DXGI_PRESENT_PARAMETERS presentParameters = {};
-            // Turn VSync off; shift the blame on DWM.
-            hr = m_swapChain->Present1(0, 0, &presentParameters);
+            // Turn VSync on.
+            hr = m_swapChain->Present1(1, 0, &presentParameters);
             if (DXGI_ERROR_DEVICE_REMOVED == hr)
             {
                 releaseDevice();

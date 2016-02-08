@@ -1,4 +1,5 @@
 #pragma once
+#include "graph\graph.h"
 #include "ui\window\child\cwi.h"
 
 ATLADD_BEGIN
@@ -8,6 +9,7 @@ public:
     explicit graph_window(_In_ UINT dpiChangedMessage)
         :
         base_class_t(true),
+        m_graph {},
         m_dpiChangedMessage {dpiChangedMessage}
     {
     }
@@ -21,6 +23,11 @@ public:
         _In_ LPARAM nLParam,
         _Inout_ LRESULT& nLResult,
         _In_ DWORD nMsgMapID) override;
+
+    void addEdge(_In_ STLADD string_type&& tail, _In_ STLADD string_type&& head, _In_ float length)
+    {
+        m_graph.addEdge(std::move(tail), std::move(head), length);
+    }
 
 
 protected:
@@ -48,12 +55,13 @@ private:
     void scrollHandler(_In_ int nBar, _In_ const WORD nScrollingRequest, _In_ const WORD nPosition);
     void scrollContent(_In_ int nBar, _In_ const int nPos);
 
-    UINT m_dpiChangedMessage;
+    ARBOR graph m_graph;
     D2D1_COLOR_F m_color {D2D1::ColorF {GetSysColor(COLOR_WINDOWTEXT), 1.0f}};
     ATLADD com_ptr<ID2D1SolidColorBrush> m_brush {};
     ATLADD com_ptr<ID2D1SolidColorBrush> m_ellipseBrush {};
     ATLADD com_ptr<ID2D1PathGeometry1> m_g {};
     ATLADD com_ptr<ID2D1EllipseGeometry> m_ellipse {};
     ATLADD com_ptr<IDWriteTextFormat> m_tf {};
+    UINT m_dpiChangedMessage;
 };
 ATLADD_END

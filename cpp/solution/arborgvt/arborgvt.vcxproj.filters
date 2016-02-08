@@ -1,0 +1,218 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="header files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="resource files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="source files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="exports">
+      <UniqueIdentifier>{6ce27b05-fe9d-47cf-a613-9e2bf34fcc42}</UniqueIdentifier>
+      <Extensions>def</Extensions>
+    </Filter>
+    <Filter Include="source files\library layer">
+      <UniqueIdentifier>{6d197fb6-7dd9-43f4-98bc-2c26a0092715}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="header files\namespaces">
+      <UniqueIdentifier>{c7f0d950-f994-4133-a7ec-10ace53961e1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="header files\library layer">
+      <UniqueIdentifier>{8ea19201-beae-4f18-b8ba-f4ee1f6140c2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="header files\ui">
+      <UniqueIdentifier>{e132d11d-a861-4f99-b333-f1aba466f059}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="header files\ui\non-windowed">
+      <UniqueIdentifier>{1f9096da-bcd1-4905-8a9c-ff9885889952}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="header files\ui\windowed">
+      <UniqueIdentifier>{526a1a40-849a-486d-b1fe-103c5e1d6278}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source files\ui">
+      <UniqueIdentifier>{51f71eea-f815-4651-a1f9-c414caed2d28}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source files\ui\non-windowed">
+      <UniqueIdentifier>{1b8fedf5-33d1-4e48-bda7-dbdcd304c2b6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source files\ui\windowed">
+      <UniqueIdentifier>{d29964ce-2491-4345-9d85-77e7b8e3dca6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="header files\service">
+      <UniqueIdentifier>{1cb942eb-5b92-44ce-9158-0efc9ea0296c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="header files\service\com">
+      <UniqueIdentifier>{72378f7b-4c96-4edb-8290-5238a3880da6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="header files\_untagged">
+      <UniqueIdentifier>{29a354dc-f63b-468f-b466-9af4f2ca8fe2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="header files\ui\windowed\child">
+      <UniqueIdentifier>{d3c5af6b-aef1-4f45-a8d6-50f8fb6b3882}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="header files\ui\windowed\child\onscreen">
+      <UniqueIdentifier>{f90b7759-9994-4617-90ba-cf4b63a079d3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source files\ui\windowed\child">
+      <UniqueIdentifier>{3fc0bb13-94a6-49cb-a129-16cfc61fa244}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source files\ui\windowed\child\onscreen">
+      <UniqueIdentifier>{79a92b05-8446-4af8-8d37-c3b2c1243432}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="header files\service\winapi">
+      <UniqueIdentifier>{ebb32fa1-9011-4349-97fc-fa36c8554435}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="header files\service\winapi\directx">
+      <UniqueIdentifier>{4b738cc5-27f5-4be0-987d-a00925513814}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="header files\service\winapi\windows animation manager">
+      <UniqueIdentifier>{e5f836c8-5929-46a5-8b47-de946bc51161}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source files\service">
+      <UniqueIdentifier>{c61ae1a4-e523-4fe3-88a8-d42a45fe87fa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="header files\graph">
+      <UniqueIdentifier>{744a3c0c-6bec-4c27-9201-414713ba32b3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source files\graph">
+      <UniqueIdentifier>{19433a65-788d-4a4f-9d80-3e34261f85a5}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\source\arborgvt\exports\arborgvt.def">
+      <Filter>exports</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\source\arborgvt\dlllayer\dllmain.cpp">
+      <Filter>source files\library layer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\arborgvt\dlllayer\arbor.cpp">
+      <Filter>source files\library layer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\arborgvt\ui\nowindow\avisimpl.cpp">
+      <Filter>source files\ui\non-windowed</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\arborgvt\ui\window\wi.cpp">
+      <Filter>source files\ui\windowed</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\arborgvt\service\strgutil.cpp">
+      <Filter>source files\service</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\arborgvt\service\miscutil.cpp">
+      <Filter>source files\service</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\arborgvt\ui\window\child\onscreen\graphwnd.cpp">
+      <Filter>source files\ui\windowed\child\onscreen</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\arborgvt\service\stladdon.cpp">
+      <Filter>source files\service</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\arborgvt\graph\graph.cpp">
+      <Filter>source files\graph</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\source\arborgvt\ns\atladd.h">
+      <Filter>header files\namespaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\dlllayer\arborvis.h">
+      <Filter>header files\library layer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\dlllayer\arbor.h">
+      <Filter>header files\library layer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\service\com\impl.h">
+      <Filter>header files\service\com</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\ui\nowindow\avisimpl.h">
+      <Filter>header files\ui\non-windowed</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\sdkver.h">
+      <Filter>header files\_untagged</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\ui\window\wi.h">
+      <Filter>header files\ui\windowed</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\ui\window\child\cwi.h">
+      <Filter>header files\ui\windowed\child</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\service\com\comptr.h">
+      <Filter>header files\service\com</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\ns\dxu.h">
+      <Filter>header files\namespaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\service\winapi\directx\dx.h">
+      <Filter>header files\service\winapi\directx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\service\winapi\wam\animatio.h">
+      <Filter>header files\service\winapi\windows animation manager</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\service\functype.h">
+      <Filter>header files\service</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\service\strgutil.h">
+      <Filter>header files\service</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\service\stladdon.h">
+      <Filter>header files\service</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\service\winapi\heap.h">
+      <Filter>header files\service\winapi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\service\winapi\uh.h">
+      <Filter>header files\service\winapi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\ns\wapi.h">
+      <Filter>header files\namespaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\service\winapi\srwlock.h">
+      <Filter>header files\service\winapi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\ns\stladd.h">
+      <Filter>header files\namespaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\service\miscutil.h">
+      <Filter>header files\service</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\ns\miscutil.h">
+      <Filter>header files\namespaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\service\winapi\theme.h">
+      <Filter>header files\service\winapi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\service\winapi\chkerror.h">
+      <Filter>header files\service\winapi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\ui\window\child\onscreen\graphwnd.h">
+      <Filter>header files\ui\windowed\child\onscreen</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\ns\arbor.h">
+      <Filter>header files\namespaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\graph\vertex.h">
+      <Filter>header files\graph</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\graph\edge.h">
+      <Filter>header files\graph</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\graph\graph.h">
+      <Filter>header files\graph</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\service\ssetype.h">
+      <Filter>header files\service</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="..\..\source\arborgvt\resource\arborgvt.rc">
+      <Filter>resource files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>

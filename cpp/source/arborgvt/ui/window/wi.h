@@ -23,7 +23,7 @@ protected:
         if (!m_direct2DFactory)
         {
             D2D1_FACTORY_OPTIONS options {};
-            hr = DXU createD2DFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, options, m_direct2DFactory.getAddressOf());
+            hr = DXU createD2DFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, options, m_direct2DFactory.getAddressOf());
         }
         if (!m_directWriteFactory && SUCCEEDED(hr))
         {
@@ -233,10 +233,10 @@ protected:
         resizeSwapChainBitmap(nNewWidth, nNewHeight);
     }
 
-    template <typename Q, typename... Y>
-    std::unique_ptr<Q> createChild(_In_ Y&&... args) const
+    template <typename U, typename... Args>
+    std::unique_ptr<U> createChild(_In_ Args&&... args) const
     {
-        auto child = std::make_unique<Q>(std::forward<Y>(args)...);
+        auto child = std::make_unique<U>(std::forward<Args>(args)...);
         if (child)
         {
             if (!child->create(m_hWnd))
