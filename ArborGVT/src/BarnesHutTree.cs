@@ -15,11 +15,20 @@ namespace ArborGVT
 {
     internal class Branch
     {
-        public ArborPoint Origin = ArborPoint.Null;
-        public ArborPoint Size = ArborPoint.Null;
-        public object[] Q = new object[4] { null, null, null, null };
-        public double Mass = 0.0;
-        public ArborPoint Pt = ArborPoint.Null;
+        public ArborPoint Origin;
+        public ArborPoint Size;
+        public object[] Q;
+        public double Mass;
+        public ArborPoint Pt;
+
+        public Branch(ArborPoint origin, ArborPoint size)
+        {
+            this.Origin = origin;
+            this.Size = size;
+            this.Q = new object[4] { null, null, null, null };
+            this.Mass = 0.0;
+            this.Pt = ArborPoint.Null;
+        }
     }
 
     internal class BarnesHutTree
@@ -36,9 +45,7 @@ namespace ArborGVT
         public BarnesHutTree(ArborPoint origin, ArborPoint h, double dist)
         {
             this.fDist = dist;
-            this.fRoot = new Branch();
-            this.fRoot.Origin = origin;
-            this.fRoot.Size = h.sub(origin);
+            this.fRoot = new Branch(origin, h.sub(origin));
         }
 
         private static int getQuad(ArborNode i, Branch f)
@@ -80,12 +87,12 @@ namespace ArborGVT
                     gst.RemoveAt(0);
 
                     double m = h.Mass;
-                    int p = getQuad(h, f);
-                    object fp = f.Q[p];
+                    int qd = getQuad(h, f);
+                    object fp = f.Q[qd];
 
                     if (fp == null)
                     {
-                        f.Q[p] = h;
+                        f.Q[qd] = h;
 
                         f.Mass += m;
                         if (!f.Pt.isNull())
@@ -101,7 +108,7 @@ namespace ArborGVT
                     {
                         if (fp is Branch)
                         {
-                            f.Mass += (m);
+                            f.Mass += m;
                             if (!f.Pt.isNull())
                             {
                                 f.Pt = f.Pt.add(h.Pt.mul(m));
@@ -120,20 +127,18 @@ namespace ArborGVT
                             ArborPoint l = f.Size.div(2);
                             ArborPoint n = new ArborPoint(f.Origin.X, f.Origin.Y);
 
-                            if (p == QSe || p == QSw)
+                            if (qd == QSe || qd == QSw)
                             {
                                 n.Y += l.Y;
                             }
-                            if (p == QNe || p == QSe)
+                            if (qd == QNe || qd == QSe)
                             {
                                 n.X += l.X;
                             }
 
                             ArborNode o = fp as ArborNode;
-                            fp = new Branch();
-                            (fp as Branch).Origin = n;
-                            (fp as Branch).Size = l;
-                            f.Q[p] = fp;
+                            fp = new Branch(n, l);
+                            f.Q[qd] = fp;
 
                             f.Mass = m;
                             f.Pt = h.Pt.mul(m);

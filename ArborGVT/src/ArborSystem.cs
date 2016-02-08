@@ -333,11 +333,14 @@ namespace ArborGVT
                     return;
                 }
 
-                ArborPoint nbLT = fViewBounds.LeftTop.add(fGraphBounds.LeftTop.sub(fViewBounds.LeftTop).mul(Mag));
-                ArborPoint nbRB = fViewBounds.RightBottom.add(fGraphBounds.RightBottom.sub(fViewBounds.RightBottom).mul(Mag));
+                ArborPoint vLT = fGraphBounds.LeftTop.sub(fViewBounds.LeftTop).mul(Mag);
+                ArborPoint vRB = fGraphBounds.RightBottom.sub(fViewBounds.RightBottom).mul(Mag);
 
-                double aX = fViewBounds.LeftTop.sub(nbLT).magnitude() * this.fScreenWidth;
-                double aY = fViewBounds.RightBottom.sub(nbRB).magnitude() * this.fScreenHeight;
+                ArborPoint nbLT = fViewBounds.LeftTop.add(vLT);
+                ArborPoint nbRB = fViewBounds.RightBottom.add(vRB);
+
+                double aX = vLT.magnitude() * this.fScreenWidth;
+                double aY = vRB.magnitude() * this.fScreenHeight;
 
                 if (aX > 1 || aY > 1)
                 {

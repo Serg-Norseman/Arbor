@@ -1,4 +1,4 @@
-﻿/.gitignore
+**/.vs/
 /ArborGVT/bin/
 /ArborGVT/obj/
 /ArborSample/bin/
@@ -6,11 +6,15 @@
 /SmartGraph/bin/
 /SmartGraph/obj/
 
+/java/JArborGVT/nbproject/private/
+/java/JArborGVT/build/
+/java/JArborGVT/dist/
+/java/JArborSample/nbproject/private/
+/java/JArborSample/build/
+/java/JArborSample/dist/
+
 /gource-arbor.cmd
 
-# Added by ruslangaripov
-/**/.vs/
-/cpp/solution/arbor.desktop.2015.VC.VC.opendb
-/cpp/solution/arbor.desktop.2015.VC.db
+**/*.*db
 /cpp/solution/arborgvt/arborgvt.vcxproj.user
 /cpp/build/
