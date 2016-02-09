@@ -60,7 +60,7 @@ void graph::addEdge(_In_ STLADD string_type&& tail, _In_ STLADD string_type&& he
  *    recursive nor can be upgraded from shared to exclusive mode, the caller has to obtain exclusive SRW lock from the
  *    beginning.
  *
- * Therefore, BE CAREFUL: this method doesn't obtain any locks! It totally relis on caller.
+ * Therefore, BE CAREFUL: this method doesn't obtain any locks! It totally relies on caller.
  */
 const vertex* graph::addVertex(_In_ STLADD string_type&& name)
 {

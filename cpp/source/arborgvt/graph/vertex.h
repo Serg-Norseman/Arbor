@@ -100,8 +100,8 @@ public:
             cmp = _mm_cmpeq_ps(m_coordinates, right.m_coordinates);
             if (0x0F != _mm_movemask_ps(cmp))
             {
-                // Make swap w/o temporary storage using `XORPS`. The latter itself doesn't fail on NaNs but
-                // XOR-swapping of two equal value always gives zero.
+                // Do a swap w/o temporary storage using `XORPS`. The latter itself doesn't fail on NaNs but
+                // XOR-swapping of two equal values always gives zero.
                 cmp = _mm_xor_ps(m_coordinates, right.m_coordinates);
                 right.m_coordinates = _mm_xor_ps(cmp, right.m_coordinates);
                 m_coordinates = _mm_xor_ps(cmp, right.m_coordinates);
