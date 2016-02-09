@@ -17,6 +17,9 @@ WAPI heap_t private_heap::m_heap;
  *
  * Parameters:
  * None.
+ *
+ * Returns:
+ * Handle to the private heap object, used by a thread, attached this DLL, and by threads, spawned by this DLL.
  */
 HANDLE private_heap::createHeap()
 {
