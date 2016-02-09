@@ -122,10 +122,10 @@ public class ArborViewer extends JPanel implements IArborRenderer
 
                 gfx.setColor(node.Color);
                 gfx.fillRect((int) node.Box.x, (int) node.Box.y, (int) node.Box.width, (int) node.Box.height);
-                
+
                 gfx.setColor(Color.white);
-                gfx.drawString(node.Sign, 
-                        (int)(node.Box.x + (node.Box.width - metrics.stringWidth(node.Sign)) / 2), 
+                gfx.drawString(node.Sign,
+                        (int)(node.Box.x + (node.Box.width - metrics.stringWidth(node.Sign)) / 2),
                         (int)(node.Box.y + (node.Box.height - metrics.getHeight()) / 2 + metrics.getAscent()));
             }
 
