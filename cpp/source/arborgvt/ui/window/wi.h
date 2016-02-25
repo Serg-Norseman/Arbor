@@ -9,6 +9,7 @@
 #include <wincodec.h>
 
 ATLADD_BEGIN
+
 #pragma region wi_factories
 /**
  * 'wi_factories' class groups some COM factories together (allowing for 'window_impl' template classes to have single
@@ -121,7 +122,7 @@ private:
 class directx_render abstract: protected directx_toolkit
 {
 protected:
-    virtual void draw() const = 0;
+    virtual void draw() = 0;
 
     virtual void createDeviceResources()
     {
@@ -295,4 +296,5 @@ private:
     using directx_render::m_swapChain;
 };
 #pragma endregion window_impl declaration
+
 ATLADD_END

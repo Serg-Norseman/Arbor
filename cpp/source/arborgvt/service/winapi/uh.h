@@ -24,23 +24,22 @@ public:
      * Copy ctor and copy assignment operator ain't defined.
      */
     unique_handle(_In_ const unique_handle&) = delete;
-    unique_handle& operator =(_In_ const unique_handle&) = delete;
 
     unique_handle() noexcept
         :
-        m_handle(traits_type::invalid())
+        m_handle {traits_type::invalid()}
     {
     }
 
     unique_handle(_In_ unique_handle&& right) noexcept
         :
-        m_handle(right.release())
+        m_handle {right.release()}
     {
     }
 
     explicit unique_handle(_In_opt_ const handle_type handle) noexcept
         :
-        m_handle(handle)
+        m_handle {handle}
     {
     }
 
@@ -48,6 +47,8 @@ public:
     {
         close();
     }
+
+    unique_handle& operator =(_In_ const unique_handle&) = delete;
 
     unique_handle& operator =(_In_ unique_handle&& right) noexcept
     {

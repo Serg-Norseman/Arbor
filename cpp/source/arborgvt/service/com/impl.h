@@ -3,6 +3,7 @@
 #include <Windows.h>
 
 ATLADD_BEGIN
+
 template <typename... T>
 class __declspec(novtable) implements: public T...
 {
@@ -71,4 +72,5 @@ private:
         return nullptr;
     }
 };
+
 ATLADD_END

@@ -1,8 +1,19 @@
 #pragma once
 #include "graph\graph.h"
+#include "service\com\comptr.h"
+#include "service\stladdon.h"
+#include "ui\nowindow\graph\draw.h"
 #include "ui\window\child\cwi.h"
 
 ATLADD_BEGIN
+
+/**
+ * A HWND object that renders the graph.
+ *
+ * The class contains `new` and `delete` overloaded operators to avoid 'C4316' warning when build x86 release (object
+ * allocated on the heap may not be aligned 16). The class has a data member of `ARBOR graph` type that must be aligned
+ * on a 16-byte boundary.
+ */
 class graph_window: public child_window_impl<graph_window>
 {
 public:
@@ -10,8 +21,23 @@ public:
         :
         base_class_t(true),
         m_graph {},
+        m_vertices {},
+        m_edges {},
+        m_areaStrokeStyle {},
         m_dpiChangedMessage {dpiChangedMessage}
     {
+    }
+
+    static void* operator new(_In_ const size_t size)
+    {
+        STLADD aligned_sse_allocator<graph_window> allocator {};
+        return allocator.allocate(size / sizeof(graph_window));
+    }
+
+    static void operator delete(_In_ void* p, _In_ const size_t size)
+    {
+        STLADD aligned_sse_allocator<graph_window> allocator {};
+        allocator.deallocate(static_cast<graph_window*> (p), size);
     }
 
     _Check_return_ virtual HWND create(_In_ const HWND hParent) override;
@@ -29,39 +55,63 @@ public:
         m_graph.addEdge(std::move(tail), std::move(head), length);
     }
 
+    void clear() noexcept
+    {
+        m_graph.clear();
+        m_vertices.clear();
+        m_edges.clear();
+    }
+
 
 protected:
     virtual LRESULT createHandler() override;
-    virtual void sizeHandler(_In_ const LONG nNewWidth, _In_ const LONG nNewHeight) override;
-    virtual void draw() const override;
+    virtual void draw() override;
 
-    virtual void createDeviceResources() override
-    {
-        m_direct2DContext->CreateSolidColorBrush(
-            D2D1::ColorF {GetSysColor(COLOR_WINDOWTEXT), 1.0f}, m_brush.getAddressOf());
-        m_direct2DContext->CreateSolidColorBrush(m_color, m_ellipseBrush.getAddressOf());
-    }
-
-    virtual void releaseDeviceResources() override
-    {
-        m_ellipseBrush.reset();
-        m_brush.reset();
-    }
+    virtual void createDeviceResources() override;
+    virtual void releaseDeviceResources() override;
 
 
 private:
     typedef child_window_impl base_class_t;
+    typedef std::vector<std::unique_ptr<vertex_draw>> vertices_draw_cont_t;
+    typedef std::vector<std::unique_ptr<edge_draw>> edges_draw_cont_t;
+
+    static __m128 __vectorcall logicalToGraph(
+        _In_ const __m128 value, _In_ const __m128 logicalSize, _In_ const __m128 viewBound);
+    static __m128 __vectorcall graphToLogical(
+        _In_ const __m128 value, _In_ const __m128 logicalSize, _In_ const __m128 viewBound);
 
     void scrollHandler(_In_ int nBar, _In_ const WORD nScrollingRequest, _In_ const WORD nPosition);
     void scrollContent(_In_ int nBar, _In_ const int nPos);
+    HRESULT createTextLayout(
+        _In_ const STLADD string_type* text, _COM_Outptr_result_maybenull_ IDWriteTextLayout** textLayout) const;
+    void __fastcall connectAreas(
+        _In_ const D2D1_ELLIPSE& tailArea,
+        _In_ const D2D1_ELLIPSE& headArea,
+        _In_ const bool directed,
+        _In_ ID2D1SolidColorBrush* brush) const noexcept;
+    _Success_(return) bool __fastcall getEllipsePoint(
+        _In_ const D2D1_ELLIPSE& tailArea,
+        _In_ const D2D1_ELLIPSE& headArea,
+        _Out_ D2D1_POINT_2F* point) const noexcept;
+    _Success_(return) bool __fastcall getArrow(
+        _In_ const D2D1_POINT_2F& tailPoint,
+        _In_ const D2D1_POINT_2F& headPoint,
+        _Out_ D2D1_POINT_2F* left,
+        _Out_ D2D1_POINT_2F* right) const noexcept;
+
+    // `m_vertexNameWidth` limits text of a vertex to a part of this window width. Strictly speaking not a good
+    // solution.
+    static constexpr float m_vertexNameWidth = 0.3f;
+    static constexpr float m_arrowLength = 7.75f;
+    static constexpr float m_arrowHalfWidth = 1.5f;
+    static constexpr float m_margin = 120.0f;
 
     ARBOR graph m_graph;
-    D2D1_COLOR_F m_color {D2D1::ColorF {GetSysColor(COLOR_WINDOWTEXT), 1.0f}};
-    ATLADD com_ptr<ID2D1SolidColorBrush> m_brush {};
-    ATLADD com_ptr<ID2D1SolidColorBrush> m_ellipseBrush {};
-    ATLADD com_ptr<ID2D1PathGeometry1> m_g {};
-    ATLADD com_ptr<ID2D1EllipseGeometry> m_ellipse {};
-    ATLADD com_ptr<IDWriteTextFormat> m_tf {};
+    vertices_draw_cont_t m_vertices;
+    edges_draw_cont_t m_edges;
+    ATLADD com_ptr<ID2D1StrokeStyle1> m_areaStrokeStyle;
     UINT m_dpiChangedMessage;
 };
+
 ATLADD_END

@@ -750,7 +750,7 @@ BOOL window_impl<T>::ProcessWindowMessage(
                     sizeHandler(pWindowPos->cx, pWindowPos->cy);
                 }
             }
-            else
+            else if ((!(SWP_NOSIZE & pWindowPos->flags)) || (SWP_SHOWWINDOW & pWindowPos->flags))
             {
                 RECT rect;
                 GetClientRect(&rect);

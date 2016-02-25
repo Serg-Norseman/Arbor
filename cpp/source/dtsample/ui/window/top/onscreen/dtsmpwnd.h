@@ -100,6 +100,7 @@ private:
     }
 
     void resizeVisual();
+    void addDataToTheGraph();
 
     ATLADD com_ptr<ITaskbarList3> m_taskbarList3;
     HCURSOR m_hAppStartingCursor;

@@ -63,7 +63,7 @@
     <Import Project="..\properties\include directories.props" />
     <Import Project="..\properties\warning level.props" />
     <Import Project="..\properties\multi-processor compilation.props" />
-    <Import Project="..\properties\directxmath.props" />
+    <Import Project="..\properties\floating point.props" />
     <Import Project="..\properties\cl general.props" />
     <Import Project="..\properties\cl optimization.props" />
     <Import Project="..\properties\cl code generation.props" />
@@ -138,7 +138,7 @@
     <ClCompile Include="..\..\source\arborgvt\service\miscutil.cpp" />
     <ClCompile Include="..\..\source\arborgvt\service\stladdon.cpp" />
     <ClCompile Include="..\..\source\arborgvt\service\strgutil.cpp" />
-    <ClCompile Include="..\..\source\arborgvt\ui\nowindow\avisimpl.cpp" />
+    <ClCompile Include="..\..\source\arborgvt\ui\nowindow\avisimpl\avisimpl.cpp" />
     <ClCompile Include="..\..\source\arborgvt\ui\window\child\onscreen\graphwnd.cpp" />
     <ClCompile Include="..\..\source\arborgvt\ui\window\wi.cpp" />
   </ItemGroup>
@@ -159,7 +159,7 @@
     <ClInclude Include="..\..\source\arborgvt\service\com\impl.h" />
     <ClInclude Include="..\..\source\arborgvt\service\functype.h" />
     <ClInclude Include="..\..\source\arborgvt\service\miscutil.h" />
-    <ClInclude Include="..\..\source\arborgvt\service\ssetype.h" />
+    <ClInclude Include="..\..\source\arborgvt\service\sse.h" />
     <ClInclude Include="..\..\source\arborgvt\service\stladdon.h" />
     <ClInclude Include="..\..\source\arborgvt\service\strgutil.h" />
     <ClInclude Include="..\..\source\arborgvt\service\winapi\chkerror.h" />
@@ -169,7 +169,8 @@
     <ClInclude Include="..\..\source\arborgvt\service\winapi\theme.h" />
     <ClInclude Include="..\..\source\arborgvt\service\winapi\uh.h" />
     <ClInclude Include="..\..\source\arborgvt\service\winapi\wam\animatio.h" />
-    <ClInclude Include="..\..\source\arborgvt\ui\nowindow\avisimpl.h" />
+    <ClInclude Include="..\..\source\arborgvt\ui\nowindow\avisimpl\avisimpl.h" />
+    <ClInclude Include="..\..\source\arborgvt\ui\nowindow\graph\draw.h" />
     <ClInclude Include="..\..\source\arborgvt\ui\window\child\cwi.h" />
     <ClInclude Include="..\..\source\arborgvt\ui\window\child\onscreen\graphwnd.h" />
     <ClInclude Include="..\..\source\arborgvt\ui\window\wi.h" />

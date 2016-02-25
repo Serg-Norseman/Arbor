@@ -1,6 +1,7 @@
 #include "graph\graph.h"
 
 ARBOR_BEGIN
+
 /**
  * Adds a new edge to the graph. The edge connects two specified vertices.
  *
@@ -14,6 +15,12 @@ ARBOR_BEGIN
  *
  * Returns:
  * N/A.
+ *
+ * Remarks:
+ * The method exclusively locks the `m_verticesLock` mutex first and then acquires the `m_edgesLock` mutex. If another
+ * thread, using another method of this class, will obtain the locks in a different order, a deadlock may occur. To
+ * avoid it all threads must use the same order when they acquire the locks or try-to-acquire forms of lock must be
+ * used (with `std::try_to_lock` argument).
  */
 void graph::addEdge(_In_ STLADD string_type&& tail, _In_ STLADD string_type&& head, _In_ float length)
 {
@@ -33,12 +40,28 @@ void graph::addEdge(_In_ STLADD string_type&& tail, _In_ STLADD string_type&& he
     }
     if (noEdge)
     {
-        STLADD default_allocator<edge> allocator {};
-        edge* p = allocator.allocate(1);
-        allocator.construct(p, tailVertex, headVertex, length, m_stiffness);
+        edge* p = new edge {tailVertex, headVertex, true, length, m_stiffness};
         STLADD lock_guard_exclusive<WAPI srw_lock> lock {m_edgesLock};
         m_edges.emplace_back(p);
     }
+}
+
+
+/**
+ * Removes all edges and vertices from this graph.
+ *
+ * Parameters:
+ * None.
+ *
+ * Returns:
+ * N/A.
+ */
+void graph::clear() noexcept
+{
+    STLADD lock_guard_exclusive<WAPI srw_lock> verticesLock {m_verticesLock};
+    STLADD lock_guard_shared<WAPI srw_lock> lock {m_edgesLock};
+    m_edges.clear();
+    m_vertices.clear();
 }
 
 
@@ -90,21 +113,44 @@ const vertex* graph::addVertex(_In_ STLADD string_type&& name)
  *    recursive nor can be upgraded from shared to exclusive mode, the caller has to obtain exclusive SRW lock from the
  *    beginning.
  *
- * Therefore, BE CAREFUL: this method doesn't obtain any locks! It totally relis on caller.
+ * Therefore, BE CAREFUL: this method doesn't obtain any locks! It totally relies on caller.
  */
 const vertex* __vectorcall graph::addVertex(_In_ STLADD string_type&& name, _In_ const __m128 coordinates)
 {
-    // Don't obtain a shared lock here; caller has to do this.
-    auto it = m_vertices.find(name);
-    if (m_vertices.end() == it)
-    {
-        STLADD string_type key {name};
-        // And no an exclusive lock here too.
-        std::pair<vertices_cont_t::iterator, bool> result =
-            m_vertices.emplace(key, vertex {std::move(name), coordinates});
-        it = result.first;
-    }
-    return &(it->second);
+    /*
+     * About order of evaluation of inside initializer-list.
+     * >8.5.4 List-initialization [dcl.init.list]
+     * >4 Within the initializer-list of a braced-init-list, the initializer-clauses, including any that result from
+     * >pack expansions (14.5.3), are evaluated in the order in which they appear. That is, every value computation and
+     * >side effect associated with a given initializer-clause is sequenced before every value computation and
+     * >side effect associated with any initializer-clause that follows it in the comma-separated list of the
+     * >initializer-list. [Note: This evaluation ordering holds regardless of the semantics of the initialization;
+     * >for example, it applies when the elements of the initializer-list are interpreted as arguments of a constructor
+     * >call, even though ordinarily there are no sequencing constraints on the arguments of a call. -end note].
+     *
+     * If MSVC 2015 Update 2 will really consider this as it's expected (MSVC before 2015 Update 2 release doesn't),
+     * the following code can be changed like this:
+     * // For MSVC 2015 Update 1 and below:
+     * STLADD string_type key {name};
+     * std::pair<vertices_cont_t::iterator, bool> result =
+     *     m_vertices.emplace(key, vertex {std::move(name), coordinates});
+     *
+     * // For MSVC 2015 Update 2 and above:
+     * std::pair<vertices_cont_t::iterator, bool> result =
+     *     m_vertices.insert({name, vertex {std::move(name), coordinates}});
+     *
+     * Thus, the above code for 'VC 2015 Update 2' calls this template ctor of `std::pair`:
+     * std::pair(std::basic_string<...>& _Val1, arbor::vertex&& _Val2 = {...});
+     * with arguments deduced as:
+     *     - for template ctor itself: <std::basic_string<...>& __ptr64, arbor::vertex, void>,
+     *     - for `pair` template class: <std::basic_string<...> const, arbor::vertex>.
+     * Following [8.5.4.4] the code, at first, makes a copy of `name` argument (passing it as `_Val1` parameter),
+     * and after that the code moves `name` into `vertex` ctor.
+     */
+    STLADD string_type key {name};
+    std::pair<vertices_cont_t::iterator, bool> result =
+        m_vertices.emplace(key, vertex {std::move(name), coordinates});
+    return &(result.first->second);
 }
 
 ARBOR_END

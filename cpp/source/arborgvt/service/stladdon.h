@@ -311,7 +311,7 @@ __pragma(warning(pop))
 
     void deallocate(_In_ void* p) const
     {
-        deallocate(p, 0);
+        deallocate(static_cast<const pointer> (p), 0);
     }
 
 
@@ -341,14 +341,17 @@ public:
     };
 };
 
+template <typename T>
+using aligned_sse_allocator = aligned_allocator<T, alignof(__m128)>;
+
 
 
 /**
- * smart_ptr_deleter class.
+ * default_deleter class.
  * Deleter that uses memory_manager service.
  */
 template <typename T>
-class smart_ptr_deleter
+class default_deleter
 {
 public:
     typedef typename std::conditional<std::is_pointer<T>::value, typename std::remove_pointer<T>::type, T>::type
@@ -358,13 +361,14 @@ public:
     void operator ()(_In_ pointer p)
     {
         default_allocator<element_type> allocator {};
+        allocator.destroy(p);
         allocator.deallocate(p);
     }
 };
 
 
 
-template <typename T>
+template <typename T, std::size_t Alignment>
 class aligned_deleter
 {
 public:
@@ -374,16 +378,20 @@ public:
 
     void operator ()(_In_ pointer p)
     {
-        aligned_allocator<element_type> allocator {};
+        aligned_allocator<element_type, Alignment> allocator {};
+        allocator.destroy(p);
         allocator.deallocate(p);
     }
 };
+
+template <typename T>
+using aligned_sse_deleter = aligned_deleter<T, alignof(__m128)>;
 #pragma endregion memory resource handling
 
 #pragma region typedefs
-typedef std::unique_ptr<LOGFONT, smart_ptr_deleter<LOGFONT>> logfont_unique_ptr_t;
-typedef std::unique_ptr<unsigned char, smart_ptr_deleter<unsigned char>> u_char_unique_ptr_t;
-typedef std::unique_ptr<TCHAR, smart_ptr_deleter<TCHAR>> t_char_unique_ptr_t;
+typedef std::unique_ptr<LOGFONT, default_deleter<LOGFONT>> logfont_unique_ptr_t;
+typedef std::unique_ptr<unsigned char, default_deleter<unsigned char>> u_char_unique_ptr_t;
+typedef std::unique_ptr<TCHAR, default_deleter<TCHAR>> t_char_unique_ptr_t;
 
 typedef std::basic_string<wchar_t, std::char_traits<wchar_t>, default_allocator<wchar_t>> w_string_type;
 typedef std::basic_string<char, std::char_traits<char>, default_allocator<char>> a_string_type;

@@ -5,6 +5,7 @@
 #include <UIAnimation.h>
 
 WAPI_BEGIN
+
 class animation
 {
 public:
@@ -76,4 +77,5 @@ private:
     ATLADD com_ptr<IUIAnimationManager2> m_animationManager;
     ATLADD com_ptr<IUIAnimationTimer> m_animationTimer;
 };
+
 WAPI_END

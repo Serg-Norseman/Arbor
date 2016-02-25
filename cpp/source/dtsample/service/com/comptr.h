@@ -152,8 +152,7 @@ public:
         return SUCCEEDED(m_p->QueryInterface(temp.getAddressOf())) ? temp : nullptr;
     }
 
-    _Check_return_ HRESULT coCreateInstance(
-        _In_ const IID& iid, _Inout_opt_ IUnknown* pOuter, _In_ DWORD nClsContext) noexcept
+    HRESULT coCreateInstance(_In_ const IID& iid, _Inout_opt_ IUnknown* pOuter, _In_ DWORD nClsContext) noexcept
     {
         assert(nullptr == m_p);
         return ::CoCreateInstance(iid, pOuter, nClsContext, __uuidof(T), reinterpret_cast<void**> (&m_p));
