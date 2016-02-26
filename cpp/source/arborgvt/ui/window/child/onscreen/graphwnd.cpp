@@ -169,101 +169,118 @@ void graph_window::draw()
      * I didn't compare the evils. But I believe that searching in a lookup table ain't faster than double calculation
      * made by SSE instructions. Especially, when size of the graph (and therefore size of the lookup table) will be big
      * enough.
+     *
+     * This method may change graph's objects (it sets user-defined data for vertices and edges). Therefore this method
+     * has to obtain _exclusive_ locks before it can access vertices and/or edges. Thus no one can change graph while
+     * this method renders it. This method must obtain vertices lock first and then edges lock -- only this order is
+     * allowed; otherwise a deadlock may occur.
      */
-    for (auto it = m_graph.verticesBegin(); m_graph.verticesEnd() != it; ++it)
+    STLADD lock_guard_exclusive<WAPI srw_lock> verticesLock {m_graph.getVerticesLock(), std::try_to_lock};
+    if (verticesLock)
     {
-        __m128 coordinate = it->getCoordinates();
-        if (_mm_movemask_ps(_mm_cmpeq_ps(coordinate, coordinate)))
+        // I see no sense to draw only vertices (under a designated lock) on the first step and then draw edges having
+        // locks on the both containers.
+        STLADD lock_guard_exclusive<WAPI srw_lock> edgesLock {m_graph.getEdgesLock(), std::try_to_lock};
+        if (edgesLock)
         {
-            coordinate = graphToLogical(coordinate, size, viewBound);
-            auto draw = static_cast<vertex_draw*> (it->getData());
-            if (!draw)
+            for (auto it = m_graph.verticesBegin(); m_graph.verticesEnd() != it; ++it)
             {
-                /*
-                 * If a vertex was added after device resources had created...
-                 *
-                 * This method may modify `m_graph`'s elements; that's why `draw` is non-const method. I don't want to
-                 * issue additional loops on each `WM_PAINT` before a render stage -- this is a waste of CPU resources.
-                 */
-                ATLADD com_ptr<IDWriteTextLayout> layout {};
-                if (SUCCEEDED(createTextLayout(it->getName(), layout.getAddressOf())))
+                __m128 coordinate = it->getCoordinates();
+                if (_mm_movemask_ps(_mm_cmpeq_ps(coordinate, coordinate)))
                 {
-                    draw = new vertex_draw {std::move(layout)};
-                    m_vertices.emplace_back(draw);
-                    it->setData(draw);
-                    draw->createDeviceResources(m_direct2DContext.get(), m_hWnd, *it);
-                }
-            }
-            D2D1_ELLIPSE area;
-            if (SUCCEEDED(draw->getArea(coordinate, &area)))
-            {
-                /*
-                 * Be aware that `vertex_draw::getXXXXBrush` method below uses COM reference counting that can be
-                 * omitted here, 'cos `brush` is definitely local-only COM object.
-                 *
-                 * If you can guarantee that 'out' parameter of `vertex_draw::getXXXXBrush` method is always local only,
-                 * you can safely modify `getBrush` in a way that it will not use COM reference counting.
-                 */
-                ATLADD com_ptr<ID2D1SolidColorBrush> brush {};
-                if (S_OK == draw->getBrush(brush.getAddressOf()))
-                {
-                    m_direct2DContext->FillEllipse(area, brush.get());
-                }
-                brush.reset();
-                if (S_OK == draw->getTextBrush(brush.getAddressOf()))
-                {
-                    if (m_areaStrokeStyle)
+                    coordinate = graphToLogical(coordinate, size, viewBound);
+                    auto draw = static_cast<vertex_draw*> (it->getData());
+                    if (!draw)
                     {
-                        m_direct2DContext->DrawEllipse(area, brush.get(), 1.0f, m_areaStrokeStyle.get());
-                    }
-                    ATLADD com_ptr<IDWriteTextLayout> layout {};
-                    if (S_OK == draw->getTextLayout(layout.getAddressOf()))
-                    {
-                        DWRITE_TEXT_METRICS metrics;
-                        if (SUCCEEDED(layout->GetMetrics(&metrics)))
+                        /*
+                         * If a vertex was added after device resources had created...
+                         *
+                         * This method may modify `m_graph`'s elements; that's why `draw` is non-const method. I don't
+                         * want to issue additional loops on each `WM_PAINT` before a render stage -- this is a waste of
+                         * CPU resources.
+                         */
+                        ATLADD com_ptr<IDWriteTextLayout> layout {};
+                        if (SUCCEEDED(createTextLayout(it->getName(), layout.getAddressOf())))
                         {
-                            D2D1_POINT_2F origin = D2D1::Point2F(
-                                area.point.x - (metrics.width * 0.5f), area.point.y - (metrics.height * 0.5f));
-                            m_direct2DContext->DrawTextLayout(
-                                origin, layout.get(), brush.get(), D2D1_DRAW_TEXT_OPTIONS_NONE);
+                            draw = new vertex_draw {std::move(layout)};
+                            m_vertices.emplace_back(draw);
+                            it->setData(draw);
+                            draw->createDeviceResources(m_direct2DContext.get(), m_hWnd, *it);
+                        }
+                    }
+                    D2D1_ELLIPSE area;
+                    if (SUCCEEDED(draw->getArea(coordinate, &area)))
+                    {
+                        /*
+                         * Be aware that `vertex_draw::getXXXXBrush` method below uses COM reference counting that can
+                         * be omitted here, 'cos `brush` is definitely local-only COM object.
+                         *
+                         * If you can guarantee that 'out' parameter of `vertex_draw::getXXXXBrush` method is always
+                         * local only, you can safely modify `getBrush` in a way that it will not use COM reference
+                         * counting.
+                         */
+                        ATLADD com_ptr<ID2D1SolidColorBrush> brush {};
+                        if (S_OK == draw->getBrush(brush.getAddressOf()))
+                        {
+                            m_direct2DContext->FillEllipse(area, brush.get());
+                        }
+                        brush.reset();
+                        if (S_OK == draw->getTextBrush(brush.getAddressOf()))
+                        {
+                            if (m_areaStrokeStyle)
+                            {
+                                m_direct2DContext->DrawEllipse(area, brush.get(), 1.0f, m_areaStrokeStyle.get());
+                            }
+                            ATLADD com_ptr<IDWriteTextLayout> layout {};
+                            if (S_OK == draw->getTextLayout(layout.getAddressOf()))
+                            {
+                                DWRITE_TEXT_METRICS metrics;
+                                if (SUCCEEDED(layout->GetMetrics(&metrics)))
+                                {
+                                    D2D1_POINT_2F origin = D2D1::Point2F(
+                                        area.point.x - (metrics.width * 0.5f), area.point.y - (metrics.height * 0.5f));
+                                    m_direct2DContext->DrawTextLayout(
+                                        origin, layout.get(), brush.get(), D2D1_DRAW_TEXT_OPTIONS_NONE);
+                                }
+                            }
                         }
                     }
                 }
             }
-        }
-    }
-    for (auto it = m_graph.edgesBegin(); m_graph.edgesEnd() != it; ++it)
-    {
-        const ARBOR vertex* tail = (*it)->getTail();
-        __m128 tailCoordinate = tail->getCoordinates();
-        if (_mm_movemask_ps(_mm_cmpeq_ps(tailCoordinate, tailCoordinate)))
-        {
-            const ARBOR vertex* head = (*it)->getHead();
-            __m128 headCoordinate = head->getCoordinates();
-            if (_mm_movemask_ps(_mm_cmpeq_ps(headCoordinate, headCoordinate)))
+            for (auto it = m_graph.edgesBegin(); m_graph.edgesEnd() != it; ++it)
             {
-                tailCoordinate = graphToLogical(tailCoordinate, size, viewBound);
-                headCoordinate = graphToLogical(headCoordinate, size, viewBound);
-                // Get tail and head ellipses.
-                auto tailDraw = static_cast<vertex_draw*> (tail->getData());
-                auto headDraw = static_cast<vertex_draw*> (head->getData());
-                D2D1_ELLIPSE tailArea;
-                D2D1_ELLIPSE headArea;
-                if (SUCCEEDED(tailDraw->getArea(tailCoordinate, &tailArea)) &&
-                    SUCCEEDED(headDraw->getArea(headCoordinate, &headArea)))
+                const ARBOR vertex* tail = (*it)->getTail();
+                __m128 tailCoordinate = tail->getCoordinates();
+                if (_mm_movemask_ps(_mm_cmpeq_ps(tailCoordinate, tailCoordinate)))
                 {
-                    auto draw = static_cast<edge_draw*> ((*it)->getData());
-                    if (!draw)
+                    const ARBOR vertex* head = (*it)->getHead();
+                    __m128 headCoordinate = head->getCoordinates();
+                    if (_mm_movemask_ps(_mm_cmpeq_ps(headCoordinate, headCoordinate)))
                     {
-                        draw = new edge_draw {};
-                        m_edges.emplace_back(draw);
-                        (*it)->setData(draw);
-                        draw->createDeviceResources(m_direct2DContext.get(), **it);
-                    }
-                    ATLADD com_ptr<ID2D1SolidColorBrush> brush {};
-                    if (S_OK == draw->getBrush(brush.getAddressOf()))
-                    {
-                        connectAreas(tailArea, headArea, (*it)->getDirected(), brush.get());
+                        tailCoordinate = graphToLogical(tailCoordinate, size, viewBound);
+                        headCoordinate = graphToLogical(headCoordinate, size, viewBound);
+                        // Get tail and head ellipses.
+                        auto tailDraw = static_cast<vertex_draw*> (tail->getData());
+                        auto headDraw = static_cast<vertex_draw*> (head->getData());
+                        D2D1_ELLIPSE tailArea;
+                        D2D1_ELLIPSE headArea;
+                        if (SUCCEEDED(tailDraw->getArea(tailCoordinate, &tailArea)) &&
+                            SUCCEEDED(headDraw->getArea(headCoordinate, &headArea)))
+                        {
+                            auto draw = static_cast<edge_draw*> ((*it)->getData());
+                            if (!draw)
+                            {
+                                draw = new edge_draw {};
+                                m_edges.emplace_back(draw);
+                                (*it)->setData(draw);
+                                draw->createDeviceResources(m_direct2DContext.get(), **it);
+                            }
+                            ATLADD com_ptr<ID2D1SolidColorBrush> brush {};
+                            if (S_OK == draw->getBrush(brush.getAddressOf()))
+                            {
+                                connectAreas(tailArea, headArea, (*it)->getDirected(), brush.get());
+                            }
+                        }
                     }
                 }
             }

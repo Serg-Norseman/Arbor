@@ -26,7 +26,7 @@ int APIENTRY wWinMain(
     {
         // May be 'InitCommonControlsEx' is required here to use visual styles with scroll bars.
 
-        MISCUTIL windows_system::setProcessExplicitAppUserModelID(L"Serg-Norseman.Arbor.dtsample");
+        SetCurrentProcessExplicitAppUserModelID(L"Serg-Norseman.Arbor.dtsample");
         UINT nTaskbarButtonCreatedMessage = RegisterWindowMessage(TEXT("TaskbarButtonCreated"));
         auto window = std::make_unique<ATLADD desktop_sample_window>(nTaskbarButtonCreatedMessage);
         if (window)

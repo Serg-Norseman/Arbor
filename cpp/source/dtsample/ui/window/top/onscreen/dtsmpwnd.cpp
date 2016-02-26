@@ -577,27 +577,36 @@ void desktop_sample_window::resizeVisual()
 void desktop_sample_window::addDataToTheGraph()
 {
     using namespace std::string_literals;
-    HRESULT hr = m_visual->addEdge(TEXT("vertex.1"s), TEXT("vertex.1.2"s), 1.5f);
-    if (SUCCEEDED(hr))
+    try
     {
-        hr = m_visual->addEdge(TEXT("vertex.1"s), TEXT("vertex.1.3"s), 1.75f);
+        HRESULT hr = m_visual->addEdge(TEXT("vertex.1"s), TEXT("vertex.1.2"s), 1.5f);
         if (SUCCEEDED(hr))
         {
-            hr = m_visual->addEdge(TEXT("vertex.1.2"s), TEXT("vertex.1.2.4"s), 1.75f);
+            hr = m_visual->addEdge(TEXT("vertex.1"s), TEXT("vertex.1.3"s), 1.75f);
             if (SUCCEEDED(hr))
             {
-                hr = m_visual->addEdge(TEXT("vertex.1.2"s), TEXT("big vertex.1.2.5 derived\nfrom vertex.1.2"s), 1.75f);
+                hr = m_visual->addEdge(TEXT("vertex.1.2"s), TEXT("vertex.1.2.4"s), 1.75f);
                 if (SUCCEEDED(hr))
                 {
-                    HWND visualHWND;
-                    hr = m_visual->getHWND(&visualHWND);
-                    if (m_visual && (S_OK == hr))
+                    hr = m_visual->addEdge(
+                        TEXT("vertex.1.2"s), TEXT("big vertex.1.2.5 derived\nfrom vertex.1.2"s), 1.75f);
+                    if (SUCCEEDED(hr))
                     {
-                        ::InvalidateRect(visualHWND, nullptr, FALSE);
+                        HWND visualHWND;
+                        hr = m_visual->getHWND(&visualHWND);
+                        if (m_visual && (S_OK == hr))
+                        {
+                            ::InvalidateRect(visualHWND, nullptr, FALSE);
+                        }
                     }
                 }
             }
         }
+    }
+    catch (std::bad_alloc& e)
+    {
+        ::MessageBoxA(m_hWnd, e.what(), nullptr, MB_OK | MB_ICONERROR);
+        DestroyWindow();
     }
 }
 #pragma endregion desktop_sample_window implementation
