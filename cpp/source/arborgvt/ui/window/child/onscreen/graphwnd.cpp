@@ -205,7 +205,7 @@ void graph_window::draw()
                             draw = new vertex_draw {std::move(layout)};
                             m_vertices.emplace_back(draw);
                             it->setData(draw);
-                            draw->createDeviceResources(m_direct2DContext.get(), m_hWnd, *it);
+                            draw->createDeviceResources(m_direct2DContext.get(), *it);
                         }
                     }
                     D2D1_ELLIPSE area;
@@ -317,7 +317,7 @@ void graph_window::createDeviceResources()
                 it->setData(draw);
             }
         }
-        draw->createDeviceResources(m_direct2DContext.get(), m_hWnd, *it);
+        draw->createDeviceResources(m_direct2DContext.get(), *it);
     }
     for (auto it = m_graph.edgesBegin(); m_graph.edgesEnd() != it; ++it)
     {
