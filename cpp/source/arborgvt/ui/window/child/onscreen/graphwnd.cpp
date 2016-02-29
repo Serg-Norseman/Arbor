@@ -1,7 +1,9 @@
+﻿#include "service\sse.h"
 #include "ui\window\child\onscreen\graphwnd.h"
 #include <random>
 
 ATLADD_BEGIN
+
 /**
  * Creates this window.
  *
@@ -93,34 +95,6 @@ BOOL graph_window::ProcessWindowMessage(
             }
             break;
 
-            case WM_LBUTTONUP:
-            {
-                float fDPIX;
-                float fDPIY;
-                if (m_direct2DContext && SUCCEEDED(getDpiForMonitor(m_hWnd, &fDPIX, &fDPIY)))
-                {
-                    D2D1_MATRIX_3X2_F transform;
-                    m_direct2DContext->GetTransform(&transform);
-                    D2D1_SIZE_F offset {};
-                    BOOL contains;
-                    D2D1_POINT_2F point = D2D1::Point2F(
-                        physicalToLogical(GET_X_LPARAM(nLParam), fDPIX) - transform._31,
-                        physicalToLogical(GET_Y_LPARAM(nLParam), fDPIY) - transform._32);
-                    if (SUCCEEDED(m_ellipse->FillContainsPoint(point, nullptr, &contains)) && contains)
-                    {
-                        std::random_device rd {};
-                        std::mt19937 gen {rd()};
-                        std::uniform_real_distribution<float> dist {0.0f, 1.0f};
-                        m_color = D2D1::ColorF {dist(gen), dist(gen), dist(gen), 1.0f};
-                        Invalidate(FALSE);
-                        UpdateWindow();
-                    }
-                }
-                nLResult = 0;
-                bHandled = TRUE;
-            }
-            break;
-
             default:
             {
                 bHandled = base_class_t::ProcessWindowMessage(hWnd, nMessage, nWParam, nLParam, nLResult, nMsgMapID);
@@ -133,100 +107,31 @@ BOOL graph_window::ProcessWindowMessage(
 
 
 /**
- * Handles WM_CREATE message.
+ * WM_CREATE message handler.
  *
  * Parameters:
  * None.
  *
  * Returns:
- * N/A.
+ * To continue creation of the window returns 0. To destroy the window returns -1.
  */
 LRESULT graph_window::createHandler()
 {
     LRESULT nResult = base_class_t::createHandler();
     if (!nResult)
     {
-        RECT rect;
-        GetClientRect(&rect);
-        ATLADD com_ptr<ID2D1GeometrySink> s {};
-        m_direct2DFactory->CreatePathGeometry(m_g.getAddressOf());
-        m_g->Open(s.getAddressOf());
-        const float cfStep = 30.0f;
-        for (unsigned int nIt = 1; static_cast<unsigned int> (rect.right / cfStep) >= nIt; ++nIt)
-        {
-            s->BeginFigure(D2D1::Point2F(std::round(cfStep * nIt) + 0.5f, 0.0f), D2D1_FIGURE_BEGIN_HOLLOW);
-            s->AddLine(D2D1::Point2F(std::round(cfStep * nIt) + 0.5f, static_cast<float> (rect.bottom)));
-            s->EndFigure(D2D1_FIGURE_END_OPEN);
-        }
-        for (unsigned int nIt = 1; static_cast<unsigned int> (rect.bottom / cfStep) >= nIt; ++nIt)
-        {
-            s->BeginFigure(D2D1::Point2F(0.0f, std::round(cfStep * nIt) + 0.5f), D2D1_FIGURE_BEGIN_HOLLOW);
-            s->AddLine(D2D1::Point2F(static_cast<float> (rect.right), std::round(cfStep * nIt) + 0.5f));
-            s->EndFigure(D2D1_FIGURE_END_OPEN);
-        }
-        s->Close();
-        m_direct2DFactory->CreateEllipseGeometry(D2D1::Ellipse(D2D1::Point2F(
-            rect.right * 0.5f, rect.bottom * 0.5f), rect.right * 0.5f, rect.bottom * 0.5f), m_ellipse.getAddressOf());
-        m_directWriteFactory->CreateTextFormat(
-            L"Segoe UI",
-            nullptr,
-            DWRITE_FONT_WEIGHT_NORMAL,
-            DWRITE_FONT_STYLE_NORMAL,
-            DWRITE_FONT_STRETCH_NORMAL,
+        D2D1_STROKE_STYLE_PROPERTIES1 prop = D2D1::StrokeStyleProperties1(
+            D2D1_CAP_STYLE_FLAT,
+            D2D1_CAP_STYLE_FLAT,
+            D2D1_CAP_STYLE_FLAT,
+            D2D1_LINE_JOIN_MITER,
             10.0f,
-            L"ru-ru",
-            m_tf.getAddressOf());
+            D2D1_DASH_STYLE_DASH,
+            0.0f,
+            D2D1_STROKE_TRANSFORM_TYPE_NORMAL);
+        m_direct2DFactory->CreateStrokeStyle(prop, nullptr, 0, m_areaStrokeStyle.getAddressOf());
     }
     return nResult;
-}
-
-
-/**
- * WM_SIZE message handler.
- *
- * Parameters:
- * >nResizingType
- * The type of resizing requested.
- * >nNewWidth
- * The new width of the window.
- * >nNewHeight
- * The new height of the window.
- *
- * Returns:
- * N/A.
- */
-void graph_window::sizeHandler(_In_ const LONG nNewWidth, _In_ const LONG nNewHeight)
-{
-    base_class_t::sizeHandler(nNewWidth, nNewHeight);
-    float fDPIX;
-    float fDPIY;
-    if (SUCCEEDED(getDpiForMonitor(m_hWnd, &fDPIX, &fDPIY)))
-    {
-        RECT rect;
-        GetClientRect(&rect);
-        ATLADD com_ptr<ID2D1GeometrySink> s {};
-        m_g.reset();
-        m_direct2DFactory->CreatePathGeometry(m_g.getAddressOf());
-        m_g->Open(s.getAddressOf());
-        const float cfStep = 30.0f;
-        for (unsigned int nIt = 1; static_cast<unsigned int> (rect.right / cfStep) >= nIt; ++nIt)
-        {
-            s->BeginFigure(D2D1::Point2F(std::round(cfStep * nIt) + 0.5f, 0.0f), D2D1_FIGURE_BEGIN_HOLLOW);
-            s->AddLine(D2D1::Point2F(std::round(cfStep * nIt) + 0.5f, static_cast<float> (rect.bottom)));
-            s->EndFigure(D2D1_FIGURE_END_OPEN);
-        }
-        for (unsigned int nIt = 1; static_cast<unsigned int> (rect.bottom / cfStep) >= nIt; ++nIt)
-        {
-            s->BeginFigure(D2D1::Point2F(0.0f, std::round(cfStep * nIt) + 0.5f), D2D1_FIGURE_BEGIN_HOLLOW);
-            s->AddLine(D2D1::Point2F(static_cast<float> (rect.right), std::round(cfStep * nIt) + 0.5f));
-            s->EndFigure(D2D1_FIGURE_END_OPEN);
-        }
-        s->Close();
-        m_ellipse.reset();
-        m_direct2DFactory->CreateEllipseGeometry(
-            D2D1::Ellipse(D2D1::Point2F(physicalToLogical(rect.right, fDPIX) * 0.5f, 120.0f), 60.0f, 60.0),
-            m_ellipse.getAddressOf());
-    }
 }
 
 
@@ -239,61 +144,312 @@ void graph_window::sizeHandler(_In_ const LONG nNewWidth, _In_ const LONG nNewHe
  * Returns:
  * N/A.
  */
-void graph_window::draw() const
+void graph_window::draw()
 {
+    D2D1_SIZE_F targetSize = m_direct2DContext->GetSize();
+    sse_t value = {targetSize.width, targetSize.height, 0.0f, 0.0f};
+    __m128 size = _mm_load_ps(value.data);
+    __m128 viewBound = m_graph.getViewBound();
+
     m_direct2DContext->Clear(D2D1::ColorF {GetSysColor(COLOR_WINDOW), 1.0f});
-    const float cfStep = 30.0f;
-    RECT rect;
-    GetClientRect(&rect);
-    m_brush->SetOpacity(0.25f);
-    m_direct2DContext->DrawGeometry(m_g.get(), m_brush.get());
-    m_brush->SetOpacity(1.0f);
-    TCHAR sz[8];
-    for (unsigned int nIt = 1; static_cast<unsigned int> (rect.right / cfStep) >= nIt; nIt += 2)
+    /*
+     * Draw vertices and edges.
+     *
+     * To draw a vertex I need to get its coordinate. To draw an edge I need coordinates of both tail vertex and head
+     * vertex.
+     *
+     * Drawing vertices and edges in two separate loops I end up with double calculation of coordinate of each vertex
+     * (one calculation for a vertex itself and and another one -- for edge points). That's evil #1.
+     *
+     * I can use single loop that draws an edge and its vertices on each iteration. Here I need to guarantee that I draw
+     * each vertex only once (for example, if I draw a vertex with transparency effect and so on). Therefore I must have
+     * a lookup table where already drawn vertices are stored. And before draw a vertex I check that table. That's evil
+     * #2.
+     *
+     * I didn't compare the evils. But I believe that searching in a lookup table ain't faster than double calculation
+     * made by SSE instructions. Especially, when size of the graph (and therefore size of the lookup table) will be big
+     * enough.
+     *
+     * This method may change graph's objects (it sets user-defined data for vertices and edges). Therefore this method
+     * has to obtain _exclusive_ locks before it can access vertices and/or edges. Thus no one can change graph while
+     * this method renders it. This method must obtain vertices lock first and then edges lock -- only this order is
+     * allowed; otherwise a deadlock may occur.
+     */
+    STLADD lock_guard_exclusive<WAPI srw_lock> verticesLock {m_graph.getVerticesLock(), std::try_to_lock};
+    if (verticesLock)
     {
-        int nLength = _stprintf_s(sz, L"%.1f", std::round(cfStep * nIt) + 0.5f);
-        m_direct2DContext->DrawText(
-            sz,
-            nLength,
-            m_tf.get(),
-            D2D1::RectF(cfStep * nIt, 0.0f, cfStep * (nIt + 2), static_cast<float> (rect.bottom)),
-            m_brush.get());
+        // I see no sense to draw only vertices (under a designated lock) on the first step and then draw edges having
+        // locks on the both containers.
+        STLADD lock_guard_exclusive<WAPI srw_lock> edgesLock {m_graph.getEdgesLock(), std::try_to_lock};
+        if (edgesLock)
+        {
+            for (auto it = m_graph.verticesBegin(); m_graph.verticesEnd() != it; ++it)
+            {
+                __m128 coordinate = it->getCoordinates();
+                if (_mm_movemask_ps(_mm_cmpeq_ps(coordinate, coordinate)))
+                {
+                    coordinate = graphToLogical(coordinate, size, viewBound);
+                    auto draw = static_cast<vertex_draw*> (it->getData());
+                    if (!draw)
+                    {
+                        /*
+                         * If a vertex was added after device resources had created...
+                         *
+                         * This method may modify `m_graph`'s elements; that's why `draw` is non-const method. I don't
+                         * want to issue additional loops on each `WM_PAINT` before a render stage -- this is a waste of
+                         * CPU resources.
+                         */
+                        ATLADD com_ptr<IDWriteTextLayout> layout {};
+                        if (SUCCEEDED(createTextLayout(it->getName(), layout.getAddressOf())))
+                        {
+                            draw = new vertex_draw {std::move(layout)};
+                            m_vertices.emplace_back(draw);
+                            it->setData(draw);
+                            draw->createDeviceResources(m_direct2DContext.get(), *it);
+                        }
+                    }
+                    D2D1_ELLIPSE area;
+                    if (SUCCEEDED(draw->getArea(coordinate, &area)))
+                    {
+                        /*
+                         * Be aware that `vertex_draw::getXXXXBrush` method below uses COM reference counting that can
+                         * be omitted here, 'cos `brush` is definitely local-only COM object.
+                         *
+                         * If you can guarantee that 'out' parameter of `vertex_draw::getXXXXBrush` method is always
+                         * local only, you can safely modify `getBrush` in a way that it will not use COM reference
+                         * counting.
+                         */
+                        ATLADD com_ptr<ID2D1SolidColorBrush> brush {};
+                        if (S_OK == draw->getBrush(brush.getAddressOf()))
+                        {
+                            m_direct2DContext->FillEllipse(area, brush.get());
+                        }
+                        brush.reset();
+                        if (S_OK == draw->getTextBrush(brush.getAddressOf()))
+                        {
+                            if (m_areaStrokeStyle)
+                            {
+                                m_direct2DContext->DrawEllipse(area, brush.get(), 1.0f, m_areaStrokeStyle.get());
+                            }
+                            ATLADD com_ptr<IDWriteTextLayout> layout {};
+                            if (S_OK == draw->getTextLayout(layout.getAddressOf()))
+                            {
+                                DWRITE_TEXT_METRICS metrics;
+                                if (SUCCEEDED(layout->GetMetrics(&metrics)))
+                                {
+                                    D2D1_POINT_2F origin = D2D1::Point2F(
+                                        area.point.x - (metrics.width * 0.5f), area.point.y - (metrics.height * 0.5f));
+                                    m_direct2DContext->DrawTextLayout(
+                                        origin, layout.get(), brush.get(), D2D1_DRAW_TEXT_OPTIONS_NONE);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            for (auto it = m_graph.edgesBegin(); m_graph.edgesEnd() != it; ++it)
+            {
+                const ARBOR vertex* tail = (*it)->getTail();
+                __m128 tailCoordinate = tail->getCoordinates();
+                if (_mm_movemask_ps(_mm_cmpeq_ps(tailCoordinate, tailCoordinate)))
+                {
+                    const ARBOR vertex* head = (*it)->getHead();
+                    __m128 headCoordinate = head->getCoordinates();
+                    if (_mm_movemask_ps(_mm_cmpeq_ps(headCoordinate, headCoordinate)))
+                    {
+                        tailCoordinate = graphToLogical(tailCoordinate, size, viewBound);
+                        headCoordinate = graphToLogical(headCoordinate, size, viewBound);
+                        // Get tail and head ellipses.
+                        auto tailDraw = static_cast<vertex_draw*> (tail->getData());
+                        auto headDraw = static_cast<vertex_draw*> (head->getData());
+                        D2D1_ELLIPSE tailArea;
+                        D2D1_ELLIPSE headArea;
+                        if (SUCCEEDED(tailDraw->getArea(tailCoordinate, &tailArea)) &&
+                            SUCCEEDED(headDraw->getArea(headCoordinate, &headArea)))
+                        {
+                            auto draw = static_cast<edge_draw*> ((*it)->getData());
+                            if (!draw)
+                            {
+                                draw = new edge_draw {};
+                                m_edges.emplace_back(draw);
+                                (*it)->setData(draw);
+                                draw->createDeviceResources(m_direct2DContext.get(), **it);
+                            }
+                            ATLADD com_ptr<ID2D1SolidColorBrush> brush {};
+                            if (S_OK == draw->getBrush(brush.getAddressOf()))
+                            {
+                                connectAreas(tailArea, headArea, (*it)->getDirected(), brush.get());
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
-    for (unsigned int nIt = 1; static_cast<unsigned int> (rect.bottom / cfStep) >= nIt; nIt += 2)
+}
+
+
+/*
+ * Initializes D2D device specific resources.
+ *
+ * Parameters:
+ * None.
+ *
+ * Returns:
+ * N/A.
+ *
+ * Remarks:
+ * This method may create device-independent resources (for example, `IDWriteTextLayout` objects) bound to a vertex or
+ * to an edge. But the method does it only once, if an object doesn't have an initialized device-independent resource.
+ */
+void graph_window::createDeviceResources()
+{
+    for (auto it = m_graph.verticesBegin(); m_graph.verticesEnd() != it; ++it)
     {
-        int nLength = _stprintf_s(sz, L"%.1f", std::round(cfStep * nIt) + 0.5f);
-        m_direct2DContext->DrawText(
-            sz,
-            nLength,
-            m_tf.get(),
-            D2D1::RectF(0.0f, cfStep * nIt, cfStep * 3.0f, cfStep * (nIt + 1)),
-            m_brush.get());
+        auto draw = static_cast<vertex_draw*> (it->getData());
+        if (!draw)
+        {
+            ATLADD com_ptr<IDWriteTextLayout> layout {};
+            if (SUCCEEDED(createTextLayout(it->getName(), layout.getAddressOf())))
+            {
+                draw = new vertex_draw {std::move(layout)};
+                m_vertices.emplace_back(draw);
+                it->setData(draw);
+            }
+        }
+        draw->createDeviceResources(m_direct2DContext.get(), *it);
     }
-    m_ellipseBrush->SetColor(m_color);
-    m_direct2DContext->FillGeometry(m_ellipse.get(), m_ellipseBrush.get());
-    // C++ overloaded function template `wcscpy_s` doesn't have `_Out_writes_z_` SAL annotation. Therefore to shut the
-    // `C6054' warning down I have to make `sz` zero-terminated explicitly.
-    _tcscpy_s(sz, L"\u2190click!");
-    // This is a sample code so I can accept such code here.
-    sz[_countof(L"\u2190click!") - 1] = L'\x00';
-    size_t nLength = _tcscnlen(sz, _countof(sz));
-    // Shut the `C6385' warning down with the following, very silly code. It's definitely prefast noise. This and above
-    // "fixes" made for MSVC 2015 Update 1.
-    if (0 < nLength)
+    for (auto it = m_graph.edgesBegin(); m_graph.edgesEnd() != it; ++it)
     {
-        D2D1_ELLIPSE ellipse;
-        m_ellipse->GetEllipse(&ellipse);
-        D2D1_POINT_2F origin = D2D1::Point2F(
-            ellipse.point.x + ellipse.radiusX * cos(atan(1.0f)),
-            ellipse.point.y + ellipse.radiusY * cos(atan(1.0f)));
-        D2D1_SIZE_F size = m_direct2DContext->GetSize();
-        m_direct2DContext->DrawText(
-            sz,
-            static_cast<UINT32> (nLength),
-            m_tf.get(),
-            D2D1::RectF(origin.x, origin.y, size.width, size.height),
-            m_brush.get());
+        auto draw = static_cast<edge_draw*> ((*it)->getData());
+        if (!draw)
+        {
+            draw = new edge_draw {};
+            m_edges.emplace_back(draw);
+            (*it)->setData(draw);
+        }
+        draw->createDeviceResources(m_direct2DContext.get(), **it);
     }
+}
+
+
+/**
+ * Releases previously allocated D2D device specific resources.
+ *
+ * Parameters:
+ * None.
+ *
+ * Returns:
+ * N/A.
+ */
+void graph_window::releaseDeviceResources()
+{
+    std::for_each(
+        m_vertices.begin(),
+        m_vertices.end(),
+        [] (_In_ auto& value) -> void
+        {
+            value->releaseDeviceResources();
+        });
+    std::for_each(
+        m_edges.begin(),
+        m_edges.end(),
+        [] (_In_ auto& value) -> void
+        {
+            value->releaseDeviceResources();
+        });
+}
+
+
+/**
+ * Transforms a point in the Direct2D render target's coordinate space (logical coordinates of the D2D device context)
+ * to the graph coordinate space.
+ *
+ * Parameters:
+ * >value
+ * Logical coordinates of the local D2D context to be converted to the graph's space. Must not be NaN; the method
+ * doesn't check this.
+ * >logicalSize
+ * Size of the Direct2D device context render surface.
+ * >viewBound
+ * Size of the graph's view area. See Remarks section for more details.
+ *
+ * Returns:
+ * `value` coordinates converted to the graph coordinate space.
+ *
+ * Remarks:
+ * The graph's view area is a way to create initial animation of all vertices in the graph. When graph animation begins
+ * its view area grows from `4x4' predefined size upto "graph size" (area occupied by all vertices on the current
+ * animation step). To exploit this initial animation this method requires size of "view area", not "graph area".
+ *
+ * Because of some features of the algorithm that calculates vertices position (Barnes Hut and something else I still
+ * ain't aware; it's required more time to dig into C# legacy code) if the method makes direct mapping between the graph
+ * coordinate space and logical space of the Direct2D context, some vertices go beyond the bounds of the HWND. That's
+ * why I have to use the margins (as C# code does).
+ *
+ * In current implementation this method uses `HSUBPS` instruction from SSE3 set without checking CPU capabilities.
+ */
+__m128 graph_window::logicalToGraph(_In_ const __m128 value, _In_ const __m128 logicalSize, _In_ const __m128 viewBound)
+{
+    sse_t marginMem = {m_margin, m_margin, 0.0f, 0.0f};
+    __m128 margin = _mm_load_ps(marginMem.data);
+    __m128 temp = _mm_sub_ps(logicalSize, margin);
+    __m128 viewSize = _mm_hsub_ps(viewBound, viewBound);
+    viewSize = _mm_div_ps(viewSize, temp);
+    marginMem.data[0] = 0.5f;
+    marginMem.data[1] = 0.5f;
+    temp = _mm_load_ps(marginMem.data);
+    margin = _mm_mul_ps(margin, temp);
+    temp = _mm_sub_ps(value, margin);
+    temp = _mm_mul_ps(temp, viewSize);
+    viewSize = _mm_shuffle_ps(viewBound, value, 0b11101101);
+    return _mm_add_ps(temp, viewSize);
+}
+
+
+/**
+ * Transforms a point in the graph coordinate space to Direct2D render target's coordinate space (logical coordinates
+ * of the D2D device context).
+ *
+ * Parameters:
+ * >value
+ * Coordinates in the graph's space to be converted to the logical coordinates of the local D2D context. Must not be
+ * NaN; the method doesn't check this.
+ * >logicalSize
+ * Size of the Direct2D device context render surface.
+ * >viewBound
+ * Size of the graph's view area. See Remarks section for more details.
+ *
+ * Returns:
+ * `value` coordinates converted to logical coordinates of the Direct2D context.
+ *
+ * Remarks:
+ * The graph's view area is a way to create initial animation of all vertices in the graph. When graph animation begins
+ * its view area grows from `4x4' predefined size upto "graph size" (area occupied by all vertices on the current
+ * animation step). To exploit this initial animation this method requires size of "view area", not "graph area".
+ *
+ * Because of some features of the algorithm that calculates vertices position (Barnes Hut and something else I still
+ * ain't aware; it's required more time to dig into C# legacy code) if the method makes direct mapping between the graph
+ * coordinate space and logical space of the Direct2D context, some vertices go beyond the bounds of the HWND. That's
+ * why I have to use the margins (as C# code does).
+ *
+ * In current implementation this method uses `HSUBPS` instruction from SSE3 set without checking CPU capabilities.
+ */
+__m128 graph_window::graphToLogical(_In_ const __m128 value, _In_ const __m128 logicalSize, _In_ const __m128 viewBound)
+{
+    sse_t marginMem = {m_margin, m_margin, 0.0f, 0.0f};
+    __m128 margin = _mm_load_ps(marginMem.data);
+    __m128 temp = _mm_sub_ps(logicalSize, margin);
+    __m128 viewSize = _mm_hsub_ps(viewBound, viewBound);
+    viewSize = _mm_div_ps(temp, viewSize);
+    temp = _mm_shuffle_ps(viewBound, value, 0b11101101);
+    temp = _mm_sub_ps(value, temp);
+    temp = _mm_mul_ps(temp, viewSize);
+    marginMem.data[0] = 0.5f;
+    marginMem.data[1] = 0.5f;
+    viewSize = _mm_load_ps(marginMem.data);
+    margin = _mm_mul_ps(margin, viewSize);
+    return _mm_add_ps(temp, margin);
 }
 
 
@@ -421,4 +577,352 @@ void graph_window::scrollContent(_In_ int nBar, _In_ const int nPos)
         }
     }
 }
+
+
+#pragma region text
+/**
+ * Creates DirectWrite's IDWriteTextLayout object that represents the specified text.
+ *
+ * Parameters:
+ * >text
+ * Source text.
+ * >textLayout
+ * Pointer to pointer that receives the result object (if the method succeeded in terms of the HRESULT).
+ *
+ * Returns:
+ * Standard HRESULT code.
+ */
+HRESULT graph_window::createTextLayout(
+    _In_ const STLADD string_type* text, _COM_Outptr_result_maybenull_ IDWriteTextLayout** textLayout) const
+{
+    D2D1_SIZE_F size;
+    if (m_direct2DContext)
+    {
+        size = m_direct2DContext->GetSize();
+    }
+    else
+    {
+        RECT rect;
+        GetClientRect(&rect);
+        float fDPIX;
+        float fDPIY;
+        if (SUCCEEDED(getDpiForMonitor(m_hWnd, &fDPIX, &fDPIY)))
+        {
+            size.width = physicalToLogical(rect.right, fDPIX);
+            size.height = physicalToLogical(rect.bottom, fDPIY);
+        }
+        else
+        {
+            size.width = static_cast<float> (rect.right);
+            size.height = static_cast<float> (rect.bottom);
+        }
+    }
+    size.width *= m_vertexNameWidth;
+    ATLADD com_ptr<IDWriteTextLayout> layout {};
+    HRESULT hr = base_class_t::createTextLayoutForBodyTitle(text->c_str(), text->size(), &size, layout.getAddressOf());
+    if (SUCCEEDED(hr))
+    {
+        hr = layout->SetWordWrapping(DWRITE_WORD_WRAPPING_NO_WRAP);
+        if (SUCCEEDED(hr))
+        {
+            ATLADD com_ptr<IDWriteInlineObject> sign {};
+            hr = m_directWriteFactory->CreateEllipsisTrimmingSign(layout.get(), sign.getAddressOf());
+            if (SUCCEEDED(hr))
+            {
+                DWRITE_TRIMMING trimmingOptions {DWRITE_TRIMMING_GRANULARITY_CHARACTER, 0, 0};
+                hr = layout->SetTrimming(&trimmingOptions, sign.get());
+            }
+        }
+    }
+    *textLayout = SUCCEEDED(hr) ? layout.detach() : nullptr;
+    return hr;
+}
+#pragma endregion text related methods definitions
+
+
+/**
+ * Draws new edge between two specified vertices.
+ *
+ * Parameters:
+ * >tailArea
+ * Tail vertex.
+ * >headVertex
+ * Head vertex.
+ * >directed
+ * Determines whether an edge must be drawn as directed one.
+ * >brush
+ * A brush to draw the edge on the Direct2D device context.
+ *
+ * Returns:
+ * N/A.
+ *
+ * Remarks:
+ * Current implement can't connect a vertex with itself (it doesn't draw a closed edge).
+ */
+void graph_window::connectAreas(
+    _In_ const D2D1_ELLIPSE& tailArea,
+    _In_ const D2D1_ELLIPSE& headArea,
+    _In_ const bool directed,
+    _In_ ID2D1SolidColorBrush* brush) const noexcept
+{
+    D2D1_POINT_2F tailPoint;
+    if (getEllipsePoint(tailArea, headArea, &tailPoint))
+    {
+        D2D1_POINT_2F headPoint;
+        if (getEllipsePoint(headArea, tailArea, &headPoint))
+        {
+            /*
+             * Check the vectors co-direction.
+             */
+            if (((0 < (tailArea.point.x - headArea.point.x)) && (0 < (tailPoint.x - headPoint.x))) ||
+                ((0 > (tailArea.point.x - headArea.point.x)) && (0 > (tailPoint.x - headPoint.x))) ||
+                ((0 < (tailArea.point.y - headArea.point.y)) && (0 < (tailPoint.y - headPoint.y))) ||
+                ((0 > (tailArea.point.y - headArea.point.y)) && (0 > (tailPoint.y - headPoint.y))))
+            {
+                m_direct2DContext->DrawLine(tailPoint, headPoint, brush);
+                if (directed)
+                {
+                    D2D1_POINT_2F left;
+                    D2D1_POINT_2F right;
+                    if (getArrow(tailPoint, headPoint, &left, &right))
+                    {
+                        m_direct2DContext->DrawLine(left, headPoint, brush);
+                        m_direct2DContext->DrawLine(right, headPoint, brush);
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+/**
+ * Finds out an intersection point of the first specififed ellipse and the segment that begins at the center point of
+ * one ellipse and ends at the center of another ellipse.
+ *
+ * Parameters:
+ * >tailArea
+ * The first ellipse (defines the curve that intersects the segment).
+ * >headVertex
+ * The second ellipse.
+ * >point
+ * The intersection point. When the center point of the `headVertex` is outside of the area occupied by the `tailArea`
+ * this intersection point is always defined. Otherwise the `point` is undefined.
+ *
+ * Returns:
+ * `true` value if the `point` is defined and `false` otherwise.
+ *
+ * Remarks:
+ * This method solves the following task:
+ * Let's assume we have two ellipses (`tailArea` and `headArea`). The center point of the first ellipse is (x0, y0); the
+ * center point of the second ellipse is (x1, y1). Ellipse equation of the first ellipse is:
+ *  (x - x0) * (x - x0)     (y - y0) * (y - y0)
+ * --------------------- + --------------------- = 1,
+ *         a * a                   b * b
+ * where 'a' and 'b' is the x-radius and y-radius of the ellipse respectively.
+ * We also have the following line:
+ *  x - x0     y - y0
+ * -------- = --------,
+ *    m          n
+ * where vector l(m, n) is the directing vector of the line that crosses the center points of the both ellipses.
+ * Therefore m = x1 - x0 and n = y1 - y0.
+ *
+ * If we solve the above system of equations we get the answer:
+ *                        b
+ * x = x0 ± ------------------------- ('+' when x1 > x0 and '-' when x1 < x0),
+                   n * n     b * b
+ *           sqrt(------- + -------)
+ *                 m * m     a * a
+ *           n
+ * y = y0 + --- * (x - x0),
+ *           m
+ * where x is from [x0, x1] and y is from [y0, y1].
+ *
+ * In current implementation this method uses `HSUBPS`, `HADDPS` and `ADDSUBPS` instructions from SSE3 set without
+ * checking CPU capabilities.
+ */
+_Success_(return) bool graph_window::getEllipsePoint(
+    _In_ const D2D1_ELLIPSE& tailArea, _In_ const D2D1_ELLIPSE& headArea, _Out_ D2D1_POINT_2F* point) const noexcept
+{
+    /*
+     * Check position of the `headArea.point`. For `point` be valid, `headArea.point` must be outside of the area of the
+     * `tailArea`.
+     */
+    bool defined = true;
+    if ((tailArea.point.x - tailArea.radiusX <= headArea.point.x) &&
+        (tailArea.point.x + tailArea.radiusX >= headArea.point.x))
+    {
+        sse_t value = {headArea.point.x - tailArea.point.x, tailArea.radiusX, 1.0f, 0.0f};
+        __m128 temp = _mm_load_ps(value.data);
+        temp = _mm_mul_ps(temp, temp);
+        __m128 temp2 = _mm_shuffle_ps(temp, temp, 0b11100101);
+        temp = _mm_div_ss(temp, temp2);
+        temp = _mm_shuffle_ps(temp, temp, 0b11100010);
+        temp = _mm_hsub_ps(temp, temp);
+        temp = _mm_sqrt_ss(temp);
+        value = {tailArea.radiusY, tailArea.point.y, 0.0f, 0.0f};
+        temp2 = _mm_load_ps(value.data);
+        temp = _mm_mul_ss(temp, temp2);
+        temp2 = _mm_shuffle_ps(temp2, temp2, 0b11100101);
+        temp = _mm_shuffle_ps(temp, temp, 0b11100000);
+        temp = _mm_addsub_ps(temp2, temp);
+        _mm_store_ps(value.data, temp);
+        defined = (value.data[0] > headArea.point.y) || (value.data[1] < headArea.point.y);
+    }
+    if (defined)
+    {
+        /*
+         * `headArea.point` is outside of `tailArea` ellipse. Get the intersection point.
+         */
+        __m128 xy;
+        if (tailArea.point.x != headArea.point.x)
+        {
+            sse_t value = {headArea.point.x, tailArea.point.x, headArea.point.y, tailArea.point.y};
+            __m128 temp = _mm_load_ps(value.data);
+            value = {tailArea.radiusX, 0.0f, tailArea.radiusY, 0.0f};
+            __m128 temp2 = _mm_load_ps(value.data);
+            temp = _mm_hsub_ps(temp, temp2);
+            temp = _mm_mul_ps(temp, temp);
+            temp2 = _mm_shuffle_ps(temp, temp, 0b11110101);
+            temp = _mm_div_ps(temp2, temp);
+            temp = _mm_shuffle_ps(temp, temp, 0b11011000);
+            temp = _mm_hadd_ps(temp, temp);
+            temp = _mm_rsqrt_ss(temp);
+            value.data[0] = tailArea.radiusY;
+            value.data[1] = tailArea.point.x;
+            temp2 = _mm_load_ps(value.data);
+            temp = _mm_mul_ss(temp2, temp);
+            temp2 = _mm_shuffle_ps(temp2, temp2, 0b11100101);
+            xy = (tailArea.point.x < headArea.point.x) ? _mm_add_ss(temp2, temp) : _mm_sub_ss(temp2, temp);
+        }
+        else
+        {
+            sse_t value;
+            value.data[0] = tailArea.point.x;
+            xy = _mm_load_ps(value.data);
+        }
+        // Get 'y' coordinate value from computed 'x'.
+        sse_t value;
+        value = {tailArea.point.x, tailArea.radiusX, 1.0f, 0.0f};
+        __m128 temp = _mm_load_ps(value.data);
+        __m128 temp2 = _mm_shuffle_ps(xy, temp, 0b11010100);
+        temp2 = _mm_shuffle_ps(temp2, temp2, 0b11101000);
+        temp2 = _mm_shuffle_ps(temp2, temp, 0b11100100);
+        temp = _mm_sub_ss(temp2, temp);
+        temp = _mm_mul_ps(temp, temp);
+        temp2 = _mm_shuffle_ps(temp, temp, 0b11100101);
+        temp = _mm_div_ss(temp, temp2);
+        temp = _mm_shuffle_ps(temp, temp, 0b11100010);
+        temp = _mm_hsub_ps(temp, temp);
+        temp2 = _mm_shuffle_ps(temp2, temp2, 0b11100111);
+        if (0x01 & _mm_movemask_ps(_mm_cmplt_ss(temp, temp2)))
+        {
+            temp2 = _mm_shuffle_ps(temp2, temp, 0b11010100);
+            temp2 = _mm_shuffle_ps(temp2, temp2, 0b11101000);
+            temp = _mm_shuffle_ps(temp2, temp, 0b11100100);
+        }
+        temp = _mm_sqrt_ss(temp);
+        value = {tailArea.radiusY, tailArea.point.y, 0.0f, 0.0f};
+        temp2 = _mm_load_ps(value.data);
+        temp = _mm_mul_ss(temp, temp2);
+        temp2 = _mm_shuffle_ps(temp2, temp2, 0b11100101);
+        temp = (tailArea.point.y < headArea.point.y) ? _mm_add_ss(temp2, temp) : _mm_sub_ss(temp2, temp);
+        xy = _mm_shuffle_ps(xy, temp, 0b00000000);
+        _mm_store_ps(value.data, xy);
+        *point = D2D1::Point2F(value.data[0], value.data[2]);
+    }
+    return defined;
+}
+
+
+/**
+ * Draws an arrow head at the specified point.
+ *
+ * Parameters:
+ * >tailPoint
+ * Beginning of a directed edge (arrow).
+ * >headPoint
+ * Head point of the arrow.
+ * >left
+ * Arrow head point #1.
+ * >right
+ * Arrow head point #2.
+ *
+ * Returns:
+ * `true` value if the caller should draw the arrow and `false` otherwise.
+ *
+ * Remarks:
+ * In current implementation this method uses `HSUBPS`, `HADDPS` and `ADDSUBPS` instructions from SSE3 set without
+ * checking CPU capabilities.
+ */
+_Success_(return) bool graph_window::getArrow(
+    _In_ const D2D1_POINT_2F& tailPoint,
+    _In_ const D2D1_POINT_2F& headPoint,
+    _Out_ D2D1_POINT_2F* left,
+    _Out_ D2D1_POINT_2F* right) const noexcept
+{
+    // `DPPS` is part of SSE4.1.
+    sse_t value = {headPoint.x, tailPoint.x, headPoint.y, tailPoint.y};
+    __m128 temp = _mm_load_ps(value.data);
+    __m128 source = _mm_hsub_ps(temp, temp);
+    if (simd_cpu_capabilities::sse41())
+    {
+        temp = _mm_dp_ps(source, source, 0b00110001);
+    }
+    else
+    {
+        temp = _mm_mul_ps(source, source);
+        temp = _mm_hadd_ps(temp, temp);
+    }
+    temp = _mm_sqrt_ss(temp);
+    value = {m_arrowLength, m_arrowHalfWidth, 0.0f, 0.0f};
+    __m128 length = _mm_load_ps(value.data);
+    bool result = 0x01 & _mm_movemask_ps(_mm_cmplt_ss(length, temp));
+    if (result)
+    {
+        __m128 tan = _mm_div_ps(_mm_shuffle_ps(source, source, 0b11110101), source);
+        tan = _mm_shuffle_ps(tan, tan, 0b11101000);
+        temp = _mm_mul_ss(tan, tan);
+        value = {1.0f, headPoint.x, headPoint.y, 1.0f};
+        __m128 temp2 = _mm_load_ps(value.data);
+        temp = _mm_add_ss(temp, temp2);
+        temp = _mm_rsqrt_ss(temp);
+        temp = _mm_mul_ss(length, temp);
+        // Prepare `temp` and `temp2` for the following `ADDSUBPS`.
+        temp = _mm_shuffle_ps(temp, temp, 0b11100000);
+        temp2 = _mm_shuffle_ps(temp2, temp2, 0b11100101);
+        __m128 a = _mm_addsub_ps(temp2, temp);
+        if (tailPoint.x > headPoint.x)
+        {
+            a = _mm_shuffle_ps(a, a, 0b11100101);
+        }
+        temp = _mm_sub_ss(a, temp2);
+        temp = _mm_mul_ss(tan, temp);
+        temp2 = _mm_shuffle_ps(temp2, temp2, 0b11100110);
+        temp = _mm_add_ss(temp, temp2);
+        a = _mm_shuffle_ps(a, temp, 0b00000000);
+        a = _mm_shuffle_ps(a, a, 0b11101000);
+
+        temp = _mm_rcp_ss(_mm_mul_ss(tan, tan));
+        temp2 = _mm_shuffle_ps(temp2, temp2, 0b11100111);
+        temp = _mm_add_ss(temp, temp2);
+        temp = _mm_rsqrt_ss(temp);
+        temp2 = _mm_shuffle_ps(length, temp2, 0b11100101);
+        temp = _mm_mul_ss(temp, temp2);
+        temp = _mm_shuffle_ps(temp, temp, 0b11100000);
+        temp2 = _mm_shuffle_ps(a, a, 0b01010000);
+        __m128 b = _mm_addsub_ps(temp2, temp);
+        temp = _mm_sub_ps(b, temp2);
+        temp2 = _mm_rcp_ps(tan);
+        temp = _mm_mul_ps(temp, temp2);
+        temp2 = _mm_shuffle_ps(a, a, 0b11100101);
+        temp = _mm_add_ps(temp, temp2);
+        b = _mm_shuffle_ps(b, temp, 0b01000001);
+        _mm_store_ps(value.data, b);
+        *left = D2D1::Point2F(value.data[0], value.data[2]);
+        *right = D2D1::Point2F(value.data[1], value.data[3]);
+    }
+    return result;
+}
+
 ATLADD_END

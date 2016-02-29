@@ -83,6 +83,15 @@
     <Filter Include="source files\graph">
       <UniqueIdentifier>{19433a65-788d-4a4f-9d80-3e34261f85a5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="header files\ui\non-windowed\graph">
+      <UniqueIdentifier>{c1410b86-4144-4ee2-ae40-9465ff91fda5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="header files\ui\non-windowed\arbor visual implementation">
+      <UniqueIdentifier>{66526c22-3cbc-4c4b-9abe-47974d2df156}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source files\ui\non-windowed\arbor visual implementation">
+      <UniqueIdentifier>{a1f24c30-1f76-457a-8a3a-1f8f2394aa10}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\source\arborgvt\exports\arborgvt.def">
@@ -95,9 +104,6 @@
     </ClCompile>
     <ClCompile Include="..\..\source\arborgvt\dlllayer\arbor.cpp">
       <Filter>source files\library layer</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\source\arborgvt\ui\nowindow\avisimpl.cpp">
-      <Filter>source files\ui\non-windowed</Filter>
     </ClCompile>
     <ClCompile Include="..\..\source\arborgvt\ui\window\wi.cpp">
       <Filter>source files\ui\windowed</Filter>
@@ -117,6 +123,9 @@
     <ClCompile Include="..\..\source\arborgvt\graph\graph.cpp">
       <Filter>source files\graph</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\source\arborgvt\ui\nowindow\avisimpl\avisimpl.cpp">
+      <Filter>source files\ui\non-windowed\arbor visual implementation</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\source\arborgvt\ns\atladd.h">
@@ -130,9 +139,6 @@
     </ClInclude>
     <ClInclude Include="..\..\source\arborgvt\service\com\impl.h">
       <Filter>header files\service\com</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\source\arborgvt\ui\nowindow\avisimpl.h">
-      <Filter>header files\ui\non-windowed</Filter>
     </ClInclude>
     <ClInclude Include="..\..\source\arborgvt\sdkver.h">
       <Filter>header files\_untagged</Filter>
@@ -206,8 +212,14 @@
     <ClInclude Include="..\..\source\arborgvt\graph\graph.h">
       <Filter>header files\graph</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\source\arborgvt\service\ssetype.h">
+    <ClInclude Include="..\..\source\arborgvt\service\sse.h">
       <Filter>header files\service</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\ui\nowindow\graph\draw.h">
+      <Filter>header files\ui\non-windowed\graph</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\ui\nowindow\avisimpl\avisimpl.h">
+      <Filter>header files\ui\non-windowed\arbor visual implementation</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

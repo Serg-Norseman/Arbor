@@ -7,6 +7,7 @@
 #pragma comment(lib, "version.lib")
 
 MISCUTIL_BEGIN
+
 #pragma region version_info
 /**
  * Returns application exe module version.
@@ -319,4 +320,5 @@ void windows_system::changeWindowMessageFilter(_In_ const HWND hWnd, _In_ const 
     }
 }
 #pragma endregion windows_system implementation
+
 MISCUTIL_END

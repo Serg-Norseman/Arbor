@@ -10,6 +10,7 @@
 #include <sal.h>
 
 DXU_BEGIN
+
 inline HRESULT createD3Device(
     _In_ D3D_DRIVER_TYPE driverType, _In_ UINT nFlags, _Outptr_result_maybenull_ ID3D11Device** ppDevice)
 {
@@ -58,4 +59,5 @@ public:
 private:
     ATLADD com_ptr<ID2D1Multithread> m_lock;
 };
+
 DXU_END

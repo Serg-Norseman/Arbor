@@ -8,6 +8,7 @@
 #include <vssym32.h>
 
 ATLADD_BEGIN
+
 #pragma comment(lib, "d2d1.lib")
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "dwrite.lib")
@@ -704,10 +705,10 @@ ATL::CWndClassInfo& window_impl<T>::GetWndClassInfo()
  * The result of the message processing and depends on the message sent (nMessage).
  * >nMsgMapID
  * The identifier of the message map that will process the message.
-  *
+ *
  * Returns:
  * Non-zero value if the message was processed, or zero otherwise.
-*/
+ */
 template <typename T>
 BOOL window_impl<T>::ProcessWindowMessage(
     _In_ HWND hWnd,
@@ -748,7 +749,7 @@ BOOL window_impl<T>::ProcessWindowMessage(
                     sizeHandler(pWindowPos->cx, pWindowPos->cy);
                 }
             }
-            else
+            else if ((!(SWP_NOSIZE & pWindowPos->flags)) || (SWP_SHOWWINDOW & pWindowPos->flags))
             {
                 RECT rect;
                 GetClientRect(&rect);
@@ -796,4 +797,5 @@ BOOL window_impl<T>::ProcessWindowMessage(
     return bHandled;
 }
 #pragma endregion window_impl template
+
 ATLADD_END

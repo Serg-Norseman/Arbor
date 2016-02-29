@@ -4,6 +4,7 @@
 #include <d2d1.h>
 
 ATLADD_BEGIN
+
 template <typename T>
 class child_window_impl abstract: public window_impl<T>
 {
@@ -51,4 +52,5 @@ private:
 
     bool m_bCreateOnDedicatedThread;
 };
+
 ATLADD_END

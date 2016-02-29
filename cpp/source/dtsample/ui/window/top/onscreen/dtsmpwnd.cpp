@@ -381,7 +381,13 @@ _Check_return_ bool desktop_sample_window::commandHandler(_In_ const UINT nId)
 
         case ID_REFRESH:
         {
-            ::MessageBox(m_hWnd, TEXT("NYI"), nullptr, 0);
+            if (WAIT_OBJECT_0 == WaitForSingleObject(m_visualCreated.get(), 0))
+            {
+                if (SUCCEEDED(m_visual->clear()))
+                {
+                    addDataToTheGraph();
+                }
+            }
         }
         break;
 
@@ -471,7 +477,6 @@ void desktop_sample_window::updateWindowText(_In_opt_ const STLADD string_type* 
  */
 void desktop_sample_window::handleThreadTermination(_In_ const HANDLE hObject)
 {
-    using namespace std::string_literals;
     /*
      * This method is called ONLY by the 'wWinMain' function who calls the method only after the
      * 'MsgWaitForMultipleObjectsEx' was caused to return by some of the threads become signaled. This is the 'hObject'.
@@ -484,14 +489,7 @@ void desktop_sample_window::handleThreadTermination(_In_ const HANDLE hObject)
     if (m_visualCreated.get() == hObject)
     {
         // The graph visual got an HWND. We can enable some graph-window-aware controls here, for example.
-        HRESULT hr = m_visual->addEdge(TEXT("vertex.1"s), TEXT("vertex.2"s), 1.5f);
-        if (SUCCEEDED(hr))
-        {
-            hr = m_visual->addEdge(TEXT("vertex.1"s), TEXT("vertex.3"s), 1.75f);
-            if (SUCCEEDED(hr))
-            {
-            }
-        }
+        addDataToTheGraph();
     }
     if (0 == m_threads.size())
     {
@@ -559,7 +557,56 @@ void desktop_sample_window::resizeVisual()
                 static_cast<int> (size.width),
                 static_cast<int> (size.height),
                 SWP_NOACTIVATE | SWP_NOZORDER);
+            ::InvalidateRect(visualHWND, nullptr, FALSE);
         }
+    }
+}
+
+
+/**
+ * Adds sample data to the graph.
+ * This method uses `m_visual` GUI, therefore this method must be called only after the graph window GUI was
+ * initialized.
+ *
+ * Parameters:
+ * None.
+ *
+ * Returns:
+ * N/A.
+ */
+void desktop_sample_window::addDataToTheGraph()
+{
+    using namespace std::string_literals;
+    try
+    {
+        HRESULT hr = m_visual->addEdge(TEXT("vertex.1"s), TEXT("vertex.1.2"s), 1.5f);
+        if (SUCCEEDED(hr))
+        {
+            hr = m_visual->addEdge(TEXT("vertex.1"s), TEXT("vertex.1.3"s), 1.75f);
+            if (SUCCEEDED(hr))
+            {
+                hr = m_visual->addEdge(TEXT("vertex.1.2"s), TEXT("vertex.1.2.4"s), 1.75f);
+                if (SUCCEEDED(hr))
+                {
+                    hr = m_visual->addEdge(
+                        TEXT("vertex.1.2"s), TEXT("big vertex.1.2.5 derived\nfrom vertex.1.2"s), 1.75f);
+                    if (SUCCEEDED(hr))
+                    {
+                        HWND visualHWND;
+                        hr = m_visual->getHWND(&visualHWND);
+                        if (m_visual && (S_OK == hr))
+                        {
+                            ::InvalidateRect(visualHWND, nullptr, FALSE);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    catch (std::bad_alloc& e)
+    {
+        ::MessageBoxA(m_hWnd, e.what(), nullptr, MB_OK | MB_ICONERROR);
+        DestroyWindow();
     }
 }
 #pragma endregion desktop_sample_window implementation

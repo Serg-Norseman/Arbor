@@ -5,7 +5,6 @@
   <ItemDefinitionGroup Condition="'32' == $(PlatformArchitecture)">
     <ClCompile>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
-      <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup>

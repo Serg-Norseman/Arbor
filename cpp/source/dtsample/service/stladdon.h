@@ -228,22 +228,6 @@ protected:
 
 
 
-template <typename T>
-class aligned_deleter
-{
-public:
-    typedef typename std::conditional<std::is_pointer<T>::value, typename std::remove_pointer<T>::type, T>::type
-        element_type;
-    typedef typename std::conditional<std::is_pointer<T>::value, T, typename std::add_pointer<T>::type>::type pointer;
-
-    void operator ()(_In_ pointer p)
-    {
-        _aligned_free(p);
-    }
-};
-
-
-
 /**
  * CSharedPtrCryptoAPIBlobDeleter class.
  * Deleter for DATA_BLOB structure.

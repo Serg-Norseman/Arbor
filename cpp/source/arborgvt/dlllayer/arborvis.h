@@ -13,6 +13,7 @@
  * The `IArborVisual` interface has these methods.
  * `createWindow` creates window USER object.
  * `getHWND` returns handle to the window.
+ * `clear` removes all data from the graph owned by this visual.
  * `addEdge` adds a new edge that connects two specified vertices.
  */
 MIDL_INTERFACE("5923B678-E139-4334-A138-E0EA2298AA08")
@@ -26,6 +27,7 @@ public:
         _In_ HANDLE hwndReadyEvent,
         _In_ UINT dpiChangedMessage) = 0;
     virtual HRESULT STDMETHODCALLTYPE getHWND(_Out_ HWND* handle) = 0;
+    virtual HRESULT STDMETHODCALLTYPE clear() = 0;
     virtual HRESULT STDMETHODCALLTYPE addEdge(
         _In_ std::wstring&& tail,
         _In_ std::wstring&& head,
