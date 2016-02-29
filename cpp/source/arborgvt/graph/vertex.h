@@ -2,6 +2,7 @@
 #include "ns\arbor.h"
 #include "service\sse.h"
 #include "service\stladdon.h"
+#include <d2d1.h>
 
 ARBOR_BEGIN
 
@@ -52,6 +53,10 @@ public:
         // Set `m_color` to gray.
         value = {0.501960814f, 0.501960814f, 0.501960814f, 1.0f};
         m_color = _mm_load_ps(value.data);
+        // Set `m_textColor` to `COLOR_WINDOWTEXT`.
+        D2D1_COLOR_F color = D2D1::ColorF {GetSysColor(COLOR_WINDOWTEXT), 1.0f};
+        value = {color.r, color.g, color.g, color.a};
+        m_textColor = _mm_load_ps(value.data);
     }
 
     /*
@@ -65,21 +70,9 @@ public:
      */
     vertex(_In_ STLADD string_type&& name, _In_ __m128 coordinates)
         :
-        m_coordinates {coordinates},
-        m_name {std::move(name)},
-        m_data {nullptr},
-        m_mass {1.0f},
-        m_fixed {false}
+        vertex(std::move(name))
     {
-        sse_t value;
-        // Set `m_force` and `m_velocity` to zero.
-        value.data[0] = 0;
-        m_force = _mm_load_ps(value.data);
-        m_force = _mm_shuffle_ps(m_force, m_force, 0);
-        m_velocity = m_force;
-        // Set `m_color` to gray.
-        value = {0.501960814f, 0.501960814f, 0.501960814f, 1.0f};
-        m_color = _mm_load_ps(value.data);
+        m_coordinates = coordinates;
     }
 
     vertex& operator =(_In_ const vertex&) = delete;
@@ -96,12 +89,16 @@ public:
     void swap(_Inout_ vertex& right) noexcept
     {
         // `m_coordinates` can be NaN, but `XORPS` doesn't fail on NaNs.
+        // 'Cos this method uses XOR-swapping never call it to swap an object with itself.
         m_coordinates = _mm_xor_ps(m_coordinates, right.m_coordinates);
         right.m_coordinates = _mm_xor_ps(m_coordinates, right.m_coordinates);
         m_coordinates = _mm_xor_ps(m_coordinates, right.m_coordinates);
         m_color = _mm_xor_ps(m_color, right.m_color);
         right.m_color = _mm_xor_ps(m_color, right.m_color);
         m_color = _mm_xor_ps(m_color, right.m_color);
+        m_textColor = _mm_xor_ps(m_textColor, right.m_textColor);
+        right.m_textColor = _mm_xor_ps(m_textColor, right.m_textColor);
+        m_textColor = _mm_xor_ps(m_textColor, right.m_textColor);
         m_force = _mm_xor_ps(m_force, right.m_force);
         right.m_force = _mm_xor_ps(m_force, right.m_force);
         m_force = _mm_xor_ps(m_force, right.m_force);
@@ -132,6 +129,16 @@ public:
     void __vectorcall setColor(_In_ const __m128 value)
     {
         m_color = value;
+    }
+
+    __m128 __vectorcall getTextColor() const
+    {
+        return m_textColor;
+    }
+
+    void __vectorcall setTextColor(_In_ const __m128 value)
+    {
+        m_textColor = value;
     }
 
     const STLADD string_type* getName() const noexcept
@@ -173,6 +180,7 @@ private:
      */
     __m128 m_coordinates;
     __m128 m_color;
+    __m128 m_textColor;
     __m128 m_force;
     __m128 m_velocity;
     STLADD string_type m_name;

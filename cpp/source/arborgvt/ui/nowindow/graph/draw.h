@@ -4,13 +4,9 @@
 #include "service\com\comptr.h"
 #include "service\sse.h"
 #include "service\stladdon.h"
-#include "service\winapi\theme.h"
 #include <d2d1.h>
 #include <d2d1_1.h>
 #include <dwrite.h>
-#include <Uxtheme.h>
-#include <vsstyle.h>
-#include <vssym32.h>
 
 class element_draw
 {
@@ -98,17 +94,13 @@ public:
         allocator.deallocate(static_cast<vertex_draw*> (p), size);
     }
 
-    void createDeviceResources(_In_ ID2D1DeviceContext* deviceContext, _In_ HWND wnd, _In_ const ARBOR vertex& object)
+    void createDeviceResources(_In_ ID2D1DeviceContext* deviceContext, _In_ const ARBOR vertex& object)
     {
         base_class_t::createDeviceResources(deviceContext, object.getColor());
-        COLORREF color {};
-        WAPI theme_t theme {OpenThemeData(wnd, VSCLASS_TEXTSTYLE)};
-        HRESULT hr = theme ? GetThemeColor(theme.get(), TEXT_BODYTITLE, 0, TMT_TEXTCOLOR, &color) : E_POINTER;
-        if (FAILED(hr))
-        {
-            color = GetSysColor(COLOR_WINDOWTEXT);
-        }
-        deviceContext->CreateSolidColorBrush(D2D1::ColorF {color, 1.0f}, m_textBrush.getAddressOf());
+        sse_t value;
+        _mm_store_ps(value.data, object.getTextColor());
+        deviceContext->CreateSolidColorBrush(
+            reinterpret_cast<D2D1_COLOR_F*> (value.data), nullptr, m_textBrush.getAddressOf());
     }
 
     void releaseDeviceResources()
@@ -147,15 +139,19 @@ public:
 
     HRESULT __vectorcall getArea(_In_ const __m128 center, _Out_ D2D1_ELLIPSE* area) const
     {
-        DWRITE_TEXT_METRICS metrics;
-        HRESULT hr = m_textLayout->GetMetrics(&metrics);
+        HRESULT hr = m_textLayout ? S_OK : E_POINTER;
         if (SUCCEEDED(hr))
         {
-            sse_t value;
-            _mm_store_ps(value.data, center);
-            // Add some space around the text (read: use 0.75 as the multiplier and not 0.5).
-            *area = D2D1::Ellipse(
-                D2D1::Point2F(value.data[0], value.data[1]), metrics.width * 0.75f, metrics.height * 0.75f);
+            DWRITE_TEXT_METRICS metrics;
+            hr = m_textLayout->GetMetrics(&metrics);
+            if (SUCCEEDED(hr))
+            {
+                sse_t value;
+                _mm_store_ps(value.data, center);
+                // Add some space around the text (read: use 0.75 as the multiplier and not 0.5).
+                *area = D2D1::Ellipse(
+                    D2D1::Point2F(value.data[0], value.data[1]), metrics.width * 0.75f, metrics.height * 0.75f);
+            }
         }
         return hr;
     }

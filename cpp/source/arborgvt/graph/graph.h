@@ -151,6 +151,16 @@ public:
         m_viewBound = m_graphBound;
     }
 
+    WAPI srw_lock& getVerticesLock() noexcept
+    {
+        return m_verticesLock;
+    }
+
+    WAPI srw_lock& getEdgesLock() noexcept
+    {
+        return m_edgesLock;
+    }
+
     void addEdge(_In_ STLADD string_type&& tail, _In_ STLADD string_type&& head, _In_ float length);
     void clear() noexcept;
 
