@@ -156,16 +156,6 @@ public:
         m_data = value;
     }
 
-    void __vectorcall applyForce(_In_ const __m128 value)
-    {
-        sse_t massData;
-        massData.data[0] = m_mass;
-        __m128 mass = _mm_load_ps(massData.data);
-        mass = _mm_shuffle_ps(mass, mass, 0);
-        // Try to replace `_mm_div_ps` with `_mm_rcp_ps` "+" `_mm_mul_ps`?
-        m_force = _mm_add_ps(m_force, _mm_div_ps(value, mass));
-    }
-
 
 private:
     /*

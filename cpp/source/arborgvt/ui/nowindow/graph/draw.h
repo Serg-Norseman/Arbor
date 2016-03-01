@@ -137,24 +137,22 @@ public:
         }
     }
 
+ATLPREFAST_SUPPRESS(4701)
     HRESULT __vectorcall getArea(_In_ const __m128 center, _Out_ D2D1_ELLIPSE* area) const
     {
-        HRESULT hr = m_textLayout ? S_OK : E_POINTER;
+        DWRITE_TEXT_METRICS metrics;
+        HRESULT hr = m_textLayout ? m_textLayout->GetMetrics(&metrics) : E_POINTER;
         if (SUCCEEDED(hr))
         {
-            DWRITE_TEXT_METRICS metrics;
-            hr = m_textLayout->GetMetrics(&metrics);
-            if (SUCCEEDED(hr))
-            {
-                sse_t value;
-                _mm_store_ps(value.data, center);
-                // Add some space around the text (read: use 0.75 as the multiplier and not 0.5).
-                *area = D2D1::Ellipse(
-                    D2D1::Point2F(value.data[0], value.data[1]), metrics.width * 0.75f, metrics.height * 0.75f);
-            }
+            sse_t value;
+            _mm_store_ps(value.data, center);
+            // Add some space around the text (read: use 0.75 as the multiplier and not 0.5).
+            *area = D2D1::Ellipse(
+                D2D1::Point2F(value.data[0], value.data[1]), metrics.width * 0.75f, metrics.height * 0.75f);
         }
         return hr;
     }
+ATLPREFAST_UNSUPPRESS()
 
 
 private:
