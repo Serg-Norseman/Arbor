@@ -72,7 +72,7 @@ protected:
 
 
 private:
-    typedef child_window_impl base_class_t;
+    typedef child_window_impl<graph_window> base_class_t;
     typedef std::vector<std::unique_ptr<vertex_draw>> vertices_draw_cont_t;
     typedef std::vector<std::unique_ptr<edge_draw>> edges_draw_cont_t;
 

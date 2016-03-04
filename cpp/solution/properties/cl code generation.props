@@ -7,13 +7,13 @@
       <ControlFlowGuard>Guard</ControlFlowGuard>
     </ClCompile>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'Debug' == $(Configuration)">
+  <ItemDefinitionGroup Condition="$(DebugConfiguration)">
     <ClCompile>
       <MinimalRebuild>false</MinimalRebuild>
       <SmallerTypeCheck>true</SmallerTypeCheck>
     </ClCompile>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'Release' == $(Configuration)">
+  <ItemDefinitionGroup Condition="!$(DebugConfiguration)">
     <ClCompile>
       <FunctionLevelLinking>true</FunctionLevelLinking>
     </ClCompile>

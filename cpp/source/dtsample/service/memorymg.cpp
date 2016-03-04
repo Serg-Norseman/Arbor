@@ -16,7 +16,7 @@ WAPI srw_lock memory_manager::m_instanceLock;
  * Parameters:
  * >nHeapInitialSize
  * The initial size of the heap, in bytes. This value determines the initial amount of memory that is committed for the
- * heap. The value will be rounded up to the next page boundary. 
+ * heap. The value will be rounded up to the next page boundary.
  */
 private_heap::private_heap(_In_ size_t nHeapInitialSize)
 {
@@ -65,7 +65,7 @@ private_heap::private_heap(_In_ size_t nHeapInitialSize)
  * >std::bad_alloc
  * When instantiation of the singleton failed.
  */
-memory_manager::pointer_t memory_manager::getInstance() throw(...)
+memory_manager::pointer_t memory_manager::getInstance() noexcept(false)
 {
     bool bInstantiated = false;
     // Make a scope for the shared lock.

@@ -51,7 +51,7 @@ class memory_manager
 public:
     typedef memory_manager* pointer_t;
 
-    static pointer_t getInstance() throw(...);
+    static pointer_t getInstance() noexcept(false);
     const HANDLE getThreadHeap();
 
     template <typename T> T mAlloc(_In_ size_t nAllocationSize)

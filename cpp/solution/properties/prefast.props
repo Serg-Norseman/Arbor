@@ -4,10 +4,10 @@
   <PropertyGroup>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
-  <PropertyGroup Condition="'Release' == $(Configuration)">
+  <PropertyGroup Condition="!$(DebugConfiguration)">
     <RunCodeAnalysis>true</RunCodeAnalysis>
   </PropertyGroup>
-  <ItemDefinitionGroup Condition="'Release' == $(Configuration)">
+  <ItemDefinitionGroup Condition="!$(DebugConfiguration)">
     <ClCompile>
       <EnablePREfast>true</EnablePREfast>
     </ClCompile>

@@ -54,7 +54,7 @@ public:
  * Returns:
  * shared_ptr to the singleton instance.
  */
-string_util::pointer_t string_util::getInstance() throw(...)
+string_util::pointer_t string_util::getInstance() noexcept(false)
 {
     bool bInstantiated = false;
     // Make a scope for the shared lock.
@@ -1150,7 +1150,7 @@ _Check_return_ STLADD string_unique_ptr_t string_util::formatNumber(_In_ const T
                         while (TEXT('\x00') != *pszSource)
                         {
                             // Skip ';' and '0' symbols at the end.
-                             
+
                             if ((TEXT(';') != *pszSource) &&
                                 ((TEXT('0') != *pszSource) || (TEXT('\x00') != *(pszSource + 1))))
                             {

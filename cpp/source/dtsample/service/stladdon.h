@@ -112,7 +112,7 @@ __pragma(warning(push)) __pragma(warning(disable: 4100))
     }
 __pragma(warning(pop))
 
-    pointer allocate(_In_ const size_type nCount) const throw(...)
+    pointer allocate(_In_ const size_type nCount) const noexcept(false)
     {
         if (!nCount)
         {

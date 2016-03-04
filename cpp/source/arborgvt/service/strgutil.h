@@ -1,6 +1,5 @@
 #pragma once
 #include "service\stladdon.h"
-#include "service\winapi\srwlock.h"
 #include <memory>
 
 class string_util
@@ -9,7 +8,25 @@ public:
     typedef const string_util* const_ptr_t;
     typedef string_util* pointer_t;
 
-    static pointer_t getInstance() throw(...);
+    string_util()
+        :
+        m_hModuleWithResource {nullptr}
+    {
+    }
+
+    static pointer_t getInstance() noexcept(false);
+
+    static void* operator new(_In_ const size_t size)
+    {
+        STLADD default_allocator<string_util> allocator {};
+        return allocator.allocate(size / sizeof(string_util));
+    }
+
+    static void operator delete(_In_ void* p, _In_ const size_t size)
+    {
+        STLADD default_allocator<string_util> allocator {};
+        allocator.deallocate(static_cast<string_util*> (p), size);
+    }
 
     void setModuleHandleWithResource(_In_ HINSTANCE hModuleWithResource)
     {
@@ -71,19 +88,12 @@ public:
 private:
     typedef std::unique_ptr<string_util> unique_ptr_t;
 
-    string_util()
-        :
-        m_hModuleWithResource(nullptr)
-    {
-    }
-
     static BOOL CALLBACK enumDateFormatsProcExEx(_In_z_ LPWSTR pszDateFormatString,
                                                  _In_ CALID nCalendarID,
                                                  _In_ LPARAM nParam);
     static BOOL CALLBACK enumDateFormatsProcEx(_In_z_ LPTSTR pszDateFormatString, _In_ CALID nCalendarID);
 
     static unique_ptr_t m_instance;
-    static WAPI srw_lock m_instanceLock;
     static LPTSTR* m_ppszEnumDateFormatsProcExData;
     HINSTANCE m_hModuleWithResource;
 };

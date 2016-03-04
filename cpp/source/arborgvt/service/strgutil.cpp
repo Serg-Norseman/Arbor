@@ -8,7 +8,6 @@
 #include <type_traits>
 
 string_util::unique_ptr_t string_util::m_instance;
-WAPI srw_lock string_util::m_instanceLock;
 LPTSTR* string_util::m_ppszEnumDateFormatsProcExData;
 
 // Default character(s) used to separate list items (default for a case when attempt to take it from the regional
@@ -51,32 +50,19 @@ public:
  * None.
  *
  * Returns:
- * shared_ptr to the singleton instance.
+ * Smart pointer to the singleton instance.
  */
-string_util::pointer_t string_util::getInstance() throw(...)
+string_util::pointer_t string_util::getInstance() noexcept(false)
 {
-    bool bInstantiated = false;
-    // Make a scope for the shared lock.
+    class initializer
     {
-        STLADD lock_guard_shared<WAPI srw_lock> lock {m_instanceLock};
-        bInstantiated = static_cast<bool> (m_instance);
-    }
-    if (!bInstantiated)
-    {
-        STLADD lock_guard_exclusive<WAPI srw_lock> lock {m_instanceLock};
-        if (!m_instance)
+    public:
+        initializer()
         {
             m_instance.reset(new string_util {});
         }
-    }
-
-    // Accessing a pointer on Windows platform is an atomic operation I believe... but to play safe I lock an access.
-    STLADD lock_guard_shared<WAPI srw_lock> lock {m_instanceLock};
-    if (!m_instance)
-    {
-        throw std::bad_alloc {};
-    }
-
+    };
+    static initializer guard {};
     return m_instance.get();
 }
 
@@ -1146,7 +1132,7 @@ _Check_return_ STLADD string_unique_ptr_t string_util::formatNumber(_In_ const T
                         while (TEXT('\x00') != *pszSource)
                         {
                             // Skip ';' and '0' symbols at the end.
-                             
+
                             if ((TEXT(';') != *pszSource) &&
                                 ((TEXT('0') != *pszSource) || (TEXT('\x00') != *(pszSource + 1))))
                             {

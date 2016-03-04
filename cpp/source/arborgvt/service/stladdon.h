@@ -130,7 +130,7 @@ __pragma(warning(push)) __pragma(warning(disable: 4100))
     }
 __pragma(warning(pop))
 
-    pointer allocate(_In_ const size_type count) const throw(...)
+    pointer allocate(_In_ const size_type count) const noexcept(false)
     {
         if (count)
         {
@@ -164,7 +164,7 @@ __pragma(warning(pop))
 
     void deallocate(_In_ void* p) const
     {
-        deallocate(static_cast<const pointer> (p), 0);
+        deallocate(static_cast<pointer> (p), 0);
     }
 };
 
@@ -185,6 +185,25 @@ public:
 };
 
 
+/*
+ * The `maxAlignment` function can be a member of `aligned_allocator` **template**, but because it looks like ICC 16.0
+ * has a bug (it doesn't allow to use a constexpr member function of a template class inside this template class body),
+ * I have to move declaration and definition of the `maxAlignment` function out of `aligned_allocator` template.
+ * (Note: MSVC 2015 Update 1 can compile such a template instantiation).
+ *
+ * For more information please view the following pages:
+ * stackoverflow.com/questions/35764069/static-assert-and-intel-c-compiler
+ * and
+ * stackoverflow.com/questions/16493652/constexpr-not-working-if-the-function-is-declared-inside-class-scope
+ *
+ * Also view 'compiler_bugs.md' file.
+ */
+template <typename T, std::size_t Alignment>
+constexpr std::size_t maxAlignment()
+{
+    return max(std::alignment_of<T>::value, Alignment);
+}
+
 /**
  * `aligned_allocator` aligns allocated memory on the maximum of the minimum alignment specified and the alignment of
  * objects of type `T`.
@@ -201,6 +220,8 @@ public:
     typedef T&& rvalue_reference;
     typedef size_t size_type;
     typedef ptrdiff_t difference_type;
+    typedef std::integral_constant<std::size_t, maxAlignment<value_type, Alignment>()> max_alignment_t;
+
     template <typename U>
     struct rebind
     {
@@ -220,7 +241,7 @@ public:
     template <typename U, size_t UAlignment>
     constexpr bool operator ==(_In_ const aligned_allocator<U, UAlignment>& right) const noexcept
     {
-        return maxAlignment() == right.maxAlignment();
+        return max_alignment_t::value == aligned_allocator<U, UAlignment>::max_alignment_t::value;
     }
 
     template <typename U, size_t UAlignment>
@@ -241,7 +262,7 @@ public:
 
     size_t max_size() const noexcept
     {
-        return (static_cast<size_type> (~0) - (maxAlignment() - 1 + sizeof(pointer))) / sizeof(value_type);
+        return (static_cast<size_type> (~0) - (max_alignment_t::value - 1 + sizeof(pointer))) / sizeof(value_type);
     }
 
     template <typename U, typename... Args>
@@ -265,7 +286,7 @@ __pragma(warning(push)) __pragma(warning(disable: 4100))
     }
 __pragma(warning(pop))
 
-    pointer allocate(_In_ const size_type count) const throw(...)
+    pointer allocate(_In_ const size_type count) const noexcept(false)
     {
         if (count)
         {
@@ -281,14 +302,14 @@ __pragma(warning(pop))
              *
              * When do I get more "pure C++" code: using `sizeof(pointer)` or `sizeof(size_t)`?
              */
-            void* p = HeapAlloc(getHeap(), 0, count * sizeof(value_type) + maxAlignment() - 1 + sizeof(pointer));
+            size_t padding = max_alignment_t::value - 1 + sizeof(pointer);
+            void* p = HeapAlloc(getHeap(), 0, count * sizeof(value_type) + padding);
             if (!p)
             {
                 throw std::bad_alloc {};
             }
             auto aligned =
-                reinterpret_cast<size_t*> (((reinterpret_cast<size_t> (p)) + maxAlignment() - 1 + sizeof(pointer)) &
-                ~(maxAlignment() - 1));
+                reinterpret_cast<size_t*> (((reinterpret_cast<size_t> (p)) + padding) & ~(max_alignment_t::value - 1));
             *(aligned - 1) = reinterpret_cast<size_t> (p);
             return reinterpret_cast<pointer> (aligned);
         }
@@ -314,14 +335,7 @@ __pragma(warning(pop))
         deallocate(static_cast<const pointer> (p), 0);
     }
 
-
-private:
-    static constexpr std::size_t maxAlignment()
-    {
-        return max(std::alignment_of<value_type>::value, Alignment);
-    }
-
-    static_assert(0 == ((maxAlignment() - 1) & maxAlignment()),
+    static_assert(0 == ((max_alignment_t::value - 1) & max_alignment_t::value),
         "Maximum of `Alignment` and alignment of `T` must be a power of 2");
 };
 

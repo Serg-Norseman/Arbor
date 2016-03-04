@@ -9,7 +9,7 @@ public:
     typedef const string_util* const_ptr_t;
     typedef string_util* pointer_t;
 
-    static pointer_t getInstance() throw(...);
+    static pointer_t getInstance() noexcept(false);
 
     void setModuleHandleWithResource(_In_ HINSTANCE hModuleWithResource)
     {
