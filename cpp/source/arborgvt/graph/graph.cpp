@@ -59,7 +59,7 @@ void graph::addEdge(_In_ STLADD string_type&& tail, _In_ STLADD string_type&& he
 void graph::clear() noexcept
 {
     STLADD lock_guard_exclusive<WAPI srw_lock> verticesLock {m_verticesLock};
-    STLADD lock_guard_shared<WAPI srw_lock> lock {m_edgesLock};
+    STLADD lock_guard_exclusive<WAPI srw_lock> lock {m_edgesLock};
     m_edges.clear();
     m_vertices.clear();
 }

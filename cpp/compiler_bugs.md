@@ -16,8 +16,7 @@ private:
         return max(std::alignment_of<T>::value, Alignment);
     }
 
-    static_assert(0 == ((maxAlignment() - 1) & maxAlignment()),
-        "some message");
+    static_assert(maxAlignment(), "some message");
 };
 
 foo_t<__m128, 33> foo {};
@@ -48,7 +47,7 @@ private:
 };
 ```
 
-MSVC and ICC both fail to compile this because `foo_t` is incomplete when a compiler checks an assertion. GCC fails too.
+MSVC and ICC both fail to compile this because `foo_t` is incomplete when a compiler checks the assertion. GCC fails too.
 
 See ["constexpr not working if the function is declared inside class scope"](http://stackoverflow.com/questions/16493652/constexpr-not-working-if-the-function-is-declared-inside-class-scope) topic for more information.
 
