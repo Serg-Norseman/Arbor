@@ -4,6 +4,9 @@
 #include "service\stladdon.h"
 #include "ui\nowindow\graph\draw.h"
 #include "ui\window\child\cwi.h"
+#if defined(_DEBUG) || defined(SHOWFPS)
+#include <chrono>
+#endif
 
 ATLADD_BEGIN
 
@@ -25,6 +28,14 @@ public:
         m_edges {},
         m_areaStrokeStyle {},
         m_dpiChangedMessage {dpiChangedMessage}
+#if defined(_DEBUG) || defined(SHOWFPS)
+        ,
+        m_frameTimes {0},
+        m_frameIt {m_frameTimes.begin()},
+        m_frameTotal {0},
+        m_framesPerSecondTextFormat {},
+        m_framesPerSecondBrush {}
+#endif
     {
     }
 
@@ -99,6 +110,10 @@ private:
         _In_ const D2D1_POINT_2F& headPoint,
         _Out_ D2D1_POINT_2F* left,
         _Out_ D2D1_POINT_2F* right) const noexcept;
+#if defined(_DEBUG) || defined(SHOWFPS)
+    std::chrono::high_resolution_clock::duration getAverageFrameTime(
+        _In_ std::chrono::high_resolution_clock::duration&& frameTime);
+#endif
 
     // `m_vertexNameWidth` limits text of a vertex to a part of this window width. Strictly speaking not a good
     // solution.
@@ -112,6 +127,16 @@ private:
     edges_draw_cont_t m_edges;
     ATLADD com_ptr<ID2D1StrokeStyle1> m_areaStrokeStyle;
     UINT m_dpiChangedMessage;
+
+#if defined(_DEBUG) || defined(SHOWFPS)
+    static constexpr size_t m_framesMaxNumber = 100;
+    // `m_frameIt` must be declared after `m_frameTimes`! See member initialization list in the ctor.
+    std::vector<std::chrono::high_resolution_clock::duration::rep> m_frameTimes;
+    std::vector<std::chrono::high_resolution_clock::duration::rep>::iterator m_frameIt;
+    std::chrono::high_resolution_clock::duration::rep m_frameTotal;
+    ATLADD com_ptr<IDWriteTextFormat> m_framesPerSecondTextFormat;
+    ATLADD com_ptr<ID2D1SolidColorBrush> m_framesPerSecondBrush;
+#endif
 };
 
 ATLADD_END

@@ -3,8 +3,6 @@
 #include "service\winapi\theme.h"
 #include "ui\window\child\onscreen\graphwnd.h"
 #include "ui\window\wi.h"
-#include <Uxtheme.h>
-#include <vsstyle.h>
 #include <vssym32.h>
 
 ATLADD_BEGIN
@@ -96,7 +94,7 @@ HRESULT directx_toolkit::getDpiForMonitor(_In_ const HWND hWnd, _Out_ float* pfD
  * Pointer to pointer that receives the result object (if the method succeeded in terms of the HRESULT).
  *
  * Returns:
- * Standard HRESULT.
+ * Standard HRESULT code.
  */
 HRESULT directx_toolkit::createTextLayoutForBodyTitle(
     _In_ IDWriteFactory* pDWriteFactory,
@@ -106,26 +104,11 @@ HRESULT directx_toolkit::createTextLayoutForBodyTitle(
     _In_ const D2D1_SIZE_F* pSize,
     _COM_Outptr_result_maybenull_ IDWriteTextLayout** ppTextLayout) const
 {
-    LOGFONT font {};
-    WAPI theme_t theme {OpenThemeData(hWnd, VSCLASS_TEXTSTYLE)};
-    HRESULT hr = theme ? GetThemeFont(theme.get(), nullptr, TEXT_BODYTITLE, 0, TMT_FONT, &font) : E_FAIL;
-    if (FAILED(hr))
-    {
-        NONCLIENTMETRICS nonClientMetrics;
-        nonClientMetrics.cbSize = sizeof(NONCLIENTMETRICS);
-        // I don't plan to run the application on Windows earlier than Windows 7 so I don't mess around with
-        // 'NONCLIENTMETRICS::iPaddedBorderWidth' field.
-        if (SystemParametersInfo(SPI_GETNONCLIENTMETRICS, nonClientMetrics.cbSize, &nonClientMetrics, 0))
-        {
-            // COPY a big enough structure 'LOGFONT' hoping 'GetThemeFont' will fail very rarely. At least it
-            // doesn't on my Windows 10 and Windows 7 SP1.
-            font = nonClientMetrics.lfCaptionFont;
-            hr = S_OK;
-        }
-    }
+    ATLADD com_ptr<IDWriteTextFormat> textFormat {};
+    HRESULT hr = createTextFormatForBodyTitle(pDWriteFactory, hWnd, textFormat.getAddressOf());
     if (SUCCEEDED(hr))
     {
-        hr = createTextLayout(pDWriteFactory, pszText, nSize, &font, pSize, ppTextLayout);
+        hr = createTextLayout(pDWriteFactory, pszText, nSize, textFormat.get(), pSize, ppTextLayout);
     }
     else
     {
@@ -154,7 +137,7 @@ HRESULT directx_toolkit::createTextLayoutForBodyTitle(
  * Pointer to pointer that receives the result object (if the method succeeded in terms of the HRESULT).
  *
  * Returns:
- * Standard HRESULT.
+ * Standard HRESULT code.
  */
 HRESULT directx_toolkit::createTextLayoutForBodyText(
     _In_ IDWriteFactory* pDWriteFactory,
@@ -164,26 +147,11 @@ HRESULT directx_toolkit::createTextLayoutForBodyText(
     _In_ const D2D1_SIZE_F* pSize,
     _COM_Outptr_result_maybenull_ IDWriteTextLayout** ppTextLayout) const
 {
-    LOGFONT font {};
-    WAPI theme_t theme {OpenThemeData(hWnd, VSCLASS_TEXTSTYLE)};
-    HRESULT hr = theme ? GetThemeFont(theme.get(), nullptr, TEXT_BODYTEXT, 0, TMT_FONT, &font) : E_FAIL;
-    if (FAILED(hr))
-    {
-        NONCLIENTMETRICS nonClientMetrics;
-        nonClientMetrics.cbSize = sizeof(NONCLIENTMETRICS);
-        // I don't plan to run the application on Windows earlier than Windows 7 so I don't mess around with
-        // 'NONCLIENTMETRICS::iPaddedBorderWidth' field.
-        if (SystemParametersInfo(SPI_GETNONCLIENTMETRICS, nonClientMetrics.cbSize, &nonClientMetrics, 0))
-        {
-            // COPY a big enough structure 'LOGFONT' hoping 'GetThemeFont' will fail very rarely. At least it
-            // doesn't on my Windows 10 and Windows 7 SP1.
-            font = nonClientMetrics.lfMessageFont;
-            hr = S_OK;
-        }
-    }
+    ATLADD com_ptr<IDWriteTextFormat> textFormat {};
+    HRESULT hr = createTextFormatForBodyText(pDWriteFactory, hWnd, textFormat.getAddressOf());
     if (SUCCEEDED(hr))
     {
-        hr = createTextLayout(pDWriteFactory, pszText, nSize, &font, pSize, ppTextLayout);
+        hr = createTextLayout(pDWriteFactory, pszText, nSize, textFormat.get(), pSize, ppTextLayout);
     }
     else
     {
@@ -391,8 +359,8 @@ HRESULT directx_toolkit::loadBitmapFromFile(
  * Source text.
  * >nSize
  * Size of the 'pszText'.
- * >pLogFont
- * Pointer to initialized LOGFONT structure for creating text format.
+ * >pTextFormat
+ * Text format for the resulting text layout.
  * >pSize
  * Layout box size.
  * >ppTextLayout
@@ -405,17 +373,66 @@ HRESULT directx_toolkit::createTextLayout(
     _In_ IDWriteFactory* pDWriteFactory,
     _In_reads_z_(nSize) LPCTSTR pszText,
     _In_ const size_t nSize,
-    _In_ const LOGFONT* pLogFont,
+    _In_ IDWriteTextFormat* pTextFormat,
     _In_ const D2D1_SIZE_F* pSize,
     _COM_Outptr_result_maybenull_ IDWriteTextLayout** ppTextLayout) const
 {
     ATLADD com_ptr<IDWriteTextLayout> textLayout {};
     HRESULT hr = E_POINTER;
-    if (pDWriteFactory && pszText)
+    if (pszText)
+    {
+        hr = pDWriteFactory->CreateTextLayout(
+            pszText,
+            static_cast<UINT32> (nSize),
+            pTextFormat,
+            pSize->width,
+            pSize->height,
+            textLayout.getAddressOf());
+        if (SUCCEEDED(hr))
+        {
+            ATLADD com_ptr<IDWriteTypography> typography {};
+            hr = pDWriteFactory->CreateTypography(typography.getAddressOf());
+            if (SUCCEEDED(hr))
+            {
+                DWRITE_FONT_FEATURE fontFeature;
+                fontFeature.nameTag = DWRITE_FONT_FEATURE_TAG_STYLISTIC_SET_7;
+                fontFeature.parameter = 1;
+                typography->AddFontFeature(fontFeature);
+                hr = textLayout->SetTypography(
+                    typography.get(), DWRITE_TEXT_RANGE {0, static_cast<UINT32> (nSize)});
+            }
+        }
+    }
+    *ppTextLayout = SUCCEEDED(hr) ? textLayout.detach() : nullptr;
+    return hr;
+}
+
+
+/**
+ * Creates DirectWrite's IDWriteTextFormat object.
+ *
+ * Parameters:
+ * >pDWriteFactory
+ * Pointer to instantiated 'IDWriteFactory' object used to create result 'IDWriteTextFormat'.
+ * >pLogFont
+ * Pointer to initialized LOGFONT structure for creating text format.
+ * >ppTextLayout
+ * Pointer to pointer that receives the result object (if the method succeeded in terms of the HRESULT).
+ *
+ * Returns:
+ * Standard HRESULT.
+ */
+HRESULT directx_toolkit::createTextFormat(
+    _In_ IDWriteFactory* pDWriteFactory,
+    _In_ const LOGFONT* pLogFont,
+    _COM_Outptr_result_maybenull_ IDWriteTextFormat** ppTextFormat) const
+{
+    ATLADD com_ptr<IDWriteTextFormat> textFormat {};
+    HRESULT hr = E_POINTER;
+    if (pDWriteFactory)
     {
         string_util::const_ptr_t pStringUtil = string_util::getInstance();
         STLADD string_unique_ptr_t szLocale = pStringUtil->getCurrentUserLocale();
-        ATLADD com_ptr<IDWriteTextFormat> textFormat;
         hr = pDWriteFactory->CreateTextFormat(
             pLogFont->lfFaceName,
             nullptr,
@@ -425,32 +442,58 @@ HRESULT directx_toolkit::createTextLayout(
             abs(pLogFont->lfHeight) * 72.0f / 96.0f,
             szLocale ? szLocale->c_str() : L"",
             textFormat.getAddressOf());
-        if (SUCCEEDED(hr))
+    }
+    *ppTextFormat = SUCCEEDED(hr) ? textFormat.detach() : nullptr;
+    return hr;
+}
+
+
+/**
+* Creates DirectWrite's IDWriteTextFormat object that may be used to draw text as title of a text.
+*
+* Parameters:
+* >pDWriteFactory
+* Pointer to instantiated 'IDWriteFactory' object used to create result 'IDWriteTextFormat'.
+* >hWnd
+* The method uses Visual Styles API to get font for the result object. This is handle of the window for which visual
+* theme data is required.
+* >ppTextFormat
+* Pointer to pointer that receives the result object (if the method succeeded in terms of the HRESULT).
+*
+* Returns:
+* Standard HRESULT code.
+*/
+HRESULT directx_toolkit::createTextFormat(
+    _In_ IDWriteFactory* pDWriteFactory,
+    _In_ const HWND hWnd,
+    _In_ const int nPartId,
+    _COM_Outptr_result_maybenull_ IDWriteTextFormat** ppTextFormat) const
+{
+    LOGFONT font {};
+    WAPI theme_t theme {OpenThemeData(hWnd, VSCLASS_TEXTSTYLE)};
+    HRESULT hr = theme ? GetThemeFont(theme.get(), nullptr, nPartId, 0, TMT_FONT, &font) : E_FAIL;
+    if (FAILED(hr))
+    {
+        NONCLIENTMETRICS nonClientMetrics;
+        nonClientMetrics.cbSize = sizeof(NONCLIENTMETRICS);
+        // I don't plan to run the application on Windows earlier than Windows 7 so I don't mess around with
+        // 'NONCLIENTMETRICS::iPaddedBorderWidth' field.
+        if (SystemParametersInfo(SPI_GETNONCLIENTMETRICS, nonClientMetrics.cbSize, &nonClientMetrics, 0))
         {
-            hr = pDWriteFactory->CreateTextLayout(
-                pszText,
-                static_cast<UINT32> (nSize),
-                textFormat.get(),
-                pSize->width,
-                pSize->height,
-                textLayout.getAddressOf());
-            if (SUCCEEDED(hr))
-            {
-                ATLADD com_ptr<IDWriteTypography> typography {};
-                hr = pDWriteFactory->CreateTypography(typography.getAddressOf());
-                if (SUCCEEDED(hr))
-                {
-                    DWRITE_FONT_FEATURE fontFeature;
-                    fontFeature.nameTag = DWRITE_FONT_FEATURE_TAG_STYLISTIC_SET_7;
-                    fontFeature.parameter = 1;
-                    typography->AddFontFeature(fontFeature);
-                    hr = textLayout->SetTypography(
-                        typography.get(), DWRITE_TEXT_RANGE {0, static_cast<UINT32> (nSize)});
-                }
-            }
+            // COPY a big enough structure 'LOGFONT' hoping 'GetThemeFont' will fail very rarely. At least it
+            // doesn't on my Windows 10 and Windows 7 SP1.
+            font = nonClientMetrics.lfCaptionFont;
+            hr = S_OK;
         }
     }
-    *ppTextLayout = SUCCEEDED(hr) ? textLayout.detach() : nullptr;
+    if (SUCCEEDED(hr))
+    {
+        hr = createTextFormat(pDWriteFactory, &font, ppTextFormat);
+    }
+    else
+    {
+        *ppTextFormat = nullptr;
+    }
     return hr;
 }
 #pragma endregion directx_toolkit definition

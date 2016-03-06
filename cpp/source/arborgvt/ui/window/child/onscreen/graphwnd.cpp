@@ -130,6 +130,9 @@ LRESULT graph_window::createHandler()
             0.0f,
             D2D1_STROKE_TRANSFORM_TYPE_NORMAL);
         m_direct2DFactory->CreateStrokeStyle(prop, nullptr, 0, m_areaStrokeStyle.getAddressOf());
+#if defined(_DEBUG) || defined(SHOWFPS)
+        createTextFormatForBodyText(m_framesPerSecondTextFormat.getAddressOf());
+#endif
     }
     return nResult;
 }
@@ -146,6 +149,11 @@ LRESULT graph_window::createHandler()
  */
 void graph_window::draw()
 {
+#if defined(_DEBUG) || defined(SHOWFPS)
+    std::chrono::high_resolution_clock clock {};
+    std::chrono::high_resolution_clock::time_point first = clock.now();
+#endif
+
     D2D1_SIZE_F targetSize = m_direct2DContext->GetSize();
     sse_t value = {targetSize.width, targetSize.height, 0.0f, 0.0f};
     __m128 size = _mm_load_ps(value.data);
@@ -175,110 +183,114 @@ void graph_window::draw()
      * this method renders it. This method must obtain vertices lock first and then edges lock -- only this order is
      * allowed; otherwise a deadlock may occur.
      */
-    STLADD lock_guard_exclusive<WAPI srw_lock> verticesLock {m_graph.getVerticesLock(), std::try_to_lock};
-    if (verticesLock)
     {
-        // I see no sense to draw only vertices (under a designated lock) on the first step and then draw edges having
-        // locks on the both containers.
-        STLADD lock_guard_exclusive<WAPI srw_lock> edgesLock {m_graph.getEdgesLock(), std::try_to_lock};
-        if (edgesLock)
+        // Begin scopes for locks (they exploit RAII).
+        STLADD lock_guard_exclusive<WAPI srw_lock> verticesLock {m_graph.getVerticesLock(), std::try_to_lock};
+        if (verticesLock)
         {
-            for (auto it = m_graph.verticesBegin(); m_graph.verticesEnd() != it; ++it)
+            // I see no sense to draw only vertices (under a designated lock) on the first step and then draw edges
+            // having locks on the both containers.
+            STLADD lock_guard_exclusive<WAPI srw_lock> edgesLock {m_graph.getEdgesLock(), std::try_to_lock};
+            if (edgesLock)
             {
-                __m128 coordinate = it->getCoordinates();
-                if (_mm_movemask_ps(_mm_cmpeq_ps(coordinate, coordinate)))
+                for (auto it = m_graph.verticesBegin(); m_graph.verticesEnd() != it; ++it)
                 {
-                    coordinate = graphToLogical(coordinate, size, viewBound);
-                    auto draw = static_cast<vertex_draw*> (it->getData());
-                    if (!draw)
+                    __m128 coordinate = it->getCoordinates();
+                    if (_mm_movemask_ps(_mm_cmpeq_ps(coordinate, coordinate)))
                     {
-                        /*
-                         * If a vertex was added after device resources had created...
-                         *
-                         * This method may modify `m_graph`'s elements; that's why `draw` is non-const method. I don't
-                         * want to issue additional loops on each `WM_PAINT` before a render stage -- this is a waste of
-                         * CPU resources.
-                         */
-                        ATLADD com_ptr<IDWriteTextLayout> layout {};
-                        if (SUCCEEDED(createTextLayout(it->getName(), layout.getAddressOf())))
+                        coordinate = graphToLogical(coordinate, size, viewBound);
+                        auto draw = static_cast<vertex_draw*> (it->getData());
+                        if (!draw)
                         {
-                            draw = new vertex_draw {std::move(layout)};
-                            m_vertices.emplace_back(draw);
-                            it->setData(draw);
-                            draw->createDeviceResources(m_direct2DContext.get(), *it);
-                        }
-                    }
-                    D2D1_ELLIPSE area;
-                    if (SUCCEEDED(draw->getArea(coordinate, &area)))
-                    {
-                        /*
-                         * Be aware that `vertex_draw::getXXXXBrush` method below uses COM reference counting that can
-                         * be omitted here, 'cos `brush` is definitely local-only COM object.
-                         *
-                         * If you can guarantee that 'out' parameter of `vertex_draw::getXXXXBrush` method is always
-                         * local only, you can safely modify `getBrush` in a way that it will not use COM reference
-                         * counting.
-                         */
-                        ATLADD com_ptr<ID2D1SolidColorBrush> brush {};
-                        if (S_OK == draw->getBrush(brush.getAddressOf()))
-                        {
-                            m_direct2DContext->FillEllipse(area, brush.get());
-                        }
-                        brush.reset();
-                        if (S_OK == draw->getTextBrush(brush.getAddressOf()))
-                        {
-                            if (m_areaStrokeStyle)
-                            {
-                                m_direct2DContext->DrawEllipse(area, brush.get(), 1.0f, m_areaStrokeStyle.get());
-                            }
+                            /*
+                             * If a vertex was added after device resources had created...
+                             *
+                             * This method may modify `m_graph`'s elements; that's why `draw` is non-const method.
+                             * I don't want to issue additional loops on each `WM_PAINT` before a render stage -- this
+                             * is a waste of CPU resources.
+                             */
                             ATLADD com_ptr<IDWriteTextLayout> layout {};
-                            if (S_OK == draw->getTextLayout(layout.getAddressOf()))
+                            if (SUCCEEDED(createTextLayout(it->getName(), layout.getAddressOf())))
                             {
-                                DWRITE_TEXT_METRICS metrics;
-                                if (SUCCEEDED(layout->GetMetrics(&metrics)))
+                                draw = new vertex_draw {std::move(layout)};
+                                m_vertices.emplace_back(draw);
+                                it->setData(draw);
+                                draw->createDeviceResources(m_direct2DContext.get(), *it);
+                            }
+                        }
+                        D2D1_ELLIPSE area;
+                        if (SUCCEEDED(draw->getArea(coordinate, &area)))
+                        {
+                            /*
+                             * Be aware that `vertex_draw::getXXXXBrush` method below uses COM reference counting that
+                             * can be omitted here, 'cos `brush` is definitely local-only COM object.
+                             *
+                             * If you can guarantee that 'out' parameter of `vertex_draw::getXXXXBrush` method is always
+                             * local only, you can safely modify `getBrush` in a way that it will not use COM reference
+                             * counting.
+                             */
+                            ATLADD com_ptr<ID2D1SolidColorBrush> brush {};
+                            if (S_OK == draw->getBrush(brush.getAddressOf()))
+                            {
+                                m_direct2DContext->FillEllipse(area, brush.get());
+                            }
+                            brush.reset();
+                            if (S_OK == draw->getTextBrush(brush.getAddressOf()))
+                            {
+                                if (m_areaStrokeStyle)
                                 {
-                                    D2D1_POINT_2F origin = D2D1::Point2F(
-                                        area.point.x - (metrics.width * 0.5f), area.point.y - (metrics.height * 0.5f));
-                                    m_direct2DContext->DrawTextLayout(
-                                        origin, layout.get(), brush.get(), D2D1_DRAW_TEXT_OPTIONS_NONE);
+                                    m_direct2DContext->DrawEllipse(area, brush.get(), 1.0f, m_areaStrokeStyle.get());
+                                }
+                                ATLADD com_ptr<IDWriteTextLayout> layout {};
+                                if (S_OK == draw->getTextLayout(layout.getAddressOf()))
+                                {
+                                    DWRITE_TEXT_METRICS metrics;
+                                    if (SUCCEEDED(layout->GetMetrics(&metrics)))
+                                    {
+                                        D2D1_POINT_2F origin = D2D1::Point2F(
+                                            area.point.x - (metrics.width * 0.5f),
+                                            area.point.y - (metrics.height * 0.5f));
+                                        m_direct2DContext->DrawTextLayout(
+                                            origin, layout.get(), brush.get(), D2D1_DRAW_TEXT_OPTIONS_NONE);
+                                    }
                                 }
                             }
                         }
                     }
                 }
-            }
-            for (auto it = m_graph.edgesBegin(); m_graph.edgesEnd() != it; ++it)
-            {
-                const ARBOR vertex* tail = (*it)->getTail();
-                __m128 tailCoordinate = tail->getCoordinates();
-                if (_mm_movemask_ps(_mm_cmpeq_ps(tailCoordinate, tailCoordinate)))
+                for (auto it = m_graph.edgesBegin(); m_graph.edgesEnd() != it; ++it)
                 {
-                    const ARBOR vertex* head = (*it)->getHead();
-                    __m128 headCoordinate = head->getCoordinates();
-                    if (_mm_movemask_ps(_mm_cmpeq_ps(headCoordinate, headCoordinate)))
+                    const ARBOR vertex* tail = (*it)->getTail();
+                    __m128 tailCoordinate = tail->getCoordinates();
+                    if (_mm_movemask_ps(_mm_cmpeq_ps(tailCoordinate, tailCoordinate)))
                     {
-                        tailCoordinate = graphToLogical(tailCoordinate, size, viewBound);
-                        headCoordinate = graphToLogical(headCoordinate, size, viewBound);
-                        // Get tail and head ellipses.
-                        auto tailDraw = static_cast<vertex_draw*> (tail->getData());
-                        auto headDraw = static_cast<vertex_draw*> (head->getData());
-                        D2D1_ELLIPSE tailArea;
-                        D2D1_ELLIPSE headArea;
-                        if (SUCCEEDED(tailDraw->getArea(tailCoordinate, &tailArea)) &&
-                            SUCCEEDED(headDraw->getArea(headCoordinate, &headArea)))
+                        const ARBOR vertex* head = (*it)->getHead();
+                        __m128 headCoordinate = head->getCoordinates();
+                        if (_mm_movemask_ps(_mm_cmpeq_ps(headCoordinate, headCoordinate)))
                         {
-                            auto draw = static_cast<edge_draw*> ((*it)->getData());
-                            if (!draw)
+                            tailCoordinate = graphToLogical(tailCoordinate, size, viewBound);
+                            headCoordinate = graphToLogical(headCoordinate, size, viewBound);
+                            // Get tail and head ellipses.
+                            auto tailDraw = static_cast<vertex_draw*> (tail->getData());
+                            auto headDraw = static_cast<vertex_draw*> (head->getData());
+                            D2D1_ELLIPSE tailArea;
+                            D2D1_ELLIPSE headArea;
+                            if (SUCCEEDED(tailDraw->getArea(tailCoordinate, &tailArea)) &&
+                                SUCCEEDED(headDraw->getArea(headCoordinate, &headArea)))
                             {
-                                draw = new edge_draw {};
-                                m_edges.emplace_back(draw);
-                                (*it)->setData(draw);
-                                draw->createDeviceResources(m_direct2DContext.get(), **it);
-                            }
-                            ATLADD com_ptr<ID2D1SolidColorBrush> brush {};
-                            if (S_OK == draw->getBrush(brush.getAddressOf()))
-                            {
-                                connectAreas(tailArea, headArea, (*it)->getDirected(), brush.get());
+                                auto draw = static_cast<edge_draw*> ((*it)->getData());
+                                if (!draw)
+                                {
+                                    draw = new edge_draw {};
+                                    m_edges.emplace_back(draw);
+                                    (*it)->setData(draw);
+                                    draw->createDeviceResources(m_direct2DContext.get(), **it);
+                                }
+                                ATLADD com_ptr<ID2D1SolidColorBrush> brush {};
+                                if (S_OK == draw->getBrush(brush.getAddressOf()))
+                                {
+                                    connectAreas(tailArea, headArea, (*it)->getDirected(), brush.get());
+                                }
                             }
                         }
                     }
@@ -286,6 +298,27 @@ void graph_window::draw()
             }
         }
     }
+
+#if defined(_DEBUG) || defined(SHOWFPS)
+    /*
+     * Claculate and show average FPS.
+     */
+    std::chrono::high_resolution_clock::duration duration = getAverageFrameTime(clock.now() - first);
+    auto durationInMicroseconds = std::chrono::duration_cast<std::chrono::microseconds>(duration);
+    auto durationInSeconds = std::chrono::duration_cast<std::chrono::duration<double>>(duration);
+    double fps = 1.0 / durationInSeconds.count();
+    int length = _sctprintf(TEXT("%.4f FPS (%I64i µs per frame)"), fps, durationInMicroseconds.count()) + 1;
+    STLADD default_allocator<TCHAR> allocator {};
+    STLADD t_char_unique_ptr_t text(allocator.allocate(length));
+    length =
+        _stprintf_s(text.get(), length, TEXT("%.4f FPS (%I64i µs per frame)"), fps, durationInMicroseconds.count());
+    m_direct2DContext->DrawText(
+        text.get(),
+        length,
+        m_framesPerSecondTextFormat.get(),
+        D2D1::RectF(0.0f, 0.0f, targetSize.width, targetSize.height),
+        m_framesPerSecondBrush.get());
+#endif
 }
 
 
@@ -330,6 +363,10 @@ void graph_window::createDeviceResources()
         }
         draw->createDeviceResources(m_direct2DContext.get(), **it);
     }
+#if defined(_DEBUG) || defined(SHOWFPS)
+    m_direct2DContext->CreateSolidColorBrush(
+        D2D1::ColorF {D2D1::ColorF::Red, 1.0f}, m_framesPerSecondBrush.getAddressOf());
+#endif
 }
 
 
@@ -344,6 +381,9 @@ void graph_window::createDeviceResources()
  */
 void graph_window::releaseDeviceResources()
 {
+#if defined(_DEBUG) || defined(SHOWFPS)
+    m_framesPerSecondBrush.reset();
+#endif
     std::for_each(
         m_vertices.begin(),
         m_vertices.end(),
@@ -730,7 +770,7 @@ void graph_window::connectAreas(
  * If we solve the above system of equations we get the answer:
  *                        b
  * x = x0 ± ------------------------- ('+' when x1 > x0 and '-' when x1 < x0),
-                   n * n     b * b
+ *                 n * n     b * b
  *           sqrt(------- + -------)
  *                 m * m     a * a
  *           n
@@ -924,5 +964,46 @@ _Success_(return) bool graph_window::getArrow(
     }
     return result;
 }
+
+
+#if defined(_DEBUG) || defined(SHOWFPS)
+/**
+ * Calculates average time spent to render a frame by this window.
+ * This method stores time of some last frames and calculates an average value through that frames.
+ *
+ * Parameters:
+ * >frameTime
+ * Time spent to render the last frame.
+ *
+ * Returns:
+ * Average time, this window spends to render a frame.
+ *
+ * Remarks:
+ * Unit of measurement is `std::chrono::high_resolution_clock::period` of second.
+ */
+std::chrono::high_resolution_clock::duration graph_window::getAverageFrameTime(
+    _In_ std::chrono::high_resolution_clock::duration&& frameTime)
+{
+    std::chrono::high_resolution_clock::duration::rep frame = frameTime.count();
+    m_frameTotal -= *m_frameIt;
+    m_frameTotal += frame;
+    *m_frameIt = frame;
+    auto result = std::chrono::high_resolution_clock::duration {m_frameTotal / m_frameTimes.size()};
+    if (m_framesMaxNumber > m_frameTimes.size())
+    {
+        m_frameTimes.push_back(0);
+        m_frameIt = m_frameTimes.end() - 1;
+    }
+    else
+    {
+        ++m_frameIt;
+    }
+    if (m_frameTimes.end() == m_frameIt)
+    {
+        m_frameIt = m_frameTimes.begin();
+    }
+    return result;
+}
+#endif
 
 ATLADD_END

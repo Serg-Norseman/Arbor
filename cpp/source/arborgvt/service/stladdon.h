@@ -31,8 +31,7 @@ protected:
             initializer()
             {
                 /*
-                 * This library has only one thread, therefore I get no lock here. C++11 guarantees thread-safety here,
-                 * though (static local variables initialization, [6.7]).
+                 * C++11 guarantees thread-safety here (static local variables initialization, [6.7]).
                  *
                  * `m_heap` is protected from multiple access by Windows (see implementation of `createHeap` method).
                  */
@@ -198,8 +197,8 @@ public:
  *
  * Also view 'compiler_bugs.md' file.
  */
-template <typename T, std::size_t Alignment>
-constexpr std::size_t maxAlignment()
+template <typename T, size_t Alignment>
+constexpr size_t maxAlignment()
 {
     return max(std::alignment_of<T>::value, Alignment);
 }
@@ -208,7 +207,7 @@ constexpr std::size_t maxAlignment()
  * `aligned_allocator` aligns allocated memory on the maximum of the minimum alignment specified and the alignment of
  * objects of type `T`.
  */
-template <typename T, std::size_t Alignment>
+template <typename T, size_t Alignment>
 class aligned_allocator: private private_heap
 {
 public:
@@ -220,7 +219,7 @@ public:
     typedef T&& rvalue_reference;
     typedef size_t size_type;
     typedef ptrdiff_t difference_type;
-    typedef std::integral_constant<std::size_t, maxAlignment<value_type, Alignment>()> max_alignment_t;
+    typedef std::integral_constant<size_t, maxAlignment<value_type, Alignment>()> max_alignment_t;
 
     template <typename U>
     struct rebind
@@ -382,7 +381,7 @@ public:
 
 
 
-template <typename T, std::size_t Alignment>
+template <typename T, size_t Alignment>
 class aligned_deleter
 {
 public:
