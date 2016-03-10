@@ -124,7 +124,7 @@ _Success_(return) bool string_util::loadString(
  *
  * Returns:
  * true value in case of success, false -- otherwise. In the first case caller should free the *ppszResult buffer
- * w/ `default_allocator`.
+ * w/ `default_allocator` or `delete` operator.
  */
 _Success_(return) bool string_util::loadString(
     _In_ UINT nStringResourceId,
@@ -144,8 +144,7 @@ _Success_(return) bool string_util::loadString(
         ::LoadString(m_hModuleWithResource, nStringResourceId, reinterpret_cast<LPTSTR> (&pszResourceText), 0);
     if (*pnResourceLength)
     {
-        STLADD default_allocator<TCHAR> allocator {};
-        *ppszResourceString = allocator.allocate(*pnResourceLength + 1);
+        *ppszResourceString = new TCHAR[*pnResourceLength + 1];
         if (*ppszResourceString)
         {
             _tcsncpy_s(*ppszResourceString, *pnResourceLength + 1, pszResourceText, *pnResourceLength);
@@ -225,36 +224,6 @@ _Success_(return) bool string_util::loadReadOnlyString(
 
 
 /**
- * Wrapping method for the convenience of use the string_util class.
- * When one of the string_util methods allocates some memory resource and returns a pointer to that resource,
- * a caller has ability to free the memory w/o resorting to the help of `STLADD default_allocator`.
- * For example:
- *     string_util::const_ptr_t pStringUtil = string_util::getInstance();
- *     LPTSTR pszDateTime = pStringUtil->convertSystemTimeToString(...);
- *     if (pszDateTime) { . . .
- * When you don't need the pszDateTime anymore you can release it w/:
- * (a)
- *    STLADD default_allocator<TCHAR> allocator {};
- *    allocator.deallocate(pszResourceString);
- * or
- * (b)
- *    pStringUtil->freeString(pszDateTime);
- *
- * Parameters:
- * >pszResourceString
- * String buffer, that was allocated by a string_util's member function.
- *
- * Retuns:
- * N/A.
- */
-void string_util::freeString(_In_ __drv_freesMem(Mem) _Frees_ptr_ LPTSTR pszResourceString) const
-{
-    STLADD default_allocator<TCHAR> allocator {};
-    allocator.deallocate(pszResourceString);
-}
-
-
-/**
  * Loads format string from the application's resource, checks it and makes formatted result string.
  * Format string from resource should have only one "%s" field and this field only.
  *
@@ -298,12 +267,12 @@ bool string_util::formatOneStringField(
     LPTSTR pszResultFormat;
     if (loadString(nResultFormatId, &pszResultFormat, pnResultLength))
     {
-        STLADD default_allocator<TCHAR> allocator {};
+        STLADD t_char_unique_ptr_t guard {pszResultFormat};
         const STLADD regex_type regexOfFormat(TEXT("(?:[^%]*)(?:%s){1,1}(?:[^%]*)"));
         if (std::regex_match(pszResultFormat, pszResultFormat + (*pnResultLength), regexOfFormat))
         {
             *pnResultLength += (nArgumentLength - 1);
-            *ppszResult = allocator.allocate(*pnResultLength);
+            *ppszResult = new TCHAR[*pnResultLength];
             if (*ppszResult)
             {
                 _stprintf_s(*ppszResult, *pnResultLength, pszResultFormat, pszArgument);
@@ -311,7 +280,6 @@ bool string_util::formatOneStringField(
                 bResult = true;
             }
         }
-        allocator.deallocate(pszResultFormat);
     }
     return bResult;
 }
@@ -334,10 +302,9 @@ bool string_util::formatOneStringField(
  * only two digits. Pass false to use the first value of the LOCALE_SLONGDATE/LOCALE_SSHORTDATE format.
  * I don't believe one can find the LOCALE_SLONGDATE format w/ year part two digits long in _default_ locale settings.
  * >ppszString
- * Pointer to variable, that receives address of string buffer w/ result. This buffer is allocated by the member, and
- * when it completes its works successfully it is a caller responsibility to free that memory via the application's
- * memory manager or string_util::freeString method. But when the method fails a caller must ignore this and the next
- * out parameters.
+ * Pointer to variable, that receives address of string buffer w/ result. This buffer is allocated by this method, and
+ * when it completes its works successfully it is a caller responsibility to free that memory with `delete` operator.
+ * But when the method fails a caller must ignore this and the next out parameters.
  * >pnStringLength
  * Pointer to variable that receives string result length not including NULL-terminating character. Caller can pass
  * NULL pointer here.
@@ -438,200 +405,173 @@ bool string_util::convertSystemTimeToString(
                             (pGetLocaleInfo)(LOCALE_USER_DEFAULT, nLocaleDateFormat, nullptr, 0));
         if (nFormatLength)
         {
-            STLADD default_allocator<TCHAR> allocator {};
-            LPTSTR pszFormat = allocator.allocate(nFormatLength);
-            if (nullptr != pszFormat)
+            STLADD t_char_unique_ptr_t format {new TCHAR[nFormatLength]};
+            LPTSTR pszFormat {format.get()};
+            if (pGetLocaleInfoEx)
             {
-                if (pGetLocaleInfoEx)
+                if (!(pGetLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT, nLocaleDateFormat, pszFormat, nFormatLength))
                 {
-                    if (!(pGetLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT, nLocaleDateFormat, pszFormat, nFormatLength))
-                    {
-                        allocator.deallocate(pszFormat);
-                        pszFormat = nullptr;
-                    }
+                    format.reset();
+                    pszFormat = nullptr;
                 }
-                else
+            }
+            else
+            {
+                if (!(pGetLocaleInfo)(LOCALE_USER_DEFAULT, nLocaleDateFormat, pszFormat, nFormatLength))
                 {
-                    if (!(pGetLocaleInfo)(LOCALE_USER_DEFAULT, nLocaleDateFormat, pszFormat, nFormatLength))
-                    {
-                        allocator.deallocate(pszFormat);
-                        pszFormat = nullptr;
-                    }
+                    format.reset();
+                    pszFormat = nullptr;
                 }
+            }
 
-                DWORD nFlags = bUseLongDateFormat ? DATE_LONGDATE : DATE_SHORTDATE;
-                if (bSearchForTwoDigitsFormat)
-                {
-                    if (nullptr != pszFormat)
-                    {
-                        // Check if the pszFormat formatting string has only two-digits year type.
-                        const STLADD regex_type regexOfFormat(TEXT("(?:^yy[^y].*)|(?:.*[^y]yy[^y].*)|(?:.*[^y]yy$)"));
-                        if (!std::regex_match(pszFormat, pszFormat + nFormatLength, regexOfFormat))
-                        {
-                            allocator.deallocate(pszFormat);
-                            pszFormat = nullptr;
-                        }
-                    }
-
-                    if (nullptr == pszFormat)
-                    {
-                        /*
-                         * Search other, non-default LOCALE_SSHORTDATE formatting string.
-                         * The m_pszEnumDateFormatsProcExData data memeber is used by the
-                         * string_util::enumDateFormatsProcEx static method.
-                         */
-                        m_ppszEnumDateFormatsProcExData = &pszFormat;
-                        BOOL bEnumResult =
-                            (pEnumDateFormatsExEx ?
-                            (pEnumDateFormatsExEx)(enumDateFormatsProcExEx,
-                                                   LOCALE_NAME_USER_DEFAULT,
-                                                   nFlags,
-                                                   reinterpret_cast<LPARAM> (&pszFormat)) :
-                            (pEnumDateFormatsEx)(enumDateFormatsProcEx, LOCALE_USER_DEFAULT, nFlags));
-                        if (!bEnumResult && pszFormat)
-                        {
-                            allocator.deallocate(pszFormat);
-                            pszFormat = nullptr;
-                        }
-                    }
-                }
-
-                // Use found or standard formatting string to format the pSystemTime.
-                const DWORD nGetDateFlags = pszFormat ? 0 : nFlags;
-                STLADD string_unique_ptr_t szListSeparator = getListSeparator();
-                size_t nSplitterLength = szListSeparator->size();
-                size_t nDateBufferSize;
-                // Shut the C4701 down ("potentially uninitialized local variable 'nTimeBufferSize' used").
-                size_t nTimeBufferSize = 0;
-                // Calculate buffer size big enough to hold date, time and list separator.
-                if (pGetDateFormatEx)
-                {
-                    nDateBufferSize = (pGetDateFormatEx)(LOCALE_NAME_USER_DEFAULT,
-                                                         nGetDateFlags,
-                                                         pSystemTime,
-                                                         pszFormat,
-                                                         nullptr,
-                                                         0,
-                                                         nullptr);
-                    if (nDateBufferSize)
-                    {
-                        nTimeBufferSize = (pGetTimeFormatEx)(LOCALE_NAME_USER_DEFAULT,
-                                                             TIME_NOSECONDS,
-                                                             pSystemTime,
-                                                             nullptr,
-                                                             nullptr,
-                                                             0);
-                        if (nTimeBufferSize)
-                        {
-                            *pnStringLength = nDateBufferSize + nTimeBufferSize - 1 + nSplitterLength;
-                        }
-                        else
-                        {
-                            *pnStringLength = 0;
-                        }
-                    }
-                    else
-                    {
-                        *pnStringLength = 0;
-                    }
-                }
-                else
-                {
-                    // "Under-Vista" path.
-                    nDateBufferSize = (pGetDateFormat)(LOCALE_USER_DEFAULT,
-                                                       nGetDateFlags,
-                                                       pSystemTime,
-                                                       pszFormat,
-                                                       nullptr,
-                                                       0);
-                    if (nDateBufferSize)
-                    {
-                        nTimeBufferSize = (pGetTimeFormat)(LOCALE_USER_DEFAULT,
-                                                           TIME_NOSECONDS,
-                                                           pSystemTime,
-                                                           nullptr,
-                                                           nullptr,
-                                                           0);
-                        if (nTimeBufferSize)
-                        {
-                            *pnStringLength = nDateBufferSize + nTimeBufferSize - 1 + nSplitterLength;
-                        }
-                        else
-                        {
-                            *pnStringLength = 0;
-                        }
-                    }
-                    else
-                    {
-                        *pnStringLength = 0;
-                    }
-                }
-                if (*pnStringLength)
-                {
-                    *ppszString = allocator.allocate(*pnStringLength);
-                    if (*ppszString)
-                    {
-                        if (pGetDateFormatEx)
-                        {
-                            nDateBufferSize = (pGetDateFormatEx)(LOCALE_NAME_USER_DEFAULT,
-                                                                 nGetDateFlags,
-                                                                 pSystemTime,
-                                                                 pszFormat,
-                                                                 *ppszString,
-                                                                 static_cast<int> (nDateBufferSize),
-                                                                 nullptr);
-                            if (nDateBufferSize)
-                            {
-                                _tcscat_s(*ppszString, *pnStringLength, szListSeparator->c_str());
-                                nTimeBufferSize = (pGetTimeFormatEx)(
-                                    LOCALE_NAME_USER_DEFAULT,
-                                    TIME_NOSECONDS,
-                                    pSystemTime,
-                                    nullptr,
-                                    (*ppszString) + nDateBufferSize + nSplitterLength - 1,
-                                    static_cast<int> (nTimeBufferSize));
-                            }
-                        }
-                        else
-                        {
-                            nDateBufferSize = (pGetDateFormat)(
-                                LOCALE_USER_DEFAULT,
-                                nGetDateFlags,
-                                pSystemTime,
-                                pszFormat,
-                                *ppszString,
-                                static_cast<int> (nDateBufferSize));
-                            if (nDateBufferSize)
-                            {
-                                _tcscat_s(*ppszString, *pnStringLength, szListSeparator->c_str());
-                                nTimeBufferSize = (pGetTimeFormat)(
-                                    LOCALE_USER_DEFAULT,
-                                    TIME_NOSECONDS,
-                                    pSystemTime,
-                                    nullptr,
-                                    (*ppszString) + nDateBufferSize + nSplitterLength - 1,
-                                    static_cast<int> (nTimeBufferSize));
-                            }
-                        }
-                        if (nDateBufferSize && nTimeBufferSize)
-                        {
-                            // Exclude NULL terminating character.
-                            --(*pnStringLength);
-                            bResult = true;
-                        }
-                        else
-                        {
-                            // Error has occurred.
-                            allocator.deallocate(*ppszString);
-                            *ppszString = nullptr;
-                            *pnStringLength = 0;
-                        }
-                    }
-                }
-
+            DWORD nFlags = bUseLongDateFormat ? DATE_LONGDATE : DATE_SHORTDATE;
+            if (bSearchForTwoDigitsFormat)
+            {
                 if (nullptr != pszFormat)
                 {
-                    allocator.deallocate(pszFormat);
+                    // Check if the pszFormat formatting string has only two-digits year type.
+                    const STLADD regex_type regexOfFormat {TEXT("(?:^yy[^y].*)|(?:.*[^y]yy[^y].*)|(?:.*[^y]yy$)")};
+                    if (!std::regex_match(pszFormat, pszFormat + nFormatLength, regexOfFormat))
+                    {
+                        format.reset();
+                        pszFormat = nullptr;
+                    }
+                }
+
+                if (nullptr == pszFormat)
+                {
+                    /*
+                     * Search other, non-default LOCALE_SSHORTDATE formatting string.
+                     * The m_pszEnumDateFormatsProcExData data memeber is used by the
+                     * `string_util::enumDateFormatsProcEx` static method.
+                     */
+                    m_ppszEnumDateFormatsProcExData = &pszFormat;
+                    BOOL bEnumResult =
+                        pEnumDateFormatsExEx ?
+                        (pEnumDateFormatsExEx)(enumDateFormatsProcExEx,
+                                               LOCALE_NAME_USER_DEFAULT,
+                                               nFlags,
+                                               reinterpret_cast<LPARAM> (&pszFormat)) :
+                        (pEnumDateFormatsEx)(enumDateFormatsProcEx, LOCALE_USER_DEFAULT, nFlags);
+                    if (!bEnumResult && pszFormat)
+                    {
+                        format.reset();
+                        pszFormat = nullptr;
+                    }
+                }
+            }
+
+            // Use found or standard formatting string to format the pSystemTime.
+            const DWORD nGetDateFlags = pszFormat ? 0 : nFlags;
+            STLADD string_unique_ptr_t szListSeparator = getListSeparator();
+            size_t nSplitterLength = szListSeparator->size();
+            size_t nDateBufferSize;
+            // Shut the C4701 down ("potentially uninitialized local variable 'nTimeBufferSize' used").
+            size_t nTimeBufferSize = 0;
+            // Calculate buffer size big enough to hold date, time and list separator.
+            if (pGetDateFormatEx)
+            {
+                nDateBufferSize = (pGetDateFormatEx)(
+                    LOCALE_NAME_USER_DEFAULT, nGetDateFlags, pSystemTime, pszFormat, nullptr, 0, nullptr);
+                if (nDateBufferSize)
+                {
+                    nTimeBufferSize = (pGetTimeFormatEx)(
+                        LOCALE_NAME_USER_DEFAULT, TIME_NOSECONDS, pSystemTime, nullptr, nullptr, 0);
+                    if (nTimeBufferSize)
+                    {
+                        *pnStringLength = nDateBufferSize + nTimeBufferSize - 1 + nSplitterLength;
+                    }
+                    else
+                    {
+                        *pnStringLength = 0;
+                    }
+                }
+                else
+                {
+                    *pnStringLength = 0;
+                }
+            }
+            else
+            {
+                // "Pre-Vista" path.
+                nDateBufferSize = (pGetDateFormat)(
+                    LOCALE_USER_DEFAULT, nGetDateFlags, pSystemTime, pszFormat, nullptr, 0);
+                if (nDateBufferSize)
+                {
+                    nTimeBufferSize = (pGetTimeFormat)(
+                        LOCALE_USER_DEFAULT, TIME_NOSECONDS, pSystemTime, nullptr, nullptr, 0);
+                    if (nTimeBufferSize)
+                    {
+                        *pnStringLength = nDateBufferSize + nTimeBufferSize - 1 + nSplitterLength;
+                    }
+                    else
+                    {
+                        *pnStringLength = 0;
+                    }
+                }
+                else
+                {
+                    *pnStringLength = 0;
+                }
+            }
+            if (*pnStringLength)
+            {
+                *ppszString = new TCHAR[*pnStringLength];
+                if (pGetDateFormatEx)
+                {
+                    nDateBufferSize = (pGetDateFormatEx)(
+                        LOCALE_NAME_USER_DEFAULT,
+                        nGetDateFlags,
+                        pSystemTime,
+                        pszFormat,
+                        *ppszString,
+                        static_cast<int> (nDateBufferSize),
+                        nullptr);
+                    if (nDateBufferSize)
+                    {
+                        _tcscat_s(*ppszString, *pnStringLength, szListSeparator->c_str());
+                        nTimeBufferSize = (pGetTimeFormatEx)(
+                            LOCALE_NAME_USER_DEFAULT,
+                            TIME_NOSECONDS,
+                            pSystemTime,
+                            nullptr,
+                            (*ppszString) + nDateBufferSize + nSplitterLength - 1,
+                            static_cast<int> (nTimeBufferSize));
+                    }
+                }
+                else
+                {
+                    nDateBufferSize = (pGetDateFormat)(
+                        LOCALE_USER_DEFAULT,
+                        nGetDateFlags,
+                        pSystemTime,
+                        pszFormat,
+                        *ppszString,
+                        static_cast<int> (nDateBufferSize));
+                    if (nDateBufferSize)
+                    {
+                        _tcscat_s(*ppszString, *pnStringLength, szListSeparator->c_str());
+                        nTimeBufferSize = (pGetTimeFormat)(
+                            LOCALE_USER_DEFAULT,
+                            TIME_NOSECONDS,
+                            pSystemTime,
+                            nullptr,
+                            (*ppszString) + nDateBufferSize + nSplitterLength - 1,
+                            static_cast<int> (nTimeBufferSize));
+                    }
+                }
+                if (nDateBufferSize && nTimeBufferSize)
+                {
+                    // Exclude NULL terminating character.
+                    --(*pnStringLength);
+                    bResult = true;
+                }
+                else
+                {
+                    // Error has occurred.
+                    delete[] *ppszString;
+                    *ppszString = nullptr;
+                    *pnStringLength = 0;
                 }
             }
         }
@@ -661,10 +601,9 @@ bool string_util::convertSystemTimeToString(
  * only two digits. Pass false to use the first value of the LOCALE_SLONGDATE/LOCALE_SSHORTDATE format.
  * I don't believe one can find the LOCALE_SLONGDATE format w/ year part two digits long in _default_ locale settings.
  * >ppszString
- * Pointer to variable, that receives address of string buffer w/ result. This buffer is allocated by the member, and
- * when it completes its works successfully it is a caller responsibility to free that memory via the application's
- * memory manager or string_util::freeString method. But when the method fails a caller must ignore this and the next
- * out parameters.
+ * Pointer to variable, that receives address of string buffer w/ result. This buffer is allocated by this method, and
+ * when it completes its works successfully it is a caller responsibility to free that memory with `delete` opeartor.
+ * But when the method fails a caller must ignore this and the next out parameters.
  * >pnStringLength
  * Pointer to variable that receives string result length not including NULL-terminating character. Caller can pass
  * NULL pointer here.
@@ -688,19 +627,21 @@ bool string_util::convertSystemDateOnlyToString(
         _In_ DATEFMT_ENUMPROCEXEX, _In_opt_ LPCWSTR, _In_ DWORD, _In_ LPARAM);
     using enum_date_formats_ex_func_t = BOOL (WINAPI *)(_In_ DATEFMT_ENUMPROCEXW, _In_ LCID, _In_ DWORD);
 
-    using get_date_format_ex_func_t = int (WINAPI *)(_In_opt_ LPCWSTR,
-                                                     _In_ DWORD,
-                                                     _In_opt_ CONST SYSTEMTIME*,
-                                                     _In_opt_ LPCWSTR,
-                                                     _Out_writes_opt_(cchDate) LPWSTR,
-                                                     _In_ int cchDate,
-                                                     _In_opt_ LPCWSTR);
-    using get_date_format_func_t = int (WINAPI *)(_In_ LCID,
-                                                  _In_ DWORD,
-                                                  _In_opt_ CONST SYSTEMTIME*,
-                                                  _In_opt_ LPCWSTR,
-                                                  _Out_writes_opt_(cchDate) LPWSTR,
-                                                  _In_ int cchDate);
+    using get_date_format_ex_func_t = int (WINAPI *)(
+        _In_opt_ LPCWSTR,
+        _In_ DWORD,
+        _In_opt_ CONST SYSTEMTIME*,
+        _In_opt_ LPCWSTR,
+        _Out_writes_opt_(cchDate) LPWSTR,
+        _In_ int cchDate,
+        _In_opt_ LPCWSTR);
+    using get_date_format_func_t = int (WINAPI *)(
+        _In_ LCID,
+        _In_ DWORD,
+        _In_opt_ CONST SYSTEMTIME*,
+        _In_opt_ LPCWSTR,
+        _Out_writes_opt_(cchDate) LPWSTR,
+        _In_ int cchDate);
 
     get_locale_info_ex_func_t pGetLocaleInfoEx = nullptr;
     get_locale_info_func_t pGetLocaleInfo = nullptr;
@@ -746,127 +687,109 @@ bool string_util::convertSystemDateOnlyToString(
                             (pGetLocaleInfo)(LOCALE_USER_DEFAULT, nLocaleDateFormat, nullptr, 0));
         if (nFormatLength)
         {
-            STLADD default_allocator<TCHAR> allocator {};
-            LPTSTR pszFormat = allocator.allocate(nFormatLength);
-            if (nullptr != pszFormat)
+            STLADD t_char_unique_ptr_t format {new TCHAR[nFormatLength]};
+            LPTSTR pszFormat {format.get()};
+            if (pGetLocaleInfoEx)
             {
-                if (pGetLocaleInfoEx)
+                if (!(pGetLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT, nLocaleDateFormat, pszFormat, nFormatLength))
                 {
-                    if (!(pGetLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT, nLocaleDateFormat, pszFormat, nFormatLength))
+                    format.reset();
+                    pszFormat = nullptr;
+                }
+            }
+            else
+            {
+                if (!(pGetLocaleInfo)(LOCALE_USER_DEFAULT, nLocaleDateFormat, pszFormat, nFormatLength))
+                {
+                    format.reset();
+                    pszFormat = nullptr;
+                }
+            }
+
+            const DWORD nFlags = bUseLongDateFormat ? DATE_LONGDATE : DATE_SHORTDATE;
+            if (bSearchForTwoDigitsFormat)
+            {
+                if (nullptr != pszFormat)
+                {
+                    // Check if the pszFormat formatting string has only two-digits year type.
+                    const STLADD regex_type regexOfFormat {TEXT("(?:^yy[^y].*)|(?:.*[^y]yy[^y].*)|(?:.*[^y]yy$)")};
+                    if (!std::regex_match(pszFormat, pszFormat + nFormatLength, regexOfFormat))
                     {
-                        allocator.deallocate(pszFormat);
+                        format.reset();
                         pszFormat = nullptr;
                     }
                 }
-                else
+
+                if (nullptr == pszFormat)
                 {
-                    if (!(pGetLocaleInfo)(LOCALE_USER_DEFAULT, nLocaleDateFormat, pszFormat, nFormatLength))
+                    /*
+                     * Search other, non-default LOCALE_SSHORTDATE formatting string.
+                     * The m_pszEnumDateFormatsProcExData data memeber is used by the
+                     * `string_util::enumDateFormatsProcEx` static method.
+                     */
+                    m_ppszEnumDateFormatsProcExData = &pszFormat;
+                    BOOL bEnumResult =
+                        (pEnumDateFormatsExEx ?
+                        (pEnumDateFormatsExEx)(enumDateFormatsProcExEx,
+                                               LOCALE_NAME_USER_DEFAULT,
+                                               nFlags,
+                                               reinterpret_cast<LPARAM> (&pszFormat)) :
+                        (pEnumDateFormatsEx)(enumDateFormatsProcEx, LOCALE_USER_DEFAULT, nFlags));
+                    if (!bEnumResult && pszFormat)
                     {
-                        allocator.deallocate(pszFormat);
+                        format.reset();
                         pszFormat = nullptr;
                     }
                 }
+            }
 
-                const DWORD nFlags = bUseLongDateFormat ? DATE_LONGDATE : DATE_SHORTDATE;
-                if (bSearchForTwoDigitsFormat)
-                {
-                    if (nullptr != pszFormat)
-                    {
-                        // Check if the pszFormat formatting string has only two-digits year type.
-                        const STLADD regex_type regexOfFormat(TEXT("(?:^yy[^y].*)|(?:.*[^y]yy[^y].*)|(?:.*[^y]yy$)"));
-                        if (!std::regex_match(pszFormat, pszFormat + nFormatLength, regexOfFormat))
-                        {
-                            allocator.deallocate(pszFormat);
-                            pszFormat = nullptr;
-                        }
-                    }
-
-                    if (nullptr == pszFormat)
-                    {
-                        /*
-                         * Search other, non-default LOCALE_SSHORTDATE formatting string.
-                         * The m_pszEnumDateFormatsProcExData data memeber is used by the
-                         * string_util::enumDateFormatsProcEx static method.
-                         */
-                        m_ppszEnumDateFormatsProcExData = &pszFormat;
-                        BOOL bEnumResult =
-                            (pEnumDateFormatsExEx ?
-                            (pEnumDateFormatsExEx)(enumDateFormatsProcExEx,
-                                                   LOCALE_NAME_USER_DEFAULT,
-                                                   nFlags,
-                                                   reinterpret_cast<LPARAM> (&pszFormat)) :
-                            (pEnumDateFormatsEx)(enumDateFormatsProcEx, LOCALE_USER_DEFAULT, nFlags));
-                        if (!bEnumResult && pszFormat)
-                        {
-                            allocator.deallocate(pszFormat);
-                            pszFormat = nullptr;
-                        }
-                    }
-                }
-
-                // Use found or standard formatting string to format the pSystemTime.
-                const DWORD nGetDateFlags = (pszFormat ? 0 : nFlags);
+            // Use found or standard formatting string to format the pSystemTime.
+            const DWORD nGetDateFlags = pszFormat ? 0 : nFlags;
+            if (pGetDateFormatEx)
+            {
+                *pnStringLength = (pGetDateFormatEx)(
+                    LOCALE_NAME_USER_DEFAULT, nGetDateFlags, pSystemTime, pszFormat, nullptr, 0, nullptr);
+            }
+            else
+            {
+                *pnStringLength = (pGetDateFormat)(
+                    LOCALE_USER_DEFAULT, nGetDateFlags, pSystemTime, pszFormat, nullptr, 0);
+            }
+            if (*pnStringLength)
+            {
+                *ppszString = new TCHAR[*pnStringLength];
                 if (pGetDateFormatEx)
                 {
-                    *pnStringLength = (pGetDateFormatEx)(LOCALE_NAME_USER_DEFAULT,
-                                                         nGetDateFlags,
-                                                         pSystemTime,
-                                                         pszFormat,
-                                                         nullptr,
-                                                         0,
-                                                         nullptr);
+                    *pnStringLength = (pGetDateFormatEx)(
+                        LOCALE_NAME_USER_DEFAULT,
+                        nGetDateFlags,
+                        pSystemTime,
+                        pszFormat,
+                        *ppszString,
+                        static_cast<int> ((*pnStringLength)),
+                        nullptr);
                 }
                 else
                 {
-                    *pnStringLength = (pGetDateFormat)(LOCALE_USER_DEFAULT,
-                                                       nGetDateFlags,
-                                                       pSystemTime,
-                                                       pszFormat,
-                                                       nullptr,
-                                                       0);
+                    *pnStringLength = (pGetDateFormat)(
+                        LOCALE_USER_DEFAULT,
+                        nGetDateFlags,
+                        pSystemTime,
+                        pszFormat,
+                        *ppszString,
+                        static_cast<int> ((*pnStringLength)));
                 }
                 if (*pnStringLength)
                 {
-                    *ppszString = allocator.allocate(*pnStringLength);
-                    if (*ppszString)
-                    {
-                        if (pGetDateFormatEx)
-                        {
-                            *pnStringLength = (pGetDateFormatEx)(LOCALE_NAME_USER_DEFAULT,
-                                                                 nGetDateFlags,
-                                                                 pSystemTime,
-                                                                 pszFormat,
-                                                                 *ppszString,
-                                                                 static_cast<int> ((*pnStringLength)),
-                                                                 nullptr);
-                        }
-                        else
-                        {
-                            *pnStringLength = (pGetDateFormat)(LOCALE_USER_DEFAULT,
-                                                               nGetDateFlags,
-                                                               pSystemTime,
-                                                               pszFormat,
-                                                               *ppszString,
-                                                               static_cast<int> ((*pnStringLength)));
-                        }
-                        if (*pnStringLength)
-                        {
-                            // Exclude NULL terminating character.
-                            --(*pnStringLength);
-                            bResult = true;
-                        }
-                        else
-                        {
-                            // Error has occurred.
-                            allocator.deallocate(*ppszString);
-                            *ppszString = nullptr;
-                        }
-                    }
+                    // Exclude NULL terminating character.
+                    --(*pnStringLength);
+                    bResult = true;
                 }
-
-                if (nullptr != pszFormat)
+                else
                 {
-                    allocator.deallocate(pszFormat);
+                    // Error has occurred.
+                    delete[] *ppszString;
+                    *ppszString = nullptr;
                 }
             }
         }
@@ -889,10 +812,9 @@ bool string_util::convertSystemDateOnlyToString(
  * >pSystemTime
  * System time to be converted to string representation.
  * >ppszString
- * Pointer to variable, that receives address of string buffer w/ result. This buffer is allocated by the member, and
- * when it completes its works successfully it is a caller responsibility to free that memory via the application's
- * memory manager or string_util::freeString method. But when the method fails a caller must ignore this and the next
- * out parameters.
+ * Pointer to variable, that receives address of string buffer w/ result. This buffer is allocated by this method, and
+ * when it completes its works successfully it is a caller responsibility to free that memory with `delete` operator.
+ * But when the method fails a caller must ignore this and the next out parameters.
  * >pnStringLength
  * Pointer to variable that receives string result length not including NULL-terminating character.
  *
@@ -906,18 +828,20 @@ bool string_util::convertSystemTimeOnlyToString(
     _When_(0 == return, _Outptr_result_maybenull_z_) LPTSTR* const ppszString,
     _Out_ size_t* pnStringLength) const
 {
-    using get_time_format_ex_func_t = int (WINAPI *)(_In_opt_ LPCWSTR,
-                                                     _In_ DWORD,
-                                                     _In_opt_ CONST SYSTEMTIME*,
-                                                     _In_opt_ LPCWSTR,
-                                                     _Out_writes_opt_(cchTime) LPWSTR,
-                                                     _In_ int cchTime);
-    using get_time_format_func_t = int (WINAPI *)(_In_ LCID,
-                                                  _In_ DWORD,
-                                                  _In_opt_ CONST SYSTEMTIME*,
-                                                  _In_opt_ LPCWSTR,
-                                                  _Out_writes_opt_(cchTime) LPWSTR,
-                                                  _In_ int cchTime);
+    using get_time_format_ex_func_t = int (WINAPI *)(
+        _In_opt_ LPCWSTR,
+        _In_ DWORD,
+        _In_opt_ CONST SYSTEMTIME*,
+        _In_opt_ LPCWSTR,
+        _Out_writes_opt_(cchTime) LPWSTR,
+        _In_ int cchTime);
+    using get_time_format_func_t = int (WINAPI *)(
+        _In_ LCID,
+        _In_ DWORD,
+        _In_opt_ CONST SYSTEMTIME*,
+        _In_opt_ LPCWSTR,
+        _Out_writes_opt_(cchTime) LPWSTR,
+        _In_ int cchTime);
 
     bool bResult = false;
     get_time_format_func_t pGetTimeFormat = nullptr;
@@ -934,7 +858,6 @@ bool string_util::convertSystemTimeOnlyToString(
     }
 
     *pnStringLength = 0;
-    STLADD default_allocator<TCHAR> allocator {};
     if (pGetTimeFormatEx)
     {
         *pnStringLength =
@@ -947,40 +870,39 @@ bool string_util::convertSystemTimeOnlyToString(
     }
     if (*pnStringLength)
     {
-        *ppszString = allocator.allocate(*pnStringLength);
-        if (*ppszString)
+        *ppszString = new TCHAR[*pnStringLength];
+        if (pGetTimeFormatEx)
         {
-            if (pGetTimeFormatEx)
-            {
-                *pnStringLength = (pGetTimeFormatEx)(LOCALE_NAME_USER_DEFAULT,
-                                                     TIME_NOSECONDS,
-                                                     pSystemTime,
-                                                     nullptr,
-                                                     *ppszString,
-                                                     static_cast<int> ((*pnStringLength)));
-            }
-            else if (pGetTimeFormat)
-            {
-                *pnStringLength = (pGetTimeFormat)(LOCALE_USER_DEFAULT,
-                                                   TIME_NOSECONDS,
-                                                   pSystemTime,
-                                                   nullptr,
-                                                   *ppszString,
-                                                   static_cast<int> ((*pnStringLength)));
-            }
+            *pnStringLength = (pGetTimeFormatEx)(
+                LOCALE_NAME_USER_DEFAULT,
+                TIME_NOSECONDS,
+                pSystemTime,
+                nullptr,
+                *ppszString,
+                static_cast<int> ((*pnStringLength)));
+        }
+        else if (pGetTimeFormat)
+        {
+            *pnStringLength = (pGetTimeFormat)(
+                LOCALE_USER_DEFAULT,
+                TIME_NOSECONDS,
+                pSystemTime,
+                nullptr,
+                *ppszString,
+                static_cast<int> ((*pnStringLength)));
+        }
 
-            if (*pnStringLength)
-            {
-                // Exclude NULL terminating character.
-                --(*pnStringLength);
-                bResult = true;
-            }
-            else
-            {
-                // Error has occurred.
-                allocator.deallocate(*ppszString);
-                *ppszString = nullptr;
-            }
+        if (*pnStringLength)
+        {
+            // Exclude NULL terminating character.
+            --(*pnStringLength);
+            bResult = true;
+        }
+        else
+        {
+            // Error has occurred.
+            delete[] *ppszString;
+            *ppszString = nullptr;
         }
     }
     if (nullptr != hKernel32)
@@ -1020,8 +942,7 @@ _Check_return_ STLADD string_unique_ptr_t string_util::formatNumber(_In_ const T
 
     STLADD string_unique_ptr_t szResult {};
     size_t nNumberLength = 32;
-    STLADD default_allocator<TCHAR> allocator {};
-    STLADD t_char_unique_ptr_t szNumber {allocator.allocate(nNumberLength)};
+    STLADD t_char_unique_ptr_t szNumber {new TCHAR[nNumberLength]};
     nNumberLength = _stprintf_s(szNumber, nNumberLength, printf_value_trait<T>::get(), value);
 
     /*
@@ -1116,8 +1037,8 @@ _Check_return_ STLADD string_unique_ptr_t string_util::formatNumber(_In_ const T
             (pGetLocaleInfo)(LOCALE_USER_DEFAULT, LOCALE_SGROUPING, nullptr, 0);
         if (nInfoLength)
         {
-            pszInfo = allocator.allocate((static_cast<size_t> (nInfoLength)) << 1);
-            STLADD t_char_unique_ptr_t guard {pszInfo};
+            STLADD t_char_unique_ptr_t guard {new TCHAR[(static_cast<size_t> (nInfoLength)) << 1]};
+            pszInfo = guard.get();
             nInfoLength =
                 pGetLocaleInfoEx ?
                 (pGetLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT, LOCALE_SGROUPING, pszInfo, nInfoLength) :
@@ -1150,7 +1071,7 @@ _Check_return_ STLADD string_unique_ptr_t string_util::formatNumber(_In_ const T
             (pGetLocaleInfo)(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, nullptr, 0);
         if (nInfoLength)
         {
-            pszInfo = allocator.allocate(nInfoLength);
+            pszInfo = new TCHAR[nInfoLength];
             if (pGetLocaleInfoEx)
             {
                 if ((pGetLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT, LOCALE_SDECIMAL, pszInfo, nInfoLength))
@@ -1159,7 +1080,7 @@ _Check_return_ STLADD string_unique_ptr_t string_util::formatNumber(_In_ const T
                 }
                 else
                 {
-                    allocator.deallocate(pszInfo);
+                    delete[] pszInfo;
                 }
             }
             else
@@ -1170,7 +1091,7 @@ _Check_return_ STLADD string_unique_ptr_t string_util::formatNumber(_In_ const T
                 }
                 else
                 {
-                    allocator.deallocate(pszInfo);
+                    delete[] pszInfo;
                 }
             }
         }
@@ -1181,7 +1102,7 @@ _Check_return_ STLADD string_unique_ptr_t string_util::formatNumber(_In_ const T
             (pGetLocaleInfo)(LOCALE_USER_DEFAULT, LOCALE_STHOUSAND, nullptr, 0);
         if (nInfoLength)
         {
-            pszInfo = allocator.allocate(nInfoLength);
+            pszInfo = new TCHAR[nInfoLength];
             if (pGetLocaleInfoEx)
             {
                 if ((pGetLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT, LOCALE_STHOUSAND, pszInfo, nInfoLength))
@@ -1190,7 +1111,7 @@ _Check_return_ STLADD string_unique_ptr_t string_util::formatNumber(_In_ const T
                 }
                 else
                 {
-                    allocator.deallocate(pszInfo);
+                    delete[] pszInfo;
                 }
             }
             else
@@ -1201,7 +1122,7 @@ _Check_return_ STLADD string_unique_ptr_t string_util::formatNumber(_In_ const T
                 }
                 else
                 {
-                    allocator.deallocate(pszInfo);
+                    delete[] pszInfo;
                 }
             }
         }
@@ -1218,9 +1139,9 @@ _Check_return_ STLADD string_unique_ptr_t string_util::formatNumber(_In_ const T
         else
         {
             if (!(pGetLocaleInfo)(LOCALE_USER_DEFAULT,
-                                    LOCALE_INEGNUMBER | LOCALE_RETURN_NUMBER,
-                                    reinterpret_cast<LPTSTR> (&(numberFormat.NegativeOrder)),
-                                    sizeof(numberFormat.NegativeOrder) / sizeof(TCHAR)))
+                                  LOCALE_INEGNUMBER | LOCALE_RETURN_NUMBER,
+                                  reinterpret_cast<LPTSTR> (&(numberFormat.NegativeOrder)),
+                                  sizeof(numberFormat.NegativeOrder) / sizeof(TCHAR)))
             {
                 numberFormat.NegativeOrder = 1;
             }
@@ -1235,8 +1156,8 @@ _Check_return_ STLADD string_unique_ptr_t string_util::formatNumber(_In_ const T
             (pGetNumberFormat)(LOCALE_USER_DEFAULT, 0, szNumber, &numberFormat, nullptr, 0);
         if (nFormattedNumberLength)
         {
-            LPTSTR pszFormattedNumber = allocator.allocate(nFormattedNumberLength);
-            STLADD t_char_unique_ptr_t guard {pszFormattedNumber};
+            STLADD t_char_unique_ptr_t guard {new TCHAR[nFormattedNumberLength]};
+            LPTSTR pszFormattedNumber = guard.get();
             if (pGetNumberFormatEx)
             {
                 nFormattedNumberLength = (pGetNumberFormatEx)(
@@ -1252,11 +1173,11 @@ _Check_return_ STLADD string_unique_ptr_t string_util::formatNumber(_In_ const T
 
         if (numberFormat.lpThousandSep)
         {
-            allocator.deallocate(numberFormat.lpThousandSep);
+            delete[] numberFormat.lpThousandSep;
         }
         if (numberFormat.lpDecimalSep)
         {
-            allocator.deallocate(numberFormat.lpDecimalSep);
+            delete[] numberFormat.lpDecimalSep;
         }
     }
     if (nullptr != hKernel32)
@@ -1298,16 +1219,15 @@ BOOL CALLBACK string_util::enumDateFormatsProcExEx(_In_z_ LPWSTR pszDateFormatSt
         size_t nFormatLength;
         if (SUCCEEDED(StringCchLength(pszDateFormatString, LOCALE_SSHORTDATE_MAX_LENGTH, &nFormatLength)))
         {
-            STLADD default_allocator<TCHAR> allocator {};
             LPTSTR* ppszFormat = reinterpret_cast<LPTSTR*> (nParam);
-            *ppszFormat = allocator.allocate(nFormatLength + 1);
+            *ppszFormat = new TCHAR[nFormatLength + 1];
             if (SUCCEEDED(StringCchCopy(*ppszFormat, nFormatLength + 1, pszDateFormatString)))
             {
                 bResult = FALSE;
             }
             else
             {
-                allocator.deallocate(*ppszFormat);
+                delete[] *ppszFormat;
                 *ppszFormat = nullptr;
             }
         }
@@ -1330,9 +1250,8 @@ BOOL CALLBACK string_util::enumDateFormatsProcExEx(_In_z_ LPWSTR pszDateFormatSt
  */
 BOOL CALLBACK string_util::enumDateFormatsProcEx(_In_z_ LPTSTR pszDateFormatString, _In_ CALID nCalendarID)
 {
-    return enumDateFormatsProcExEx(pszDateFormatString,
-                                   nCalendarID,
-                                   reinterpret_cast<LPARAM> (string_util::m_ppszEnumDateFormatsProcExData));
+    return enumDateFormatsProcExEx(
+        pszDateFormatString, nCalendarID, reinterpret_cast<LPARAM> (string_util::m_ppszEnumDateFormatsProcExData));
 }
 
 
@@ -1379,9 +1298,8 @@ STLADD string_unique_ptr_t string_util::getListSeparator() const
         if (nListSeparatorLength)
         {
             // Allocate memory to store list separator string only.
-            STLADD default_allocator<TCHAR> allocator {};
-            LPTSTR pszResult = allocator.allocate(nListSeparatorLength);
-            STLADD t_char_unique_ptr_t guard {pszResult};
+            STLADD t_char_unique_ptr_t guard {new TCHAR[nListSeparatorLength]};
+            LPTSTR pszResult {guard.get()};
             if (pGetLocaleInfoEx)
             {
                 nListSeparatorLength = (pGetLocaleInfoEx)(
@@ -1463,9 +1381,8 @@ _Check_return_ STLADD string_unique_ptr_t string_util::getCurrentUserLocale() co
         if (nLength)
         {
             // Allocate memory to store list separator string only.
-            STLADD default_allocator<TCHAR> allocator {};
-            LPTSTR pszResult = allocator.allocate(nLength);
-            STLADD t_char_unique_ptr_t guard {pszResult};
+            STLADD t_char_unique_ptr_t guard {new TCHAR[nLength]};
+            LPTSTR pszResult {guard.get()};
             if (pGetLocaleInfoEx)
             {
                 nLength = (pGetLocaleInfoEx)(

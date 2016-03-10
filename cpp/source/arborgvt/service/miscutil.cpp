@@ -22,34 +22,26 @@ MISCUTIL_BEGIN
 std::vector<WORD> version_info::getApplicationExeVersionAsVector()
 {
     std::vector<WORD> result;
-    STLADD default_allocator<unsigned char> allocator {};
-    STLADD u_char_unique_ptr_t imageFileName {allocator.allocate(MAX_PATH * sizeof(TCHAR))};
-    if (imageFileName)
+    STLADD t_char_unique_ptr_t imageFileName {new TCHAR[MAX_PATH]};
+    DWORD nBytesCopied = GetModuleFileName(nullptr, imageFileName.get(), MAX_PATH);
+    if (nBytesCopied && (MAX_PATH != nBytesCopied))
     {
-        LPTSTR pszImageFileName = reinterpret_cast<LPTSTR> (imageFileName.get());
-        DWORD nBytesCopied = GetModuleFileName(nullptr, pszImageFileName, MAX_PATH);
-        if (nBytesCopied && (MAX_PATH != nBytesCopied))
+        DWORD nVersionInfoSize = GetFileVersionInfoSize(imageFileName.get(), &nBytesCopied);
+        if (nVersionInfoSize)
         {
-            DWORD nVersionInfoSize = GetFileVersionInfoSize(pszImageFileName, &nBytesCopied);
-            if (nVersionInfoSize)
+            STLADD u_char_unique_ptr_t data {new unsigned char[nVersionInfoSize]};
+            void* pData = data.get();
+            VS_FIXEDFILEINFO* pFileInfo;
+            UINT nLength;
+            if (GetFileVersionInfo(imageFileName.get(), 0, nVersionInfoSize, pData) &&
+                VerQueryValue(pData, TEXT("\\"), reinterpret_cast<void**> (&pFileInfo), &nLength))
             {
-                void* pData = allocator.allocate(nVersionInfoSize);
-                if (pData)
-                {
-                    VS_FIXEDFILEINFO* pFileInfo;
-                    UINT nLength;
-                    if (GetFileVersionInfo(pszImageFileName, 0, nVersionInfoSize, pData) &&
-                        VerQueryValue(pData, TEXT("\\"), reinterpret_cast<void**> (&pFileInfo), &nLength))
-                    {
-                        result.reserve(4);
-                        result.resize(4);
-                        result[0] = HIWORD(pFileInfo->dwFileVersionMS);
-                        result[1] = LOWORD(pFileInfo->dwFileVersionMS);
-                        result[2] = HIWORD(pFileInfo->dwFileVersionLS);
-                        result[3] = LOWORD(pFileInfo->dwFileVersionLS);
-                    }
-                    allocator.deallocate(pData);
-                }
+                result.reserve(4);
+                result.resize(4);
+                result[0] = HIWORD(pFileInfo->dwFileVersionMS);
+                result[1] = LOWORD(pFileInfo->dwFileVersionMS);
+                result[2] = HIWORD(pFileInfo->dwFileVersionLS);
+                result[3] = LOWORD(pFileInfo->dwFileVersionLS);
             }
         }
     }
@@ -71,7 +63,7 @@ std::vector<WORD> version_info::getApplicationExeVersionAsVector()
 STLADD string_unique_ptr_t version_info::getApplicationExeVersion()
 {
     STLADD string_unique_ptr_t szResult;
-    auto version(getApplicationExeVersionAsVector());
+    auto version {getApplicationExeVersionAsVector()};
     if (version.size())
     {
         STLADD wostringstream stream;
@@ -98,62 +90,45 @@ STLADD string_unique_ptr_t version_info::getApplicationExeVersionInfoStringTable
 {
     STLADD string_unique_ptr_t szResult;
 
-    STLADD default_allocator<unsigned char> allocator {};
-    STLADD u_char_unique_ptr_t pathFileName {allocator.allocate(MAX_PATH * sizeof(TCHAR))};
-    if (pathFileName)
+    STLADD t_char_unique_ptr_t pathFileName {new TCHAR[MAX_PATH]};
+    DWORD nCharsCopied = GetModuleFileName(nullptr, pathFileName.get(), MAX_PATH);
+    if (nCharsCopied && (MAX_PATH != nCharsCopied))
     {
-        LPTSTR pszPathFileName = reinterpret_cast<LPTSTR> (pathFileName.get());
-        DWORD nCharsCopied = GetModuleFileName(nullptr, pszPathFileName, MAX_PATH);
-        if (nCharsCopied && (MAX_PATH != nCharsCopied))
+        // Form link object name.
+        DWORD nVersionInfoSize = GetFileVersionInfoSize(pathFileName.get(), &nCharsCopied);
+        if (nVersionInfoSize)
         {
-            // Form link object name.
-            DWORD nVersionInfoSize = GetFileVersionInfoSize(pszPathFileName, &nCharsCopied);
-            if (nVersionInfoSize)
+            STLADD u_char_unique_ptr_t data {new unsigned char[nVersionInfoSize]};
+            void* pData = data.get();
+            typedef struct
             {
-                void* pData = allocator.allocate(nVersionInfoSize);
-                if (pData)
+                WORD nLanguage;
+                WORD nCodePage;
+            }
+            lang_and_code_page_t;
+
+            lang_and_code_page_t* pTranslation;
+            UINT nLength;
+            if (GetFileVersionInfo(pathFileName.get(), 0, nVersionInfoSize, pData) &&
+                VerQueryValue(
+                    pData, TEXT("\\VarFileInfo\\Translation"), reinterpret_cast<void**> (&pTranslation), &nLength) &&
+                nLength)
+            {
+                TCHAR szStringFileInfoFormat[] = TEXT("\\StringFileInfo\\%04x%04x\\%s");
+                size_t nEntryPathLength = _countof(szStringFileInfoFormat) + _tcscnlen(pszName, 32);
+                STLADD t_char_unique_ptr_t stringFileInfoEntry {new TCHAR[nEntryPathLength]};
+                _stprintf_s(stringFileInfoEntry.get(),
+                            nEntryPathLength,
+                            szStringFileInfoFormat,
+                            pTranslation[0].nLanguage,
+                            pTranslation[0].nCodePage,
+                            pszName);
+
+                LPTSTR pszFileDescription;
+                if (VerQueryValue(
+                    pData, stringFileInfoEntry.get(), reinterpret_cast<void**> (&pszFileDescription), &nLength))
                 {
-                    typedef struct
-                    {
-                        WORD nLanguage;
-                        WORD nCodePage;
-                    }
-                    lang_and_code_page_t;
-
-                    lang_and_code_page_t* pTranslation;
-                    UINT nLength;
-                    if (GetFileVersionInfo(pszPathFileName, 0, nVersionInfoSize, pData) &&
-                        VerQueryValue(pData,
-                                      TEXT("\\VarFileInfo\\Translation"),
-                                      reinterpret_cast<void**> (&pTranslation),
-                                      &nLength) &&
-                        nLength)
-                    {
-                        TCHAR szStringFileInfoFormat[] = TEXT("\\StringFileInfo\\%04x%04x\\%s");
-                        size_t nEntryPathLength = _countof(szStringFileInfoFormat) + _tcscnlen(pszName, 32);
-                        LPTSTR pszStringFileInfoEntry = reinterpret_cast<LPTSTR> (
-                            allocator.allocate(nEntryPathLength * sizeof(TCHAR)));
-                        if (pszStringFileInfoEntry)
-                        {
-                            _stprintf_s(pszStringFileInfoEntry,
-                                        nEntryPathLength,
-                                        szStringFileInfoFormat,
-                                        pTranslation[0].nLanguage,
-                                        pTranslation[0].nCodePage,
-                                        pszName);
-
-                            LPTSTR pszFileDescription;
-                            if (VerQueryValue(pData,
-                                              pszStringFileInfoEntry,
-                                              reinterpret_cast<void**> (&pszFileDescription),
-                                              &nLength))
-                            {
-                                szResult = std::make_unique<STLADD string_type>(pszFileDescription, nLength - 1);
-                            }
-                            allocator.deallocate(pszStringFileInfoEntry);
-                        }
-                    }
-                    allocator.deallocate(pData);
+                    szResult = std::make_unique<STLADD string_type>(pszFileDescription, nLength - 1);
                 }
             }
         }
