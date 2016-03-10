@@ -19,7 +19,7 @@ public:
     static void* operator new(_In_ const size_t size)
     {
         STLADD default_allocator<string_util> allocator {};
-        return allocator.allocate(size / sizeof(string_util));
+        return allocator.allocate(size, 0);
     }
 
     static void operator delete(_In_ void* p, _In_ const size_t size)

@@ -50,7 +50,7 @@ public:
     static void* operator new(_In_ const size_t size)
     {
         STLADD aligned_sse_allocator<edge> allocator {};
-        return allocator.allocate(size / sizeof(edge));
+        return allocator.allocate(size, 0);
     }
 
     static void operator delete(_In_ void* p, _In_ const size_t size)

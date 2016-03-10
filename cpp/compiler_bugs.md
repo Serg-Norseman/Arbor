@@ -62,7 +62,7 @@ class foo_t
 
 it succeeds. I believe because MSVC (and it looks like GCC too) instantiates `foo_t<__m128, 33> foo {}` having complete information about `foo_t`. But ICC does not have complete type there.
 
-It may by a bug or a by-design behaviour. But I lean towards a bug. Because:
+It may be a bug or a by-design behaviour. But I lean towards a bug. Because:
 - 14.7.1 Implicit instantiation [temp.inst]
   - 14.7.1 The implicit instantiation of a class template specialization causes the implicit instantiation of the declarations, but not of the definitions,    
 but

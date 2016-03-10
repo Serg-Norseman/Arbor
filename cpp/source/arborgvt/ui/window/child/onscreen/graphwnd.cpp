@@ -130,7 +130,7 @@ LRESULT graph_window::createHandler()
             0.0f,
             D2D1_STROKE_TRANSFORM_TYPE_NORMAL);
         m_direct2DFactory->CreateStrokeStyle(prop, nullptr, 0, m_areaStrokeStyle.getAddressOf());
-#if defined(_DEBUG) || defined(SHOWFPS)
+#if defined(_DEBUG) || defined(SHOW_FPS)
         createTextFormatForBodyText(m_framesPerSecondTextFormat.getAddressOf());
 #endif
     }
@@ -149,7 +149,7 @@ LRESULT graph_window::createHandler()
  */
 void graph_window::draw()
 {
-#if defined(_DEBUG) || defined(SHOWFPS)
+#if defined(_DEBUG) || defined(SHOW_FPS)
     std::chrono::high_resolution_clock clock {};
     std::chrono::high_resolution_clock::time_point first = clock.now();
 #endif
@@ -299,9 +299,9 @@ void graph_window::draw()
         }
     }
 
-#if defined(_DEBUG) || defined(SHOWFPS)
+#if defined(_DEBUG) || defined(SHOW_FPS)
     /*
-     * Claculate and show average FPS.
+     * Calculate and show average FPS.
      */
     std::chrono::high_resolution_clock::duration duration = getAverageFrameTime(clock.now() - first);
     auto durationInMicroseconds = std::chrono::duration_cast<std::chrono::microseconds>(duration);
@@ -309,7 +309,7 @@ void graph_window::draw()
     double fps = 1.0 / durationInSeconds.count();
     int length = _sctprintf(TEXT("%.4f FPS (%I64i µs per frame)"), fps, durationInMicroseconds.count()) + 1;
     STLADD default_allocator<TCHAR> allocator {};
-    STLADD t_char_unique_ptr_t text(allocator.allocate(length));
+    STLADD t_char_unique_ptr_t text {allocator.allocate(length)};
     length =
         _stprintf_s(text.get(), length, TEXT("%.4f FPS (%I64i µs per frame)"), fps, durationInMicroseconds.count());
     m_direct2DContext->DrawText(
@@ -363,7 +363,7 @@ void graph_window::createDeviceResources()
         }
         draw->createDeviceResources(m_direct2DContext.get(), **it);
     }
-#if defined(_DEBUG) || defined(SHOWFPS)
+#if defined(_DEBUG) || defined(SHOW_FPS)
     m_direct2DContext->CreateSolidColorBrush(
         D2D1::ColorF {D2D1::ColorF::Red, 1.0f}, m_framesPerSecondBrush.getAddressOf());
 #endif
@@ -381,7 +381,7 @@ void graph_window::createDeviceResources()
  */
 void graph_window::releaseDeviceResources()
 {
-#if defined(_DEBUG) || defined(SHOWFPS)
+#if defined(_DEBUG) || defined(SHOW_FPS)
     m_framesPerSecondBrush.reset();
 #endif
     std::for_each(
@@ -966,7 +966,7 @@ _Success_(return) bool graph_window::getArrow(
 }
 
 
-#if defined(_DEBUG) || defined(SHOWFPS)
+#if defined(_DEBUG) || defined(SHOW_FPS)
 /**
  * Calculates average time spent to render a frame by this window.
  * This method stores time of some last frames and calculates an average value through that frames.
@@ -997,10 +997,10 @@ std::chrono::high_resolution_clock::duration graph_window::getAverageFrameTime(
     else
     {
         ++m_frameIt;
-    }
-    if (m_frameTimes.end() == m_frameIt)
-    {
-        m_frameIt = m_frameTimes.begin();
+        if (m_frameTimes.end() == m_frameIt)
+        {
+            m_frameIt = m_frameTimes.begin();
+        }
     }
     return result;
 }

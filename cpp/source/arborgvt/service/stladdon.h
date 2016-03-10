@@ -150,8 +150,13 @@ __pragma(warning(pop))
         }
     }
 
+    pointer allocate(_In_ const size_type size, _In_ const size_type) const noexcept(false)
+    {
+        return allocate(size / sizeof(value_type));
+    }
+
     template <typename U>
-    pointer allocate(_In_ const size_type count, _In_ typename U::const_pointer) const
+    pointer allocate(_In_ const size_type count, _In_ typename U::const_pointer) const noexcept(false)
     {
         return allocate(count);
     }
@@ -318,8 +323,13 @@ __pragma(warning(pop))
         }
     }
 
+    pointer allocate(_In_ const size_type size, _In_ const size_type) const noexcept(false)
+    {
+        return allocate(size / sizeof(value_type));
+    }
+
     template <typename U>
-    pointer allocate(_In_ const size_type count, _In_ typename U::const_pointer) const
+    pointer allocate(_In_ const size_type count, _In_ typename U::const_pointer) const noexcept(false)
     {
         return allocate(count);
     }

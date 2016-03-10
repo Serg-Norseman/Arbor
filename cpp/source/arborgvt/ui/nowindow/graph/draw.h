@@ -53,7 +53,7 @@ public:
     static void* operator new(_In_ const size_t size)
     {
         STLADD default_allocator<edge_draw> allocator {};
-        return allocator.allocate(size / sizeof(edge_draw));
+        return allocator.allocate(size, 0);
     }
 
     static void operator delete(_In_ void* p, _In_ const size_t size)
@@ -85,7 +85,7 @@ public:
     static void* operator new(_In_ const size_t size)
     {
         STLADD default_allocator<vertex_draw> allocator {};
-        return allocator.allocate(size / sizeof(vertex_draw));
+        return allocator.allocate(size, 0);
     }
 
     static void operator delete(_In_ void* p, _In_ const size_t size)

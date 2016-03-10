@@ -4,7 +4,7 @@
 #include "service\stladdon.h"
 #include "ui\nowindow\graph\draw.h"
 #include "ui\window\child\cwi.h"
-#if defined(_DEBUG) || defined(SHOWFPS)
+#if defined(_DEBUG) || defined(SHOW_FPS)
 #include <chrono>
 #endif
 
@@ -28,7 +28,7 @@ public:
         m_edges {},
         m_areaStrokeStyle {},
         m_dpiChangedMessage {dpiChangedMessage}
-#if defined(_DEBUG) || defined(SHOWFPS)
+#if defined(_DEBUG) || defined(SHOW_FPS)
         ,
         m_frameTimes {0},
         m_frameIt {m_frameTimes.begin()},
@@ -42,7 +42,7 @@ public:
     static void* operator new(_In_ const size_t size)
     {
         STLADD aligned_sse_allocator<graph_window> allocator {};
-        return allocator.allocate(size / sizeof(graph_window));
+        return allocator.allocate(size, 0);
     }
 
     static void operator delete(_In_ void* p, _In_ const size_t size)
@@ -110,7 +110,7 @@ private:
         _In_ const D2D1_POINT_2F& headPoint,
         _Out_ D2D1_POINT_2F* left,
         _Out_ D2D1_POINT_2F* right) const noexcept;
-#if defined(_DEBUG) || defined(SHOWFPS)
+#if defined(_DEBUG) || defined(SHOW_FPS)
     std::chrono::high_resolution_clock::duration getAverageFrameTime(
         _In_ std::chrono::high_resolution_clock::duration&& frameTime);
 #endif
@@ -128,7 +128,7 @@ private:
     ATLADD com_ptr<ID2D1StrokeStyle1> m_areaStrokeStyle;
     UINT m_dpiChangedMessage;
 
-#if defined(_DEBUG) || defined(SHOWFPS)
+#if defined(_DEBUG) || defined(SHOW_FPS)
     static constexpr size_t m_framesMaxNumber = 100;
     // `m_frameIt` must be declared after `m_frameTimes`! See member initialization list in the ctor.
     std::vector<std::chrono::high_resolution_clock::duration::rep> m_frameTimes;

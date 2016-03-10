@@ -497,7 +497,7 @@ bool string_util::convertSystemTimeToString(
                 }
 
                 // Use found or standard formatting string to format the pSystemTime.
-                const DWORD nGetDateFlags = (pszFormat ? 0 : nFlags);
+                const DWORD nGetDateFlags = pszFormat ? 0 : nFlags;
                 STLADD string_unique_ptr_t szListSeparator = getListSeparator();
                 size_t nSplitterLength = szListSeparator->size();
                 size_t nDateBufferSize;
@@ -1018,270 +1018,255 @@ _Check_return_ STLADD string_unique_ptr_t string_util::formatNumber(_In_ const T
                                                     _Out_writes_opt_(cchNumber) LPTSTR,
                                                     _In_ int cchNumber);
 
-    STLADD string_unique_ptr_t szResult;
+    STLADD string_unique_ptr_t szResult {};
     size_t nNumberLength = 32;
-    memory_manager::pointer_t pMemoryManager = memory_manager::getInstance();
-    LPTSTR pszNumber = pMemoryManager->mAllocChars<LPTSTR>(nNumberLength);
-    if (pszNumber)
+    STLADD default_allocator<TCHAR> allocator {};
+    STLADD t_char_unique_ptr_t szNumber {allocator.allocate(nNumberLength)};
+    nNumberLength = _stprintf_s(szNumber, nNumberLength, printf_value_trait<T>::get(), value);
+
+    /*
+     * Call the GetNumberFormatEx or GetNumberFormat function.
+     */
+    get_number_format_ex_func_t pGetNumberFormatEx = nullptr;
+    get_number_format_func_t pGetNumberFormat = nullptr;
+    get_locale_info_ex_func_t pGetLocaleInfoEx = nullptr;
+    get_locale_info_func_t pGetLocaleInfo = nullptr;
+
+    HMODULE hKernel32 = nullptr;
+    if (GetModuleHandleEx(0, TEXT("kernel32.dll"), &hKernel32) && hKernel32)
     {
-        STLADD t_char_unique_ptr_t szNumber(pszNumber);
-        nNumberLength = _stprintf_s(pszNumber, nNumberLength, printf_value_trait<T>::get(), value);
+        pGetNumberFormatEx = getFunction<get_number_format_ex_func_t>(nullptr, "GetNumberFormatEx", hKernel32);
+        pGetLocaleInfoEx = getFunction<get_locale_info_ex_func_t>(nullptr, "GetLocaleInfoEx", hKernel32);
+        if (!(pGetNumberFormatEx && pGetLocaleInfoEx))
+        {
+#if defined(_UNICODE)
+            pGetNumberFormat = getFunction<get_number_format_func_t>(nullptr, "GetNumberFormatW", hKernel32);
+            pGetLocaleInfo = getFunction<get_locale_info_func_t>(nullptr, "GetLocaleInfoW", hKernel32);
+#else
+            pGetNumberFormat = getFunction<get_number_format_func_t>(nullptr, "GetNumberFormatA", hKernel32);
+            pGetLocaleInfo = getFunction<get_locale_info_func_t>(nullptr, "GetLocaleInfoA", hKernel32);
+#endif
+            // Well, the pGetNumberFormat and pGetLocaleInfo must be valid here. I don't check it.
+        }
+    }
+
+    if ((pGetNumberFormatEx && pGetLocaleInfoEx) || (pGetNumberFormat && pGetLocaleInfo))
+    {
+        NUMBERFMT numberFormat;
+        /*
+         * Fill the numberFormat structure.
+         * Set number of fractional digits.
+         */
+#pragma warning(disable: 4127)
+        if (std::is_floating_point<T>::value)
+        {
+            if (pGetLocaleInfoEx)
+            {
+                if (!(pGetLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT,
+                                        LOCALE_IDIGITS | LOCALE_RETURN_NUMBER,
+                                        reinterpret_cast<LPTSTR> (&(numberFormat.NumDigits)),
+                                        sizeof(numberFormat.NumDigits) / sizeof(TCHAR)))
+                {
+                    numberFormat.NumDigits = 2;
+                }
+            }
+            else
+            {
+                if (!(pGetLocaleInfo)(LOCALE_USER_DEFAULT,
+                                      LOCALE_IDIGITS | LOCALE_RETURN_NUMBER,
+                                      reinterpret_cast<LPTSTR> (&(numberFormat.NumDigits)),
+                                      sizeof(numberFormat.NumDigits) / sizeof(TCHAR)))
+                {
+                    numberFormat.NumDigits = 2;
+                }
+            }
+        }
+        else
+        {
+            numberFormat.NumDigits = 0;
+        }
+#pragma warning(default: 4127)
+        // Leading zeros.
+        if (pGetLocaleInfoEx)
+        {
+            if (!(pGetLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT,
+                                    LOCALE_ILZERO | LOCALE_RETURN_NUMBER,
+                                    reinterpret_cast<LPTSTR> (&(numberFormat.LeadingZero)),
+                                    sizeof(numberFormat.LeadingZero) / sizeof(TCHAR)))
+            {
+                numberFormat.LeadingZero = 1;
+            }
+        }
+        else
+        {
+            if (!(pGetLocaleInfo)(LOCALE_USER_DEFAULT,
+                                  LOCALE_ILZERO | LOCALE_RETURN_NUMBER,
+                                  reinterpret_cast<LPTSTR> (&(numberFormat.LeadingZero)),
+                                  sizeof(numberFormat.LeadingZero) / sizeof(TCHAR)))
+            {
+                numberFormat.LeadingZero = 1;
+            }
+        }
+        // Set default (hard-coded) value to the numberFormat.Grouping.
+        numberFormat.Grouping = 3;
+        LPTSTR pszInfo;
+        int nInfoLength =
+            pGetLocaleInfoEx ?
+            (pGetLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT, LOCALE_SGROUPING, nullptr, 0) :
+            (pGetLocaleInfo)(LOCALE_USER_DEFAULT, LOCALE_SGROUPING, nullptr, 0);
+        if (nInfoLength)
+        {
+            pszInfo = allocator.allocate((static_cast<size_t> (nInfoLength)) << 1);
+            STLADD t_char_unique_ptr_t guard {pszInfo};
+            nInfoLength =
+                pGetLocaleInfoEx ?
+                (pGetLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT, LOCALE_SGROUPING, pszInfo, nInfoLength) :
+                (pGetLocaleInfo)(LOCALE_USER_DEFAULT, LOCALE_SGROUPING, pszInfo, nInfoLength);
+            if (nInfoLength)
+            {
+                LPTSTR pszSource = pszInfo;
+                LPTSTR pszDest = pszInfo + nInfoLength;
+                while (TEXT('\x00') != *pszSource)
+                {
+                    // Skip ';' and '0' symbols at the end.
+
+                    if ((TEXT(';') != *pszSource) &&
+                        ((TEXT('0') != *pszSource) || (TEXT('\x00') != *(pszSource + 1))))
+                    {
+                        *pszDest = *pszSource;
+                        ++pszDest;
+                    }
+                    ++pszSource;
+                }
+                *pszDest = TEXT('\x00');
+
+                numberFormat.Grouping = _tcstoul(pszInfo + nInfoLength, nullptr, 10);
+            }
+        }
+        numberFormat.lpDecimalSep = nullptr;
+        nInfoLength =
+            pGetLocaleInfoEx ?
+            (pGetLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT, LOCALE_SDECIMAL, nullptr, 0) :
+            (pGetLocaleInfo)(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, nullptr, 0);
+        if (nInfoLength)
+        {
+            pszInfo = allocator.allocate(nInfoLength);
+            if (pGetLocaleInfoEx)
+            {
+                if ((pGetLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT, LOCALE_SDECIMAL, pszInfo, nInfoLength))
+                {
+                    numberFormat.lpDecimalSep = pszInfo;
+                }
+                else
+                {
+                    allocator.deallocate(pszInfo);
+                }
+            }
+            else
+            {
+                if ((pGetLocaleInfo)(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, pszInfo, nInfoLength))
+                {
+                    numberFormat.lpDecimalSep = pszInfo;
+                }
+                else
+                {
+                    allocator.deallocate(pszInfo);
+                }
+            }
+        }
+        numberFormat.lpThousandSep = nullptr;
+        nInfoLength =
+            pGetLocaleInfoEx ?
+            (pGetLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT, LOCALE_STHOUSAND, nullptr, 0) :
+            (pGetLocaleInfo)(LOCALE_USER_DEFAULT, LOCALE_STHOUSAND, nullptr, 0);
+        if (nInfoLength)
+        {
+            pszInfo = allocator.allocate(nInfoLength);
+            if (pGetLocaleInfoEx)
+            {
+                if ((pGetLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT, LOCALE_STHOUSAND, pszInfo, nInfoLength))
+                {
+                    numberFormat.lpThousandSep = pszInfo;
+                }
+                else
+                {
+                    allocator.deallocate(pszInfo);
+                }
+            }
+            else
+            {
+                if ((pGetLocaleInfo)(LOCALE_USER_DEFAULT, LOCALE_STHOUSAND, pszInfo, nInfoLength))
+                {
+                    numberFormat.lpThousandSep = pszInfo;
+                }
+                else
+                {
+                    allocator.deallocate(pszInfo);
+                }
+            }
+        }
+        if (pGetLocaleInfoEx)
+        {
+            if (!(pGetLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT,
+                                    LOCALE_INEGNUMBER | LOCALE_RETURN_NUMBER,
+                                    reinterpret_cast<LPTSTR> (&(numberFormat.NegativeOrder)),
+                                    sizeof(numberFormat.NegativeOrder) / sizeof(TCHAR)))
+            {
+                numberFormat.NegativeOrder = 1;
+            }
+        }
+        else
+        {
+            if (!(pGetLocaleInfo)(LOCALE_USER_DEFAULT,
+                                    LOCALE_INEGNUMBER | LOCALE_RETURN_NUMBER,
+                                    reinterpret_cast<LPTSTR> (&(numberFormat.NegativeOrder)),
+                                    sizeof(numberFormat.NegativeOrder) / sizeof(TCHAR)))
+            {
+                numberFormat.NegativeOrder = 1;
+            }
+        }
 
         /*
-         * Call the GetNumberFormatEx or GetNumberFormat function.
+         * Format the number.
          */
-        get_number_format_ex_func_t pGetNumberFormatEx = nullptr;
-        get_number_format_func_t pGetNumberFormat = nullptr;
-        get_locale_info_ex_func_t pGetLocaleInfoEx = nullptr;
-        get_locale_info_func_t pGetLocaleInfo = nullptr;
-
-        HMODULE hKernel32 = nullptr;
-        if (GetModuleHandleEx(0, TEXT("kernel32.dll"), &hKernel32) && hKernel32)
+        int nFormattedNumberLength =
+            pGetNumberFormatEx ?
+            (pGetNumberFormatEx)(LOCALE_NAME_USER_DEFAULT, 0, szNumber, &numberFormat, nullptr, 0) :
+            (pGetNumberFormat)(LOCALE_USER_DEFAULT, 0, szNumber, &numberFormat, nullptr, 0);
+        if (nFormattedNumberLength)
         {
-            pGetNumberFormatEx = getFunction<get_number_format_ex_func_t>(nullptr, "GetNumberFormatEx", hKernel32);
-            pGetLocaleInfoEx = getFunction<get_locale_info_ex_func_t>(nullptr, "GetLocaleInfoEx", hKernel32);
-            if (!(pGetNumberFormatEx && pGetLocaleInfoEx))
+            LPTSTR pszFormattedNumber = allocator.allocate(nFormattedNumberLength);
+            STLADD t_char_unique_ptr_t guard {pszFormattedNumber};
+            if (pGetNumberFormatEx)
             {
-#if defined(_UNICODE)
-                pGetNumberFormat = getFunction<get_number_format_func_t>(nullptr, "GetNumberFormatW", hKernel32);
-                pGetLocaleInfo = getFunction<get_locale_info_func_t>(nullptr, "GetLocaleInfoW", hKernel32);
-#else
-                pGetNumberFormat = getFunction<get_number_format_func_t>(nullptr, "GetNumberFormatA", hKernel32);
-                pGetLocaleInfo = getFunction<get_locale_info_func_t>(nullptr, "GetLocaleInfoA", hKernel32);
-#endif
-                // Well, the pGetNumberFormat and pGetLocaleInfo must be valid here. I don't check it.
-            }
-        }
-
-        if ((pGetNumberFormatEx && pGetLocaleInfoEx) || (pGetNumberFormat && pGetLocaleInfo))
-        {
-            NUMBERFMT numberFormat;
-            /*
-             * Fill the numberFormat structure.
-             * Set number of fractional digits.
-             */
-#pragma warning(disable: 4127)
-            if (std::is_floating_point<T>::value)
-            {
-                if (pGetLocaleInfoEx)
-                {
-                    if (!(pGetLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT,
-                                            LOCALE_IDIGITS | LOCALE_RETURN_NUMBER,
-                                            reinterpret_cast<LPTSTR> (&(numberFormat.NumDigits)),
-                                            sizeof(numberFormat.NumDigits) / sizeof(TCHAR)))
-                    {
-                        numberFormat.NumDigits = 2;
-                    }
-                }
-                else
-                {
-                    if (!(pGetLocaleInfo)(LOCALE_USER_DEFAULT,
-                                          LOCALE_IDIGITS | LOCALE_RETURN_NUMBER,
-                                          reinterpret_cast<LPTSTR> (&(numberFormat.NumDigits)),
-                                          sizeof(numberFormat.NumDigits) / sizeof(TCHAR)))
-                    {
-                        numberFormat.NumDigits = 2;
-                    }
-                }
+                nFormattedNumberLength = (pGetNumberFormatEx)(
+                    LOCALE_NAME_USER_DEFAULT, 0, szNumber, &numberFormat, pszFormattedNumber, nFormattedNumberLength);
             }
             else
             {
-                numberFormat.NumDigits = 0;
+                nFormattedNumberLength = (pGetNumberFormat)(
+                    LOCALE_USER_DEFAULT, 0, szNumber, &numberFormat, pszFormattedNumber, nFormattedNumberLength);
             }
-#pragma warning(default: 4127)
-            // Leading zeros.
-            if (pGetLocaleInfoEx)
-            {
-                if (!(pGetLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT,
-                                        LOCALE_ILZERO | LOCALE_RETURN_NUMBER,
-                                        reinterpret_cast<LPTSTR> (&(numberFormat.LeadingZero)),
-                                        sizeof(numberFormat.LeadingZero) / sizeof(TCHAR)))
-                {
-                    numberFormat.LeadingZero = 1;
-                }
-            }
-            else
-            {
-                if (!(pGetLocaleInfo)(LOCALE_USER_DEFAULT,
-                                      LOCALE_ILZERO | LOCALE_RETURN_NUMBER,
-                                      reinterpret_cast<LPTSTR> (&(numberFormat.LeadingZero)),
-                                      sizeof(numberFormat.LeadingZero) / sizeof(TCHAR)))
-                {
-                    numberFormat.LeadingZero = 1;
-                }
-            }
-            // Set default (hard-coded) value to the numberFormat.Grouping.
-            numberFormat.Grouping = 3;
-            LPTSTR pszInfo;
-            int nInfoLength = (pGetLocaleInfoEx ?
-                               (pGetLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT, LOCALE_SGROUPING, nullptr, 0) :
-                               (pGetLocaleInfo)(LOCALE_USER_DEFAULT, LOCALE_SGROUPING, nullptr, 0));
-            if (nInfoLength)
-            {
-                pszInfo = pMemoryManager->mAllocChars<LPTSTR>((static_cast<size_t> (nInfoLength)) << 1);
-                if (pszInfo)
-                {
-                    nInfoLength = (
-                        pGetLocaleInfoEx ?
-                        (pGetLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT, LOCALE_SGROUPING, pszInfo, nInfoLength) :
-                        (pGetLocaleInfo)(LOCALE_USER_DEFAULT, LOCALE_SGROUPING, pszInfo, nInfoLength));
-                    if (nInfoLength)
-                    {
-                        LPTSTR pszSource = pszInfo;
-                        LPTSTR pszDest = pszInfo + nInfoLength;
-                        while (TEXT('\x00') != *pszSource)
-                        {
-                            // Skip ';' and '0' symbols at the end.
-
-                            if ((TEXT(';') != *pszSource) &&
-                                ((TEXT('0') != *pszSource) || (TEXT('\x00') != *(pszSource + 1))))
-                            {
-                                *pszDest = *pszSource;
-                                ++pszDest;
-                            }
-                            ++pszSource;
-                        }
-                        *pszDest = TEXT('\x00');
-
-                        numberFormat.Grouping = _tcstoul(pszInfo + nInfoLength, nullptr, 10);
-                    }
-                    pMemoryManager->free(pszInfo);
-                }
-            }
-            numberFormat.lpDecimalSep = nullptr;
-            nInfoLength = (pGetLocaleInfoEx ?
-                           (pGetLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT, LOCALE_SDECIMAL, nullptr, 0) :
-                           (pGetLocaleInfo)(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, nullptr, 0));
-            if (nInfoLength)
-            {
-                pszInfo = pMemoryManager->mAllocChars<LPTSTR>(nInfoLength);
-                if (pGetLocaleInfoEx)
-                {
-                    if ((pGetLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT, LOCALE_SDECIMAL, pszInfo, nInfoLength))
-                    {
-                        numberFormat.lpDecimalSep = pszInfo;
-                    }
-                    else
-                    {
-                        pMemoryManager->free(pszInfo);
-                    }
-                }
-                else
-                {
-                    if ((pGetLocaleInfo)(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, pszInfo, nInfoLength))
-                    {
-                        numberFormat.lpDecimalSep = pszInfo;
-                    }
-                    else
-                    {
-                        pMemoryManager->free(pszInfo);
-                    }
-                }
-            }
-            numberFormat.lpThousandSep = nullptr;
-            nInfoLength = (pGetLocaleInfoEx ?
-                           (pGetLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT, LOCALE_STHOUSAND, nullptr, 0) :
-                           (pGetLocaleInfo)(LOCALE_USER_DEFAULT, LOCALE_STHOUSAND, nullptr, 0));
-            if (nInfoLength)
-            {
-                pszInfo = pMemoryManager->mAllocChars<LPTSTR>(nInfoLength);
-                if (pGetLocaleInfoEx)
-                {
-                    if ((pGetLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT, LOCALE_STHOUSAND, pszInfo, nInfoLength))
-                    {
-                        numberFormat.lpThousandSep = pszInfo;
-                    }
-                    else
-                    {
-                        pMemoryManager->free(pszInfo);
-                    }
-                }
-                else
-                {
-                    if ((pGetLocaleInfo)(LOCALE_USER_DEFAULT, LOCALE_STHOUSAND, pszInfo, nInfoLength))
-                    {
-                        numberFormat.lpThousandSep = pszInfo;
-                    }
-                    else
-                    {
-                        pMemoryManager->free(pszInfo);
-                    }
-                }
-            }
-            if (pGetLocaleInfoEx)
-            {
-                if (!(pGetLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT,
-                                        LOCALE_INEGNUMBER | LOCALE_RETURN_NUMBER,
-                                        reinterpret_cast<LPTSTR> (&(numberFormat.NegativeOrder)),
-                                        sizeof(numberFormat.NegativeOrder) / sizeof(TCHAR)))
-                {
-                    numberFormat.NegativeOrder = 1;
-                }
-            }
-            else
-            {
-                if (!(pGetLocaleInfo)(LOCALE_USER_DEFAULT,
-                                      LOCALE_INEGNUMBER | LOCALE_RETURN_NUMBER,
-                                      reinterpret_cast<LPTSTR> (&(numberFormat.NegativeOrder)),
-                                      sizeof(numberFormat.NegativeOrder) / sizeof(TCHAR)))
-                {
-                    numberFormat.NegativeOrder = 1;
-                }
-            }
-
-            /*
-             * Format the number.
-             */
-            int nFormattedNumberLength =
-                (pGetNumberFormatEx ?
-                (pGetNumberFormatEx)(LOCALE_NAME_USER_DEFAULT, 0, pszNumber, &numberFormat, nullptr, 0) :
-                (pGetNumberFormat)(LOCALE_USER_DEFAULT, 0, pszNumber, &numberFormat, nullptr, 0));
-            if (nFormattedNumberLength)
-            {
-                LPTSTR pszFormattedNumber = pMemoryManager->mAllocChars<LPTSTR>(nFormattedNumberLength);
-                if (pszFormattedNumber)
-                {
-                    if (pGetNumberFormatEx)
-                    {
-                        nFormattedNumberLength = (pGetNumberFormatEx)(LOCALE_NAME_USER_DEFAULT,
-                                                                      0,
-                                                                      pszNumber,
-                                                                      &numberFormat,
-                                                                      pszFormattedNumber,
-                                                                      nFormattedNumberLength);
-                    }
-                    else
-                    {
-                        nFormattedNumberLength = (pGetNumberFormat)(LOCALE_USER_DEFAULT,
-                                                                    0,
-                                                                    pszNumber,
-                                                                    &numberFormat,
-                                                                    pszFormattedNumber,
-                                                                    nFormattedNumberLength);
-                    }
-                    szResult = std::make_unique<STLADD string_type>(pszFormattedNumber, nFormattedNumberLength - 1);
-                    pMemoryManager->free(pszFormattedNumber);
-                }
-            }
-
-            if (numberFormat.lpThousandSep)
-            {
-                pMemoryManager->free(numberFormat.lpThousandSep);
-            }
-            if (numberFormat.lpDecimalSep)
-            {
-                pMemoryManager->free(numberFormat.lpDecimalSep);
-            }
+            szResult = std::make_unique<STLADD string_type>(pszFormattedNumber, nFormattedNumberLength - 1);
         }
-        if (nullptr != hKernel32)
+
+        if (numberFormat.lpThousandSep)
         {
-            FreeLibrary(hKernel32);
+            allocator.deallocate(numberFormat.lpThousandSep);
         }
-
-        if (!szResult)
+        if (numberFormat.lpDecimalSep)
         {
-            szResult = std::make_unique<STLADD string_type>(pszNumber, nNumberLength);
+            allocator.deallocate(numberFormat.lpDecimalSep);
         }
+    }
+    if (nullptr != hKernel32)
+    {
+        FreeLibrary(hKernel32);
+    }
+
+    if (!szResult)
+    {
+        szResult = std::make_unique<STLADD string_type>(szNumber, nNumberLength);
     }
     return szResult;
 }
@@ -1316,17 +1301,14 @@ BOOL CALLBACK string_util::enumDateFormatsProcExEx(_In_z_ LPWSTR pszDateFormatSt
             STLADD default_allocator<TCHAR> allocator {};
             LPTSTR* ppszFormat = reinterpret_cast<LPTSTR*> (nParam);
             *ppszFormat = allocator.allocate(nFormatLength + 1);
-            if (*ppszFormat)
+            if (SUCCEEDED(StringCchCopy(*ppszFormat, nFormatLength + 1, pszDateFormatString)))
             {
-                if (SUCCEEDED(StringCchCopy(*ppszFormat, nFormatLength + 1, pszDateFormatString)))
-                {
-                    bResult = FALSE;
-                }
-                else
-                {
-                    allocator.deallocate(*ppszFormat);
-                    *ppszFormat = nullptr;
-                }
+                bResult = FALSE;
+            }
+            else
+            {
+                allocator.deallocate(*ppszFormat);
+                *ppszFormat = nullptr;
             }
         }
     }
@@ -1380,7 +1362,7 @@ STLADD string_unique_ptr_t string_util::getListSeparator() const
         // Well, the pGetLocaleInfo must be valid here. I don't check it.
     }
 
-    STLADD string_unique_ptr_t szResult;
+    STLADD string_unique_ptr_t szResult {};
 
     if (pGetLocaleInfoEx || pGetLocaleInfo)
     {
@@ -1399,37 +1381,29 @@ STLADD string_unique_ptr_t string_util::getListSeparator() const
             // Allocate memory to store list separator string only.
             STLADD default_allocator<TCHAR> allocator {};
             LPTSTR pszResult = allocator.allocate(nListSeparatorLength);
-            if (pszResult)
+            STLADD t_char_unique_ptr_t guard {pszResult};
+            if (pGetLocaleInfoEx)
             {
-                if (pGetLocaleInfoEx)
+                nListSeparatorLength = (pGetLocaleInfoEx)(
+                    LOCALE_NAME_USER_DEFAULT, LOCALE_SLIST, pszResult, static_cast<int> (nListSeparatorLength));
+            }
+            else
+            {
+                nListSeparatorLength = (pGetLocaleInfo)(
+                    LOCALE_USER_DEFAULT, LOCALE_SLIST, pszResult, static_cast<int> (nListSeparatorLength));
+            }
+            if (nListSeparatorLength)
+            {
+                if (TEXT('\x20') != *(pszResult + nListSeparatorLength - 2))
                 {
-                    nListSeparatorLength = (pGetLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT,
-                                                              LOCALE_SLIST,
-                                                              pszResult,
-                                                              static_cast<int> (nListSeparatorLength));
+                    // Replace NULL termintaing character w/ 'space' character.
+                    *(pszResult + nListSeparatorLength - 1) = TEXT('\x20');
+                    szResult = std::make_unique<STLADD string_type>(pszResult, pszResult + nListSeparatorLength);
                 }
                 else
                 {
-                    nListSeparatorLength = (pGetLocaleInfo)(LOCALE_USER_DEFAULT,
-                                                            LOCALE_SLIST,
-                                                            pszResult,
-                                                            static_cast<int> (nListSeparatorLength));
+                    szResult = std::make_unique<STLADD string_type>(pszResult, pszResult + nListSeparatorLength - 1);
                 }
-                if (nListSeparatorLength)
-                {
-                    if (TEXT('\x20') != *(pszResult + nListSeparatorLength - 2))
-                    {
-                        // Replace NULL termintaing character w/ 'space' character.
-                        *(pszResult + nListSeparatorLength - 1) = TEXT('\x20');
-                        szResult = std::make_unique<STLADD string_type>(pszResult, pszResult + nListSeparatorLength);
-                    }
-                    else
-                    {
-                        szResult =
-                            std::make_unique<STLADD string_type>(pszResult, pszResult + nListSeparatorLength - 1);
-                    }
-                }
-                allocator.deallocate(pszResult);
             }
         }
     }
@@ -1472,7 +1446,7 @@ _Check_return_ STLADD string_unique_ptr_t string_util::getCurrentUserLocale() co
         // Well, the pGetLocaleInfo must be valid here. I don't check it.
     }
 
-    STLADD string_unique_ptr_t szResult;
+    STLADD string_unique_ptr_t szResult {};
 
     if (pGetLocaleInfoEx || pGetLocaleInfo)
     {
@@ -1491,23 +1465,20 @@ _Check_return_ STLADD string_unique_ptr_t string_util::getCurrentUserLocale() co
             // Allocate memory to store list separator string only.
             STLADD default_allocator<TCHAR> allocator {};
             LPTSTR pszResult = allocator.allocate(nLength);
-            if (pszResult)
+            STLADD t_char_unique_ptr_t guard {pszResult};
+            if (pGetLocaleInfoEx)
             {
-                if (pGetLocaleInfoEx)
-                {
-                    nLength = (pGetLocaleInfoEx)(
-                        LOCALE_NAME_USER_DEFAULT, LOCALE_SNAME, pszResult, static_cast<int> (nLength));
-                }
-                else
-                {
-                    nLength = (pGetLocaleInfo)(
-                        LOCALE_USER_DEFAULT, LOCALE_SNAME, pszResult, static_cast<int> (nLength));
-                }
-                if (nLength)
-                {
-                    szResult = std::make_unique<STLADD string_type>(pszResult, pszResult + nLength - 1);
-                }
-                allocator.deallocate(pszResult);
+                nLength = (pGetLocaleInfoEx)(
+                    LOCALE_NAME_USER_DEFAULT, LOCALE_SNAME, pszResult, static_cast<int> (nLength));
+            }
+            else
+            {
+                nLength = (pGetLocaleInfo)(
+                    LOCALE_USER_DEFAULT, LOCALE_SNAME, pszResult, static_cast<int> (nLength));
+            }
+            if (nLength)
+            {
+                szResult = std::make_unique<STLADD string_type>(pszResult, pszResult + nLength - 1);
             }
         }
     }
