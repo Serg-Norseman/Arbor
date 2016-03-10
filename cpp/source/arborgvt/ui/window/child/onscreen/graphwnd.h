@@ -45,10 +45,10 @@ public:
         return allocator.allocate(size, 0);
     }
 
-    static void operator delete(_In_ void* p, _In_ const size_t size)
+    static void operator delete(_In_ void* p)
     {
         STLADD aligned_sse_allocator<graph_window> allocator {};
-        allocator.deallocate(static_cast<graph_window*> (p), size);
+        allocator.deallocate(p);
     }
 
     _Check_return_ virtual HWND create(_In_ const HWND hParent) override;
@@ -84,8 +84,10 @@ protected:
 
 private:
     typedef child_window_impl<graph_window> base_class_t;
-    typedef std::vector<std::unique_ptr<vertex_draw>> vertices_draw_cont_t;
-    typedef std::vector<std::unique_ptr<edge_draw>> edges_draw_cont_t;
+    typedef std::vector<std::unique_ptr<vertex_draw>, STLADD default_allocator<std::unique_ptr<vertex_draw>>>
+        vertices_draw_cont_t;
+    typedef std::vector<std::unique_ptr<edge_draw>, STLADD default_allocator<std::unique_ptr<edge_draw>>>
+        edges_draw_cont_t;
 
     static __m128 __vectorcall logicalToGraph(
         _In_ const __m128 value, _In_ const __m128 logicalSize, _In_ const __m128 viewBound);
@@ -131,8 +133,11 @@ private:
 #if defined(_DEBUG) || defined(SHOW_FPS)
     static constexpr size_t m_framesMaxNumber = 100;
     // `m_frameIt` must be declared after `m_frameTimes`! See member initialization list in the ctor.
-    std::vector<std::chrono::high_resolution_clock::duration::rep> m_frameTimes;
-    std::vector<std::chrono::high_resolution_clock::duration::rep>::iterator m_frameIt;
+    typedef std::vector<
+        std::chrono::high_resolution_clock::duration::rep,
+        STLADD default_allocator<std::chrono::high_resolution_clock::duration::rep>> frames_cont_t;
+    frames_cont_t m_frameTimes;
+    frames_cont_t::iterator m_frameIt;
     std::chrono::high_resolution_clock::duration::rep m_frameTotal;
     ATLADD com_ptr<IDWriteTextFormat> m_framesPerSecondTextFormat;
     ATLADD com_ptr<ID2D1SolidColorBrush> m_framesPerSecondBrush;

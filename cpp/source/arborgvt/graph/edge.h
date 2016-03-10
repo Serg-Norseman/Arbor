@@ -53,10 +53,10 @@ public:
         return allocator.allocate(size, 0);
     }
 
-    static void operator delete(_In_ void* p, _In_ const size_t size)
+    static void operator delete(_In_ void* p)
     {
         STLADD aligned_sse_allocator<edge> allocator {};
-        allocator.deallocate(static_cast<edge*> (p), size);
+        allocator.deallocate(p);
     }
 
     void swap(_Inout_ edge& right) noexcept

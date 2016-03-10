@@ -126,6 +126,9 @@
     <ClCompile Include="..\..\source\arborgvt\ui\nowindow\avisimpl\avisimpl.cpp">
       <Filter>source files\ui\non-windowed\arbor visual implementation</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\source\arborgvt\service\newdel.cpp">
+      <Filter>source files\service</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\source\arborgvt\ns\atladd.h">

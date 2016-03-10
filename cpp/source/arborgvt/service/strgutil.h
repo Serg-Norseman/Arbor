@@ -16,18 +16,6 @@ public:
 
     static pointer_t getInstance() noexcept(false);
 
-    static void* operator new(_In_ const size_t size)
-    {
-        STLADD default_allocator<string_util> allocator {};
-        return allocator.allocate(size, 0);
-    }
-
-    static void operator delete(_In_ void* p, _In_ const size_t size)
-    {
-        STLADD default_allocator<string_util> allocator {};
-        allocator.deallocate(static_cast<string_util*> (p), size);
-    }
-
     void setModuleHandleWithResource(_In_ HINSTANCE hModuleWithResource)
     {
         if (hModuleWithResource != m_hModuleWithResource)

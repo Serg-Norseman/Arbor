@@ -308,8 +308,7 @@ void graph_window::draw()
     auto durationInSeconds = std::chrono::duration_cast<std::chrono::duration<double>>(duration);
     double fps = 1.0 / durationInSeconds.count();
     int length = _sctprintf(TEXT("%.4f FPS (%I64i µs per frame)"), fps, durationInMicroseconds.count()) + 1;
-    STLADD default_allocator<TCHAR> allocator {};
-    STLADD t_char_unique_ptr_t text {allocator.allocate(length)};
+    STLADD t_char_unique_ptr_t text {new TCHAR[length]};
     length =
         _stprintf_s(text.get(), length, TEXT("%.4f FPS (%I64i µs per frame)"), fps, durationInMicroseconds.count());
     m_direct2DContext->DrawText(

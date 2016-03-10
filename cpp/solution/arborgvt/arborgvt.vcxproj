@@ -231,6 +231,7 @@
     <ClCompile Include="..\..\source\arborgvt\dlllayer\dllmain.cpp" />
     <ClCompile Include="..\..\source\arborgvt\graph\graph.cpp" />
     <ClCompile Include="..\..\source\arborgvt\service\miscutil.cpp" />
+    <ClCompile Include="..\..\source\arborgvt\service\newdel.cpp" />
     <ClCompile Include="..\..\source\arborgvt\service\stladdon.cpp" />
     <ClCompile Include="..\..\source\arborgvt\service\strgutil.cpp" />
     <ClCompile Include="..\..\source\arborgvt\ui\nowindow\avisimpl\avisimpl.cpp" />

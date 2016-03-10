@@ -50,18 +50,6 @@ protected:
 class edge_draw: public element_draw
 {
 public:
-    static void* operator new(_In_ const size_t size)
-    {
-        STLADD default_allocator<edge_draw> allocator {};
-        return allocator.allocate(size, 0);
-    }
-
-    static void operator delete(_In_ void* p, _In_ const size_t size)
-    {
-        STLADD default_allocator<edge_draw> allocator {};
-        allocator.deallocate(static_cast<edge_draw*> (p), size);
-    }
-
     void createDeviceResources(_In_ ID2D1DeviceContext* deviceContext, _In_ const ARBOR edge& object)
     {
         base_class_t::createDeviceResources(deviceContext, object.getColor());
@@ -80,18 +68,6 @@ public:
         m_textBrush {},
         m_textLayout {std::move(textLayout)}
     {
-    }
-
-    static void* operator new(_In_ const size_t size)
-    {
-        STLADD default_allocator<vertex_draw> allocator {};
-        return allocator.allocate(size, 0);
-    }
-
-    static void operator delete(_In_ void* p, _In_ const size_t size)
-    {
-        STLADD default_allocator<vertex_draw> allocator {};
-        allocator.deallocate(static_cast<vertex_draw*> (p), size);
     }
 
     void createDeviceResources(_In_ ID2D1DeviceContext* deviceContext, _In_ const ARBOR vertex& object)

@@ -40,7 +40,7 @@ protected:
         std::hash<STLADD string_type>,
         std::equal_to<STLADD string_type>,
         STLADD aligned_sse_allocator<std::pair<const STLADD string_type, vertex>>> vertices_cont_t;
-    typedef std::vector<std::unique_ptr<edge>> edges_cont_t;
+    typedef std::vector<std::unique_ptr<edge>, STLADD default_allocator<std::unique_ptr<edge>>> edges_cont_t;
 
     // Prepare tag dispatch pattern.
     template <typename T>

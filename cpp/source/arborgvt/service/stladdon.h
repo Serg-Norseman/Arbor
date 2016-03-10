@@ -49,6 +49,7 @@ private:
     // Do not access `m_heap` directly. Use `getHeap` method instead.
     static WAPI heap_t m_heap;
 };
+
 /**
  * class default_allocator.
  * Allocator for STL.
