@@ -1,6 +1,5 @@
 #define OEMRESOURCE
 #include "resource.h"
-#include "service\memorymg.h"
 #include "service\miscutil.h"
 #include "service\stladdon.h"
 #include "service\winapi\directx\dx.h"
@@ -447,9 +446,8 @@ void desktop_sample_window::updateWindowText(_In_opt_ const STLADD string_type* 
     {
         szText = std::make_unique<STLADD string_type>(TEXT("Arbor GVT desktop sample"));
     }
-    memory_manager::pointer_t pMemoryManager = memory_manager::getInstance();
     size_t nSize = szText->size() + (pszText ? pszText->size() + 3 : 0) + 1;
-    STLADD t_char_unique_ptr_t szWindowText {pMemoryManager->mAllocChars<LPTSTR>(nSize)};
+    STLADD t_char_unique_ptr_t szWindowText {new TCHAR[nSize]};
     if (szWindowText)
     {
         if (pszText)

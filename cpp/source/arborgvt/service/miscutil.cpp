@@ -62,11 +62,11 @@ std::vector<WORD> version_info::getApplicationExeVersionAsVector()
  */
 STLADD string_unique_ptr_t version_info::getApplicationExeVersion()
 {
-    STLADD string_unique_ptr_t szResult;
-    auto version {getApplicationExeVersionAsVector()};
+    STLADD string_unique_ptr_t szResult {};
+    auto version(getApplicationExeVersionAsVector());
     if (version.size())
     {
-        STLADD wostringstream stream;
+        STLADD wostringstream stream {};
         std::copy(version.begin(), version.end(), std::ostream_iterator<WORD, wchar_t> {stream, TEXT(".")});
         szResult = std::make_unique<STLADD string_type>(stream.str());
         szResult->erase(szResult->end() - 1);

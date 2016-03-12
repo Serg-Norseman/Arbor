@@ -44,8 +44,6 @@
     <ClInclude Include="..\..\source\dtsample\sdkver.h" />
     <ClInclude Include="..\..\source\dtsample\service\com\comptr.h" />
     <ClInclude Include="..\..\source\dtsample\service\functype.h" />
-    <ClInclude Include="..\..\source\dtsample\service\memmgti.h" />
-    <ClInclude Include="..\..\source\dtsample\service\memorymg.h" />
     <ClInclude Include="..\..\source\dtsample\service\miscutil.h" />
     <ClInclude Include="..\..\source\dtsample\service\stladdon.h" />
     <ClInclude Include="..\..\source\dtsample\service\strgutil.h" />
@@ -66,8 +64,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\dtsample\applayer\dtsample.cpp" />
-    <ClCompile Include="..\..\source\dtsample\service\memorymg.cpp" />
     <ClCompile Include="..\..\source\dtsample\service\miscutil.cpp" />
+    <ClCompile Include="..\..\source\dtsample\service\newdel.cpp" />
+    <ClCompile Include="..\..\source\dtsample\service\stladdon.cpp" />
     <ClCompile Include="..\..\source\dtsample\service\strgutil.cpp" />
     <ClCompile Include="..\..\source\dtsample\ui\window\top\onscreen\dtsmpwnd.cpp" />
     <ClCompile Include="..\..\source\dtsample\ui\window\top\twinimpl.cpp" />

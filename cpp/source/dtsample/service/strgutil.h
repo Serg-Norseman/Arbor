@@ -1,6 +1,5 @@
 #pragma once
 #include "service\stladdon.h"
-#include "service\winapi\srwlock.h"
 #include <memory>
 
 class string_util
@@ -8,6 +7,12 @@ class string_util
 public:
     typedef const string_util* const_ptr_t;
     typedef string_util* pointer_t;
+
+    string_util()
+        :
+        m_hModuleWithResource {nullptr}
+    {
+    }
 
     static pointer_t getInstance() noexcept(false);
 
@@ -33,7 +38,6 @@ public:
         _In_ UINT nStringResourceId,
         _Outptr_result_z_ LPCTSTR* ppszResourceString,
         _Out_ size_t* pnResourceLength) const;
-    void freeString(__drv_freesMem(Mem) _Frees_ptr_ LPTSTR pszResourceString) const;
 
     _Success_(return) bool formatOneStringField(
         _In_ UINT nResultFormatId,
@@ -71,19 +75,12 @@ public:
 private:
     typedef std::unique_ptr<string_util> unique_ptr_t;
 
-    string_util()
-        :
-        m_hModuleWithResource(nullptr)
-    {
-    }
-
     static BOOL CALLBACK enumDateFormatsProcExEx(_In_z_ LPWSTR pszDateFormatString,
                                                  _In_ CALID nCalendarID,
                                                  _In_ LPARAM nParam);
     static BOOL CALLBACK enumDateFormatsProcEx(_In_z_ LPTSTR pszDateFormatString, _In_ CALID nCalendarID);
 
     static unique_ptr_t m_instance;
-    static WAPI srw_lock m_instanceLock;
     static LPTSTR* m_ppszEnumDateFormatsProcExData;
     HINSTANCE m_hModuleWithResource;
 };

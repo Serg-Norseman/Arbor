@@ -1,24 +1,29 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ImportGroup Label="PropertySheets" />
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalOptions>/DWIN32 /Bv /Gw /GR- /Zc:rvalueCast /Zc:inline /Zc:throwingNew %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="$(DebugConfiguration) and '64' == $(PlatformArchitecture)">
     <ClCompile>
-      <AdditionalOptions>/D_DEBUG /D_WIN64 /DWIN32 /D_M_X64 /D_M_AMD64 /D_AMD64_ /U_M_IX86 /U_M_IA64 /U_X86_ /favor:INTEL64 /Bv /Gw /GR- /Zc:rvalueCast /Zc:inline /Zc:throwingNew %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/D_DEBUG /D_WIN64 /D_M_X64 /D_M_AMD64 /D_AMD64_ /U_M_IX86 /U_M_IA64 /U_X86_ /favor:INTEL64 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="$(DebugConfiguration) and '32' == $(PlatformArchitecture)">
     <ClCompile>
-      <AdditionalOptions>/D_DEBUG /DWIN32 /D_X86_ /Bv /Gw /GR- /Zc:rvalueCast /Zc:inline /Zc:throwingNew %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/D_DEBUG /D_X86_ %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="!$(DebugConfiguration) and '64' == $(PlatformArchitecture)">
     <ClCompile>
-      <AdditionalOptions>/DNDEBUG /D_WIN64 /DWIN32 /D_M_X64 /D_M_AMD64 /D_AMD64_ /U_M_IX86 /U_M_IA64 /U_X86_ /favor:INTEL64 /Gw /GR- /Zc:rvalueCast /Zc:inline /Zc:throwingNew %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/DNDEBUG /D_WIN64 /D_M_X64 /D_M_AMD64 /D_AMD64_ /U_M_IX86 /U_M_IA64 /U_X86_ /favor:INTEL64 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="!$(DebugConfiguration) and '32' == $(PlatformArchitecture)">
     <ClCompile>
-      <AdditionalOptions>/DNDEBUG /DWIN32 /D_X86_ /Gw /GR- /Zc:rvalueCast /Zc:inline /Zc:throwingNew %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/DNDEBUG /D_X86_ %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="$(IntelToolset)">

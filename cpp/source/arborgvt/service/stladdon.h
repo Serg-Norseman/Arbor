@@ -342,7 +342,7 @@ __pragma(warning(pop))
 
     void deallocate(_In_ void* p) const
     {
-        deallocate(static_cast<const pointer> (p), 0);
+        deallocate(static_cast<pointer> (p), 0);
     }
 
     static_assert(0 == ((max_alignment_t::value - 1) & max_alignment_t::value),

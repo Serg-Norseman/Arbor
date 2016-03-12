@@ -72,3 +72,49 @@ Therefore when a compiler has implicitly instantiated `foo` at `foo_t<__m128, 33
 
 The problem is discussed in ["static_assert and Intel C++ compiler"]
 (http://stackoverflow.com/questions/35764069/static-assert-and-intel-c-compiler) topic.
+
+### ICC can't deduce variable type when a variable is declared using a placeholder type
+
+ICC fails when compiles one of the following code:
+
+```cpp
+int foo = 3;
+auto boo {foo};
+foo = boo + 1;
+```
+
+or
+
+```cpp
+int foo;
+auto boo {4};
+foo = boo + 1;
+```
+
+Intel C++ compiler considers code ill-formed because:
+
+```
+error : no operator "+" matches these operands
+        operand types are: std::initializer_list<int> + int
+     foo = boo + 1;
+               ^
+```
+
+Therefore it deduces type of `boo` to `std::initializer_list<int>`. This was OK before C++17. But now this violates '7.1.6.4 auto specifier [dcl.spec.auto]':
+
+> When a variable declared using a placeholder type is initialized, or a return statement occurs in a function
+declared with a return type that contains a placeholder type, the deduced return type or variable type is
+determined from the type of its initializer. In the case of a return with no operand or with an operand of
+type void, the declared return type shall be auto and the deduced return type is void. Otherwise, let T be
+the declared type of the variable or return type of the function. If the placeholder is the auto type-specifier,
+the deduced type is determined using the rules for template argument deduction. If the initialization is
+direct-list-initialization then the braced-init-list shall contain only a single assignment-expression L. If the
+deduction is for a return statement and the initializer is a braced-init-list (8.5.4), the program is ill-formed.
+Otherwise, obtain P from T by replacing the occurrences of auto with either a new invented type template
+parameter U or, if the initialization is copy-list-initialization, with std::initializer_list<U>. Deduce
+a value for U using the rules of template argument deduction from a function call (14.8.2.1), where P is
+a function template parameter type and the corresponding argument is the initializer, or L in the case of
+direct-list-initialization. If the deduction fails, the declaration is ill-formed. Otherwise, the type deduced for
+the variable or return type is obtained by substituting the deduced U into P.
+
+See ["ICL can't deduce variable type when a variable is declared using a placeholder type (auto)"](https://software.intel.com/en-us/forums/intel-c-compiler/topic/611948) topic for more information.
