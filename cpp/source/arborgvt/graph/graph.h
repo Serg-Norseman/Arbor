@@ -204,6 +204,11 @@ public:
         return const_edges_iterator {m_edges.end()};
     }
 
+    bool active() const noexcept
+    {
+        return false;
+    }
+
     __m128 __vectorcall getViewBound() const noexcept
     {
         return m_viewBound;
@@ -211,8 +216,9 @@ public:
 
 
 private:
-    const vertex* addVertex(_In_ STLADD string_type&& name);
-    const vertex* __vectorcall addVertex(_In_ STLADD string_type&& name, _In_ const __m128 coordinates);
+    vertex* addVertex(_In_ STLADD string_type&& name);
+    vertex* __vectorcall addVertex(_In_ STLADD string_type&& name, _In_ const __m128 coordinates);
+    void applySprings();
 
     static constexpr float m_stiffness = 600.0f;
 

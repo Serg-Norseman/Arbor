@@ -1,4 +1,5 @@
 #include "graph\graph.h"
+#include "graph\vector.h"
 
 ARBOR_BEGIN
 
@@ -25,8 +26,8 @@ ARBOR_BEGIN
 void graph::addEdge(_In_ STLADD string_type&& tail, _In_ STLADD string_type&& head, _In_ float length)
 {
     STLADD lock_guard_exclusive<WAPI srw_lock> verticesLock {m_verticesLock};
-    const vertex* tailVertex = addVertex(std::move(tail));
-    const vertex* headVertex = addVertex(std::move(head));
+    vertex* tailVertex = addVertex(std::move(tail));
+    vertex* headVertex = addVertex(std::move(head));
     bool noEdge = false;
     {
         STLADD lock_guard_shared<WAPI srw_lock> lock {m_edgesLock};
@@ -85,7 +86,7 @@ void graph::clear() noexcept
  *
  * Therefore, BE CAREFUL: this method doesn't obtain any locks! It totally relies on caller.
  */
-const vertex* graph::addVertex(_In_ STLADD string_type&& name)
+vertex* graph::addVertex(_In_ STLADD string_type&& name)
 {
     // Here we can end up with issuing two unnecessary calls to "get a randomly distributed value".
     sse_t value = {m_distribution(m_engine), m_distribution(m_engine), 0.0f, 0.0f};
@@ -115,7 +116,7 @@ const vertex* graph::addVertex(_In_ STLADD string_type&& name)
  *
  * Therefore, BE CAREFUL: this method doesn't obtain any locks! It totally relies on caller.
  */
-const vertex* __vectorcall graph::addVertex(_In_ STLADD string_type&& name, _In_ const __m128 coordinates)
+vertex* __vectorcall graph::addVertex(_In_ STLADD string_type&& name, _In_ const __m128 coordinates)
 {
     /*
      * About order of evaluation of inside initializer-list.
@@ -151,6 +152,74 @@ const vertex* __vectorcall graph::addVertex(_In_ STLADD string_type&& name, _In_
     std::pair<vertices_cont_t::iterator, bool> result =
         m_vertices.emplace(key, vertex {std::move(name), coordinates});
     return &(result.first->second);
+}
+
+
+/**
+ * Change forces, applied to both vertices of each edge.
+ *
+ * Parameters:
+ * None.
+ *
+ * Returns:
+ * N/A.
+ *
+ * Remarks:
+ * This is `ArborGVT::ArborSystem::applySprings` method in the original C# code.
+ */
+void graph::applySprings()
+{
+    sse_t value;
+    value.data[0] = 0;
+    __m128 zero = _mm_load_ps(value.data);
+    zero = _mm_shuffle_ps(zero, zero, 0);
+    for (auto it = m_edges.begin(); m_edges.end() != it; ++it)
+    {
+        vertex* tail = (*it)->getTail();
+        vertex* head = (*it)->getHead();
+        __m128 temp = _mm_sub_ps(head->getCoordinates(), tail->getCoordinates());
+        __m128 temp2;
+        if (simd_cpu_capabilities::sse41())
+        {
+            temp2 = _mm_dp_ps(temp, temp, 0b00110001);
+        }
+        else
+        {
+            temp2 = _mm_mul_ps(temp, temp);
+            temp2 = _mm_hadd_ps(temp2, temp2);
+        }
+        temp2 = _mm_sqrt_ss(temp2);
+        temp2 = _mm_shuffle_ps(temp2, temp2, 0);
+        __m128 oldSize = temp2;
+        if (0b0001 & _mm_movemask_ps(_mm_cmpeq_ps(temp2, zero)))
+        {
+            temp = randomVector(1.0f);
+            if (simd_cpu_capabilities::sse41())
+            {
+                temp2 = _mm_dp_ps(temp, temp, 0b00110001);
+            }
+            else
+            {
+                temp2 = _mm_mul_ps(temp, temp);
+                temp2 = _mm_hadd_ps(temp2, temp2);
+            }
+            temp2 = _mm_sqrt_ss(temp2);
+            temp2 = _mm_shuffle_ps(temp2, temp2, 0);
+        }
+        temp = _mm_mul_ps(temp, _mm_rcp_ps(temp2));
+        value.data[0] = (*it)->getLength();
+        temp2 = _mm_load_ps(value.data);
+        temp2 = _mm_shuffle_ps(temp2, temp2, 0);
+        oldSize = _mm_sub_ps(temp2, oldSize);
+        value.data[0] = (*it)->getStiffness() * 0.5f;
+        temp2 = _mm_load_ps(value.data);
+        temp2 = _mm_shuffle_ps(temp2, temp2, 0);
+        temp2 = _mm_mul_ps(temp2, oldSize);
+        temp = _mm_mul_ps(temp, temp2);
+        head->applyForce(temp);
+        temp = _mm_sub_ps(zero, temp);
+        tail->applyForce(temp);
+    }
 }
 
 ARBOR_END

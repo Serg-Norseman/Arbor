@@ -129,6 +129,9 @@
     <ClCompile Include="..\..\source\arborgvt\service\newdel.cpp">
       <Filter>source files\service</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\source\arborgvt\graph\vector.cpp">
+      <Filter>source files\graph</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\source\arborgvt\ns\atladd.h">
@@ -223,6 +226,9 @@
     </ClInclude>
     <ClInclude Include="..\..\source\arborgvt\ui\nowindow\avisimpl\avisimpl.h">
       <Filter>header files\ui\non-windowed\arbor visual implementation</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\graph\vector.h">
+      <Filter>header files\graph</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

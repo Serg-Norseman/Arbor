@@ -230,6 +230,7 @@
     <ClCompile Include="..\..\source\arborgvt\dlllayer\arbor.cpp" />
     <ClCompile Include="..\..\source\arborgvt\dlllayer\dllmain.cpp" />
     <ClCompile Include="..\..\source\arborgvt\graph\graph.cpp" />
+    <ClCompile Include="..\..\source\arborgvt\graph\vector.cpp" />
     <ClCompile Include="..\..\source\arborgvt\service\miscutil.cpp" />
     <ClCompile Include="..\..\source\arborgvt\service\newdel.cpp" />
     <ClCompile Include="..\..\source\arborgvt\service\stladdon.cpp" />
@@ -243,6 +244,7 @@
     <ClInclude Include="..\..\source\arborgvt\dlllayer\arborvis.h" />
     <ClInclude Include="..\..\source\arborgvt\graph\edge.h" />
     <ClInclude Include="..\..\source\arborgvt\graph\graph.h" />
+    <ClInclude Include="..\..\source\arborgvt\graph\vector.h" />
     <ClInclude Include="..\..\source\arborgvt\graph\vertex.h" />
     <ClInclude Include="..\..\source\arborgvt\ns\arbor.h" />
     <ClInclude Include="..\..\source\arborgvt\ns\atladd.h" />

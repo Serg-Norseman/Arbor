@@ -19,7 +19,7 @@ public:
     edge() = delete;
     edge(_In_ const edge&) = delete;
 
-    edge(_In_ const vertex* tail, _In_ const vertex* head, _In_ const float length, _In_ const float stiffness) noexcept
+    edge(_In_ vertex* tail, _In_ vertex* head, _In_ const float length, _In_ const float stiffness) noexcept
         :
         m_tail {tail},
         m_head {head},
@@ -34,8 +34,8 @@ public:
         m_color = _mm_load_ps(value.data);
     }
 
-    edge(_In_ const vertex* tail,
-        _In_ const vertex* head,
+    edge(_In_ vertex* tail,
+        _In_ vertex* head,
         _In_ const bool directed,
         _In_ const float length,
         _In_ const float stiffness) noexcept
@@ -82,9 +82,19 @@ public:
         m_color = value;
     }
 
+    vertex* getTail() noexcept
+    {
+        return m_tail;
+    }
+
     const vertex* getTail() const noexcept
     {
         return m_tail;
+    }
+
+    vertex* getHead() noexcept
+    {
+        return m_head;
     }
 
     const vertex* getHead() const noexcept
@@ -102,6 +112,16 @@ public:
         m_data = value;
     }
 
+    float getLength() const noexcept
+    {
+        return m_length;
+    }
+
+    float getStiffness() const noexcept
+    {
+        return m_stiffness;
+    }
+
     bool getDirected() const noexcept
     {
         return m_directed;
@@ -110,8 +130,8 @@ public:
 
 private:
     __m128 m_color;
-    const vertex* m_tail;
-    const vertex* m_head;
+    vertex* m_tail;
+    vertex* m_head;
     void* m_data;
     float m_length;
     float m_stiffness;

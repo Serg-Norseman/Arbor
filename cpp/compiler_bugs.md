@@ -2,7 +2,7 @@
 
 ## Intel C++ Compiler
 
-### ICC doesn't allow to declare a _template_ class where a static member function of the class is used inside the class body
+### ICC doesn't allow to declare a _template_ class where a static constexpr member function is used inside the class body
 
 ICC fails to compile the following code:
 
@@ -117,4 +117,6 @@ a function template parameter type and the corresponding argument is the initial
 direct-list-initialization. If the deduction fails, the declaration is ill-formed. Otherwise, the type deduced for
 the variable or return type is obtained by substituting the deduced U into P.
 
-See ["ICL can't deduce variable type when a variable is declared using a placeholder type (auto)"](https://software.intel.com/en-us/forums/intel-c-compiler/topic/611948) topic for more information.
+See ["ICL can't deduce variable type when a variable is declared using a placeholder type (auto) [bug since C++17]"](https://software.intel.com/en-us/forums/intel-c-compiler/topic/611948) topic for more information.
+
+*(this is a bug confirmed by Intel; it is to be fixed in Intel C++ Compiler 17.0 -- see the forum topic I specified above)*
