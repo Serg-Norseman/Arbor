@@ -6,15 +6,11 @@
       <StringPooling>true</StringPooling>
       <ControlFlowGuard>Guard</ControlFlowGuard>
     </ClCompile>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="$(DebugConfiguration)">
-    <ClCompile>
+    <ClCompile Condition="$(DebugConfiguration)">
       <MinimalRebuild>false</MinimalRebuild>
       <SmallerTypeCheck>true</SmallerTypeCheck>
     </ClCompile>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="!$(DebugConfiguration)">
-    <ClCompile>
+    <ClCompile Condition="!$(DebugConfiguration)">
       <FunctionLevelLinking>true</FunctionLevelLinking>
     </ClCompile>
   </ItemDefinitionGroup>

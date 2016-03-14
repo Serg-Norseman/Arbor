@@ -4,11 +4,12 @@
   <PropertyGroup>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
-  <PropertyGroup Condition="!$(DebugConfiguration)">
+  <!-- ICL 16.0 doesn't support `/analyze` switch -->
+  <PropertyGroup Condition="!$(IntelToolset) and !$(DebugConfiguration)">
     <RunCodeAnalysis>true</RunCodeAnalysis>
   </PropertyGroup>
-  <ItemDefinitionGroup Condition="!$(DebugConfiguration)">
-    <ClCompile>
+  <ItemDefinitionGroup>
+    <ClCompile Condition="!$(IntelToolset) and !$(DebugConfiguration)">
       <EnablePREfast>true</EnablePREfast>
     </ClCompile>
   </ItemDefinitionGroup>

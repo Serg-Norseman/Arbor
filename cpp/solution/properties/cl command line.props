@@ -3,32 +3,33 @@
   <ImportGroup Label="PropertySheets" />
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalOptions>/DWIN32 /Bv /Gw /GR- /Zc:rvalueCast /Zc:inline /Zc:throwingNew %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/DWIN32 /GR- /Zc:rvalueCast /Zc:inline /Zc:throwingNew /fp:fast %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="$(DebugConfiguration) and '64' == $(PlatformArchitecture)">
-    <ClCompile>
-      <AdditionalOptions>/D_DEBUG /D_WIN64 /D_M_X64 /D_M_AMD64 /D_AMD64_ /U_M_IX86 /U_M_IA64 /U_X86_ /favor:INTEL64 %(AdditionalOptions)</AdditionalOptions>
+    <ClCompile Condition="$(DebugConfiguration) and '64' == $(PlatformArchitecture)">
+      <AdditionalOptions>/D_DEBUG /D_WIN64 /D_M_X64 /D_M_AMD64 /D_AMD64_ /U_M_IX86 /U_M_IA64 /U_X86_ %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="$(DebugConfiguration) and '32' == $(PlatformArchitecture)">
-    <ClCompile>
+    <ClCompile Condition="$(DebugConfiguration) and '32' == $(PlatformArchitecture)">
       <AdditionalOptions>/D_DEBUG /D_X86_ %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="!$(DebugConfiguration) and '64' == $(PlatformArchitecture)">
-    <ClCompile>
-      <AdditionalOptions>/DNDEBUG /D_WIN64 /D_M_X64 /D_M_AMD64 /D_AMD64_ /U_M_IX86 /U_M_IA64 /U_X86_ /favor:INTEL64 %(AdditionalOptions)</AdditionalOptions>
+    <ClCompile Condition="!$(DebugConfiguration) and '64' == $(PlatformArchitecture)">
+      <AdditionalOptions>/DNDEBUG /D_WIN64 /D_M_X64 /D_M_AMD64 /D_AMD64_ /U_M_IX86 /U_M_IA64 /U_X86_ %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="!$(DebugConfiguration) and '32' == $(PlatformArchitecture)">
-    <ClCompile>
+    <ClCompile Condition="!$(DebugConfiguration) and '32' == $(PlatformArchitecture)">
       <AdditionalOptions>/DNDEBUG /D_X86_ %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="$(IntelToolset)">
-    <ClCompile>
-      <AdditionalOptions>/Qstd=c++0x /Qstd=c++11 /Qstd=c++14 /Qms0 /QxSSE3 %(AdditionalOptions)</AdditionalOptions>
+    <ClCompile Condition="$(IntelToolset)">
+      <!-- ICL only options -->
+      <AdditionalOptions>/Qstd=c++14 /Qms0 /QxSSE3 /QaxSSE3 %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Condition="!$(IntelToolset)">
+      <!-- non ICL options (currently they are for MSVC only) -->
+      <AdditionalOptions>/Bv /Gw %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Condition="!$(IntelToolset) and '64' == $(PlatformArchitecture)">
+      <AdditionalOptions>/favor:INTEL64 %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Condition="!$(IntelToolset) and '32' == $(PlatformArchitecture)">
+      <AdditionalOptions>/arch:SSE2 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
 </Project>

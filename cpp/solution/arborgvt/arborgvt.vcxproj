@@ -105,7 +105,6 @@
     <Import Project="..\properties\include directories.props" />
     <Import Project="..\properties\warning level.props" />
     <Import Project="..\properties\multi-processor compilation.props" />
-    <Import Project="..\properties\floating point.props" />
     <Import Project="..\properties\cl general.props" />
     <Import Project="..\properties\cl optimization.props" />
     <Import Project="..\properties\cl code generation.props" />

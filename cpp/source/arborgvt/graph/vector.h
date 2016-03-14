@@ -8,4 +8,3 @@ ARBOR_BEGIN
 extern __m128 __vectorcall randomVector(_In_ const float a);
 
 ARBOR_END
-
