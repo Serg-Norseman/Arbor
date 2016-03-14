@@ -185,34 +185,12 @@ public:
         typedef default_allocator<U> other;
     };
 };
-
-
-
-/**
- * default_deleter class.
- * Deleter that uses memory_manager service.
- */
-template <typename T>
-class default_deleter
-{
-public:
-    typedef typename std::conditional<std::is_pointer<T>::value, typename std::remove_pointer<T>::type, T>::type
-        element_type;
-    typedef typename std::conditional<std::is_pointer<T>::value, T, typename std::add_pointer<T>::type>::type pointer;
-
-    void operator ()(_In_ pointer p)
-    {
-        default_allocator<element_type> allocator {};
-        allocator.destroy(p);
-        allocator.deallocate(p);
-    }
-};
 #pragma endregion memory resource handling
 
 #pragma region typedefs
-typedef std::unique_ptr<LOGFONT, default_deleter<LOGFONT>> logfont_unique_ptr_t;
-typedef std::unique_ptr<unsigned char, default_deleter<unsigned char>> u_char_unique_ptr_t;
-typedef std::unique_ptr<TCHAR, default_deleter<TCHAR>> t_char_unique_ptr_t;
+typedef std::unique_ptr<LOGFONT> logfont_unique_ptr_t;
+typedef std::unique_ptr<unsigned char> u_char_unique_ptr_t;
+typedef std::unique_ptr<TCHAR> t_char_unique_ptr_t;
 
 typedef std::basic_string<wchar_t, std::char_traits<wchar_t>, default_allocator<wchar_t>> w_string_type;
 typedef std::basic_string<char, std::char_traits<char>, default_allocator<char>> a_string_type;
