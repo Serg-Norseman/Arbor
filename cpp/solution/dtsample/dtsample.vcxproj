@@ -146,10 +146,8 @@
   <ImportGroup Label="Shared">
   </ImportGroup>
   <ImportGroup Label="PropertySheets">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="..\properties\macros.props" />
     <Import Project="..\properties\manifest.props" />
-    <Import Project="..\properties\windows sdk versions defines.props" />
     <Import Project="..\properties\output directories.props" />
     <Import Project="..\properties\include directories.props" />
     <Import Project="..\properties\warning level.props" />
@@ -162,15 +160,8 @@
     <Import Project="..\properties\linker debugging.props" />
     <Import Project="..\properties\linker system.props" />
     <Import Project="..\properties\linker advanced.props" />
-    <Import Project="..\properties\linker command line.props" />
     <Import Project="..\properties\prefast.props" />
   </ImportGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug (ICC)|Win32'" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release (ICC)|Win32'" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" />
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <AdditionalOptions>/D_WINDOWS %(AdditionalOptions)</AdditionalOptions>

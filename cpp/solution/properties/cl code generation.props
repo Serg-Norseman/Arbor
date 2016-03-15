@@ -3,15 +3,16 @@
   <ImportGroup Label="PropertySheets" />
   <ItemDefinitionGroup>
     <ClCompile>
-      <StringPooling>true</StringPooling>
-      <ControlFlowGuard>Guard</ControlFlowGuard>
+      <MinimalRebuild />
+      <StringPooling />
+      <ControlFlowGuard />
     </ClCompile>
     <ClCompile Condition="$(DebugConfiguration)">
-      <MinimalRebuild>false</MinimalRebuild>
-      <SmallerTypeCheck>true</SmallerTypeCheck>
+      <SmallerTypeCheck />
+      <BasicRuntimeChecks />
     </ClCompile>
     <ClCompile Condition="!$(DebugConfiguration)">
-      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <FunctionLevelLinking />
     </ClCompile>
   </ItemDefinitionGroup>
 </Project>

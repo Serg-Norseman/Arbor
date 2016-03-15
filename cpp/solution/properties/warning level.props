@@ -3,8 +3,8 @@
   <ImportGroup Label="PropertySheets" />
   <ItemDefinitionGroup>
     <ClCompile>
-      <WarningLevel>Level4</WarningLevel>
-      <SDLCheck>true</SDLCheck>
+      <WarningLevel />
+      <SDLCheck />
     </ClCompile>
   </ItemDefinitionGroup>
 </Project>

@@ -19,7 +19,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "properties sheets", "proper
 		properties\directxmath.props = properties\directxmath.props
 		properties\include directories.props = properties\include directories.props
 		properties\linker advanced.props = properties\linker advanced.props
-		properties\linker command line.props = properties\linker command line.props
 		properties\linker debugging.props = properties\linker debugging.props
 		properties\linker general.props = properties\linker general.props
 		properties\linker system.props = properties\linker system.props
@@ -28,9 +27,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "properties sheets", "proper
 		properties\multi-processor compilation.props = properties\multi-processor compilation.props
 		properties\output directories.props = properties\output directories.props
 		properties\prefast.props = properties\prefast.props
-		properties\rc defines.props = properties\rc defines.props
 		properties\warning level.props = properties\warning level.props
-		properties\windows sdk versions defines.props = properties\windows sdk versions defines.props
 	EndProjectSection
 EndProject
 Global

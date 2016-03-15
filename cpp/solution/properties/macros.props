@@ -7,5 +7,6 @@
     <PlatformModName Condition="'64' == $(PlatformArchitecture)">$(PROCESSOR_ARCHITECTURE)-$(PlatformArchitecture)</PlatformModName>
     <DebugConfiguration>$([System.Text.RegularExpressions.Regex]::IsMatch($(Configuration), '[Dd]ebug'))</DebugConfiguration>
     <IntelToolset>$([System.Text.RegularExpressions.Regex]::IsMatch($(PlatformToolset), 'Intel .+ [Cc]ompiler'))</IntelToolset>
+    <TargetIsDLL>$([System.Text.RegularExpressions.Regex]::IsMatch($(TargetExt), 'dll'))</TargetIsDLL>
   </PropertyGroup>
 </Project>

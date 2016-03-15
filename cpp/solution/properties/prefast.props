@@ -9,8 +9,8 @@
     <RunCodeAnalysis>true</RunCodeAnalysis>
   </PropertyGroup>
   <ItemDefinitionGroup>
-    <ClCompile Condition="!$(IntelToolset) and !$(DebugConfiguration)">
-      <EnablePREfast>true</EnablePREfast>
+    <ClCompile>
+      <EnablePREfast />
     </ClCompile>
   </ItemDefinitionGroup>
 </Project>

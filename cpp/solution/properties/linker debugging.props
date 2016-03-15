@@ -2,10 +2,7 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ImportGroup Label="PropertySheets" />
   <ItemDefinitionGroup>
-    <Link Condition="$(DebugConfiguration)">
-      <GenerateDebugInformation>Debug</GenerateDebugInformation>
-    </Link>
-    <Link Condition="!$(DebugConfiguration)">
+    <Link>
       <GenerateDebugInformation>No</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>

@@ -3,7 +3,7 @@
   <ImportGroup Label="PropertySheets" />
   <ItemDefinitionGroup>
     <Link Condition="!$(DebugConfiguration)">
-      <SetChecksum>true</SetChecksum>
+      <SetChecksum />
     </Link>
   </ItemDefinitionGroup>
 </Project>

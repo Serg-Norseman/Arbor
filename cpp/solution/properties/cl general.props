@@ -2,10 +2,7 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ImportGroup Label="PropertySheets" />
   <ItemDefinitionGroup>
-    <ClCompile Condition="$(DebugConfiguration)">
-      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-    </ClCompile>
-    <ClCompile Condition="!$(DebugConfiguration)">
+    <ClCompile>
       <DebugInformationFormat />
     </ClCompile>
   </ItemDefinitionGroup>

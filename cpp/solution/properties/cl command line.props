@@ -1,35 +1,253 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ImportGroup Label="PropertySheets" />
-  <ItemDefinitionGroup>
+
+  <!-- ******************************************************* -->
+  <!-- Options that are specific for MSFT VC++ compiler/linker -->
+  <!-- ******************************************************* -->
+
+  <ItemDefinitionGroup Condition="!$(IntelToolset)">
+    <!-- Compiler options -->
+
     <ClCompile>
-      <AdditionalOptions>/DWIN32 /GR- /Zc:rvalueCast /Zc:inline /Zc:throwingNew /fp:fast %(AdditionalOptions)</AdditionalOptions>
+      <!-- Information about compiler -->
+      <AdditionalOptions>/Bv</AdditionalOptions>
+      <!-- Code generation (what and how) -->
+      <AdditionalOptions>/guard:cf /sdl %(AdditionalOptions)</AdditionalOptions>
+      <!-- Optimization -->
+      <AdditionalOptions>/Gw %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
-    <ClCompile Condition="$(DebugConfiguration) and '64' == $(PlatformArchitecture)">
-      <AdditionalOptions>/D_DEBUG /D_WIN64 /D_M_X64 /D_M_AMD64 /D_AMD64_ /U_M_IX86 /U_M_IA64 /U_X86_ %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-    <ClCompile Condition="$(DebugConfiguration) and '32' == $(PlatformArchitecture)">
-      <AdditionalOptions>/D_DEBUG /D_X86_ %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-    <ClCompile Condition="!$(DebugConfiguration) and '64' == $(PlatformArchitecture)">
-      <AdditionalOptions>/DNDEBUG /D_WIN64 /D_M_X64 /D_M_AMD64 /D_AMD64_ /U_M_IX86 /U_M_IA64 /U_X86_ %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-    <ClCompile Condition="!$(DebugConfiguration) and '32' == $(PlatformArchitecture)">
-      <AdditionalOptions>/DNDEBUG /D_X86_ %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-    <ClCompile Condition="$(IntelToolset)">
-      <!-- ICL only options -->
-      <AdditionalOptions>/Qstd=c++14 /Qms0 /QxSSE3 /QaxSSE3 %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-    <ClCompile Condition="!$(IntelToolset)">
-      <!-- non ICL options (currently they are for MSVC only) -->
-      <AdditionalOptions>/Bv /Gw %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-    <ClCompile Condition="!$(IntelToolset) and '64' == $(PlatformArchitecture)">
+  </ItemDefinitionGroup>
+
+  <!-- 'x86-64' specific options -->
+  <ItemDefinitionGroup Condition="!$(IntelToolset) and '64' == $(PlatformArchitecture)">
+    <!-- Compiler options -->
+
+    <ClCompile>
+      <!-- Floating point -->
       <AdditionalOptions>/favor:INTEL64 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
-    <ClCompile Condition="!$(IntelToolset) and '32' == $(PlatformArchitecture)">
+  </ItemDefinitionGroup>
+
+  <!-- 'x86' specific options -->
+  <ItemDefinitionGroup Condition="!$(IntelToolset) and '32' == $(PlatformArchitecture)">
+    <!-- Compiler options -->
+
+    <ClCompile>
+      <!-- Floating point -->
       <AdditionalOptions>/arch:SSE2 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
+  </ItemDefinitionGroup>
+
+  <!-- 'Release' specific options -->
+  <ItemDefinitionGroup Condition="!$(IntelToolset) and !$(DebugConfiguration)">
+    <!-- Compiler options -->
+
+    <ClCompile>
+      <!-- Code static analysis -->
+      <AdditionalOptions>/analyze %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+
+  <!-- ******************************************************* -->
+  <!-- Options that are specific for Intel C++ compiler/linker -->
+  <!-- ******************************************************* -->
+
+  <ItemDefinitionGroup Condition="$(IntelToolset)">
+    <!-- Compiler options -->
+
+    <ClCompile>
+      <!-- C++ language -->
+      <AdditionalOptions>/Qstd=c++14 /Qms0</AdditionalOptions>
+      <!-- Floating point -->
+      <AdditionalOptions>/QxSSE3 /QaxSSE3 %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+
+  <!-- *********************************************** -->
+  <!-- Options that are common for any compiler/linker -->
+  <!-- *********************************************** -->
+
+  <ItemDefinitionGroup>
+    <!-- Compiler options -->
+
+    <ClCompile>
+      <!-- C++ language -->
+      <AdditionalOptions>/GR- /Zc:rvalueCast /Zc:inline /Zc:throwingNew %(AdditionalOptions)</AdditionalOptions>
+      <!-- Include files-->
+      <AdditionalOptions>/I$(SelfReference) %(AdditionalOptions)</AdditionalOptions>
+      <!-- Code generation (what and how) -->
+      <AdditionalOptions>/Gm- /GF /MP /W4 %(AdditionalOptions)</AdditionalOptions>
+      <!-- Floating point -->
+      <AdditionalOptions>/fp:fast %(AdditionalOptions)</AdditionalOptions>
+      <!-- Optimization -->
+      <AdditionalOptions>/Oi %(AdditionalOptions)</AdditionalOptions>
+      <!-- Defines -->
+      <AdditionalOptions>/DWIN32 %(AdditionalOptions)</AdditionalOptions>
+      <!-- Defines (Win32 API) -->
+      <AdditionalOptions>/DPLATFORM_WIN32 /DNTDDI_VERSION=NTDDI_WINTHRESHOLD /D_WIN32_WINNT=_WIN32_WINNT_WINTHRESHOLD /DWINVER=0x0A00 /DWIN32_LEAN_AND_MEAN %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+
+    <!-- Resource compiler options -->
+
+    <ResourceCompile>
+      <!-- Include files-->
+      <AdditionalOptions>/I$(SelfReference)</AdditionalOptions>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+
+  <!-- 'x86-64' specific options -->
+  <ItemDefinitionGroup Condition="'64' == $(PlatformArchitecture)">
+    <!-- Resource compiler options -->
+
+    <ResourceCompile>
+      <!-- Defines -->
+      <AdditionalOptions>/D_WIN64 %(AdditionalOptions)</AdditionalOptions>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+
+  <!-- 'Debug' specific options -->
+  <ItemDefinitionGroup Condition="$(DebugConfiguration)">
+    <!-- Compiler options -->
+
+    <ClCompile>
+      <!-- Debug -->
+      <AdditionalOptions>/Zi %(AdditionalOptions)</AdditionalOptions>
+      <!-- Code generation -->
+      <AdditionalOptions>/RTCc /RTC1 %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+
+    <!-- Linker options -->
+
+    <Link>
+      <!-- General settings -->
+      <AdditionalOptions>/INCREMENTAL %(AdditionalOptions)</AdditionalOptions>
+      <!-- Debug -->
+      <AdditionalOptions>/DEBUG %(AdditionalOptions)</AdditionalOptions>
+    </Link>
+  </ItemDefinitionGroup>
+
+  <!-- 'Debug x86-64' specific options -->
+  <ItemDefinitionGroup Condition="$(DebugConfiguration) and '64' == $(PlatformArchitecture)">
+    <!-- Compiler options -->
+
+    <ClCompile>
+      <!-- Defines -->
+      <AdditionalOptions>/D_DEBUG /D_WIN64 /D_M_X64 /D_M_AMD64 /D_AMD64_ /U_M_IX86 /U_M_IA64 /U_X86_ %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+
+    <!-- Linker options -->
+
+    <Link>
+      <!-- Linker information -->
+      <AdditionalOptions>/verbose:incr /time %(AdditionalOptions)</AdditionalOptions>
+    </Link>
+  </ItemDefinitionGroup>
+
+  <!-- 'Debug x86' specific options -->
+  <ItemDefinitionGroup Condition="$(DebugConfiguration) and '32' == $(PlatformArchitecture)">
+    <!-- Compiler options -->
+
+    <ClCompile>
+      <!-- Defines -->
+      <AdditionalOptions>/D_DEBUG /D_X86_ %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+
+    <!-- Linker options -->
+
+    <Link>
+      <!-- Linker information -->
+      <AdditionalOptions>/verbose:incr /time %(AdditionalOptions)</AdditionalOptions>
+      <!-- Advanced linker properties -->
+      <AdditionalOptions>/SAFESEH %(AdditionalOptions)</AdditionalOptions>
+    </Link>
+  </ItemDefinitionGroup>
+
+  <!-- 'Release' specific options -->
+  <ItemDefinitionGroup Condition="!$(DebugConfiguration)">
+    <!-- Compiler options -->
+
+    <ClCompile>
+      <!-- Code generation -->
+      <AdditionalOptions>/Gy %(AdditionalOptions)</AdditionalOptions>
+      <!-- Optimization -->
+      <AdditionalOptions>/Ob2 /Ot %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+
+    <!-- Linker options -->
+
+    <Link>
+      <!-- General settings -->
+      <AdditionalOptions>/INCREMENTAL:NO %(AdditionalOptions)</AdditionalOptions>
+      <!-- Advanced linker properties -->
+      <AdditionalOptions>/RELEASE %(AdditionalOptions)</AdditionalOptions>
+    </Link>
+  </ItemDefinitionGroup>
+
+  <!-- 'Release x86-64' specific options -->
+  <ItemDefinitionGroup Condition="!$(DebugConfiguration) and '64' == $(PlatformArchitecture)">
+    <!-- Compiler options -->
+
+    <ClCompile>
+      <!-- Defines -->
+      <AdditionalOptions>/DNDEBUG /D_WIN64 /D_M_X64 /D_M_AMD64 /D_AMD64_ /U_M_IX86 /U_M_IA64 /U_X86_ %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+
+  <!-- 'Release x86' specific options -->
+  <ItemDefinitionGroup Condition="!$(DebugConfiguration) and '32' == $(PlatformArchitecture)">
+    <!-- Compiler options -->
+
+    <ClCompile>
+      <!-- Defines -->
+      <AdditionalOptions>/DNDEBUG /D_X86_ %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+
+    <!-- Linker options -->
+
+    <Link>
+      <!-- Advanced linker properties -->
+      <AdditionalOptions>/SAFESEH %(AdditionalOptions)</AdditionalOptions>
+    </Link>
+  </ItemDefinitionGroup>
+
+  <!-- 'DLL project' specific options -->
+  <ItemDefinitionGroup Condition="$(TargetIsDLL)">
+    <!-- Linker options -->
+
+    <Link>
+      <!-- Manifest -->
+      <AdditionalOptions>/MANIFEST:NO %(AdditionalOptions)</AdditionalOptions>
+    </Link>
+  </ItemDefinitionGroup>
+
+  <!-- 'Not DLL project' specific options -->
+  <ItemDefinitionGroup Condition="!$(TargetIsDLL)">
+    <!-- Linker options -->
+
+    <Link>
+      <!-- Manifest -->
+      <AdditionalOptions>/MANIFEST:EMBED %(AdditionalOptions)</AdditionalOptions>
+    </Link>
+  </ItemDefinitionGroup>
+
+  <!-- 'Not DLL project, x86-64 platform' specific options -->
+  <ItemDefinitionGroup Condition="!$(TargetIsDLL) and '64' == $(PlatformArchitecture)">
+    <!-- Linker options -->
+
+    <Link>
+      <!-- Manifest -->
+      <AdditionalOptions>/MANIFESTINPUT:$(SelfReference)\resource\$(ProjectName)$(TargetExt).amd64.manifest %(AdditionalOptions)</AdditionalOptions>
+    </Link>
+  </ItemDefinitionGroup>
+
+  <!-- 'Not DLL project, x86 platform' specific options -->
+  <ItemDefinitionGroup Condition="!$(TargetIsDLL) and '32' == $(PlatformArchitecture)">
+    <!-- Linker options -->
+
+    <Link>
+      <!-- Manifest -->
+      <AdditionalOptions>/MANIFESTINPUT:$(SelfReference)\resource\$(ProjectName)$(TargetExt).manifest %(AdditionalOptions)</AdditionalOptions>
+    </Link>
   </ItemDefinitionGroup>
 </Project>

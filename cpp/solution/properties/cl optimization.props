@@ -3,11 +3,11 @@
   <ImportGroup Label="PropertySheets" />
   <ItemDefinitionGroup>
     <ClCompile>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <IntrinsicFunctions />
     </ClCompile>
     <ClCompile Condition="!$(DebugConfiguration)">
-      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
-      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <InlineFunctionExpansion />
+      <FavorSizeOrSpeed />
     </ClCompile>
   </ItemDefinitionGroup>
 </Project>
