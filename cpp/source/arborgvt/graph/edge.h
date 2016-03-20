@@ -77,11 +77,6 @@ public:
         return m_color;
     }
 
-    void __vectorcall setColor(_In_ const __m128 value)
-    {
-        m_color = value;
-    }
-
     vertex* getTail() noexcept
     {
         return m_tail;

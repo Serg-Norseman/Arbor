@@ -46,7 +46,7 @@ public:
         m_coordinates = _mm_load_ps(value.data);
         m_coordinates = _mm_shuffle_ps(m_coordinates, m_coordinates, 0);
         // Set `m_force` and `m_velocity` to zero.
-        value.data[0] = 0;
+        *(reinterpret_cast<uint32_t*> (value.data)) = 0;
         m_force = _mm_load_ps(value.data);
         m_force = _mm_shuffle_ps(m_force, m_force, 0);
         m_velocity = m_force;
@@ -111,34 +111,44 @@ public:
         std::swap(m_fixed, right.m_fixed);
     }
 
-    __m128 __vectorcall getCoordinates() const
+    __m128 __vectorcall getCoordinates() const noexcept
     {
         return m_coordinates;
     }
 
-    void __vectorcall setCoordinates(_In_ const __m128 value)
+    void __vectorcall setCoordinates(_In_ const __m128 value) noexcept
     {
         m_coordinates = value;
     }
 
-    __m128 __vectorcall getColor() const
+    __m128 __vectorcall getColor() const noexcept
     {
         return m_color;
     }
 
-    void __vectorcall setColor(_In_ const __m128 value)
-    {
-        m_color = value;
-    }
-
-    __m128 __vectorcall getTextColor() const
+    __m128 __vectorcall getTextColor() const noexcept
     {
         return m_textColor;
     }
 
-    void __vectorcall setTextColor(_In_ const __m128 value)
+    __m128 __vectorcall getForce() const noexcept
     {
-        m_textColor = value;
+        return m_force;
+    }
+
+    void __vectorcall setForce(_In_ const __m128 value) noexcept
+    {
+        m_force = value;
+    }
+
+    __m128 __vectorcall getVelocity() const noexcept
+    {
+        return m_velocity;
+    }
+
+    void __vectorcall setVelocity(_In_ const __m128 value) noexcept
+    {
+        m_velocity = value;
     }
 
     const STLADD string_type* getName() const noexcept
@@ -156,14 +166,19 @@ public:
         m_data = value;
     }
 
-    void __vectorcall applyForce(_In_ const __m128 value)
+    void __vectorcall applyForce(_In_ const __m128 value) noexcept
     {
         // `value` must not be zero.
         sse_t massData;
         massData.data[0] = m_mass;
         __m128 mass = _mm_load_ps(massData.data);
         mass = _mm_shuffle_ps(mass, mass, 0);
-        m_force = _mm_add_ps(m_force, _mm_mul_ps(value, _mm_rcp_ss(mass)));
+        m_force = _mm_add_ps(m_force, _mm_mul_ps(value, _mm_rcp_ps(mass)));
+    }
+
+    bool getFixed() const noexcept
+    {
+        return m_fixed;
     }
 
 

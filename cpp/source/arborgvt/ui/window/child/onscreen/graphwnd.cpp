@@ -155,6 +155,7 @@ void graph_window::draw()
 #endif
 
     D2D1_SIZE_F targetSize = m_direct2DContext->GetSize();
+    // Here XMM's the first and the second zeros can be omitted.
     sse_t value = {targetSize.width, targetSize.height, 0.0f, 0.0f};
     __m128 size = _mm_load_ps(value.data);
     __m128 viewBound = m_graph.getViewBound();
@@ -480,6 +481,7 @@ __m128 graph_window::logicalToGraph(_In_ const __m128 value, _In_ const __m128 l
  */
 __m128 graph_window::graphToLogical(_In_ const __m128 value, _In_ const __m128 logicalSize, _In_ const __m128 viewBound)
 {
+    // Here XMM's the first and the second zeros can be omitted.
     sse_t marginMem = {m_margin, m_margin, 0.0f, 0.0f};
     __m128 margin = _mm_load_ps(marginMem.data);
     __m128 temp = _mm_sub_ps(logicalSize, margin);

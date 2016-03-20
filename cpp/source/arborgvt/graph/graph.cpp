@@ -170,7 +170,7 @@ vertex* __vectorcall graph::addVertex(_In_ STLADD string_type&& name, _In_ const
 void graph::applySprings()
 {
     sse_t value;
-    value.data[0] = 0;
+    *(reinterpret_cast<uint32_t*> (value.data)) = 0;
     __m128 zero = _mm_load_ps(value.data);
     zero = _mm_shuffle_ps(zero, zero, 0);
     for (auto it = m_edges.begin(); m_edges.end() != it; ++it)
@@ -181,30 +181,30 @@ void graph::applySprings()
         __m128 temp2;
         if (simd_cpu_capabilities::sse41())
         {
-            temp2 = _mm_dp_ps(temp, temp, 0b00110001);
+            temp2 = _mm_dp_ps(temp, temp, 0b00111111);
         }
         else
         {
-            temp2 = _mm_mul_ps(temp, temp);
+            temp2 = _mm_shuffle_ps(temp, temp, 0b01000100);
+            temp2 = _mm_mul_ps(temp2, temp2);
             temp2 = _mm_hadd_ps(temp2, temp2);
         }
-        temp2 = _mm_sqrt_ss(temp2);
-        temp2 = _mm_shuffle_ps(temp2, temp2, 0);
+        temp2 = _mm_sqrt_ps(temp2);
         __m128 oldSize = temp2;
         if (0b0001 & _mm_movemask_ps(_mm_cmpeq_ps(temp2, zero)))
         {
             temp = randomVector(1.0f);
             if (simd_cpu_capabilities::sse41())
             {
-                temp2 = _mm_dp_ps(temp, temp, 0b00110001);
+                temp2 = _mm_dp_ps(temp, temp, 0b00111111);
             }
             else
             {
-                temp2 = _mm_mul_ps(temp, temp);
+                temp2 = _mm_shuffle_ps(temp, temp, 0b01000100);
+                temp2 = _mm_mul_ps(temp2, temp2);
                 temp2 = _mm_hadd_ps(temp2, temp2);
             }
-            temp2 = _mm_sqrt_ss(temp2);
-            temp2 = _mm_shuffle_ps(temp2, temp2, 0);
+            temp2 = _mm_sqrt_ps(temp2);
         }
         temp = _mm_mul_ps(temp, _mm_rcp_ps(temp2));
         value.data[0] = (*it)->getLength();
@@ -220,6 +220,132 @@ void graph::applySprings()
         temp = _mm_sub_ps(zero, temp);
         tail->applyForce(temp);
     }
+}
+
+
+/**
+ *
+ *
+ * Parameters:
+ * >time
+ *
+ * Returns:
+ * N/A.
+ *
+ * Remarks:
+ * This is `ArborGVT::ArborSystem::updateVelocityAndPosition` method in the original C# code.
+ */
+void graph::updateVelocityAndPosition(_In_ const float time)
+{
+    STLADD lock_guard_exclusive<WAPI srw_lock> verticesLock {m_verticesLock};
+    if (!m_vertices.size())
+    {
+        m_meanOfEnergy = 0.0f;
+        return;
+    }
+
+    /*
+     * > Calculate center drift.
+     */
+    sse_t value;
+    *(reinterpret_cast<uint32_t*> (value.data)) = 0;
+    __m128 zero = _mm_load_ps(value.data);
+    zero = _mm_shuffle_ps(zero, zero, 0);
+    __m128 energyTotal = zero;
+    __m128 drift = zero;
+    for (auto it = m_vertices.cbegin(); m_vertices.cend() != it; ++it)
+    {
+        __m128 temp = it->second.getCoordinates();
+        drift = _mm_sub_ps(drift, temp);
+    }
+    value.data[0] = static_cast<float> (m_vertices.size());
+    __m128 size = _mm_load_ps(value.data);
+    size = _mm_shuffle_ps(size, size, 0);
+    drift = _mm_mul_ps(drift, _mm_rcp_ps(size));
+    /*
+     * > Main updates loop.
+     */
+    __m128 repulsion;
+    if (m_gravity)
+    {
+        value.data[0] = m_repulsion * (-0.01f);
+        repulsion = _mm_load_ps(value.data);
+        repulsion = _mm_shuffle_ps(repulsion, repulsion, 0);
+    }
+    value.data[0] = time;
+    __m128 timeVector = _mm_load_ps(value.data);
+    timeVector = _mm_shuffle_ps(timeVector, timeVector, 0);
+    __m128 temp;
+    for (auto it = m_vertices.begin(); m_vertices.end() != it; ++it)
+    {
+        // > Apply center drift.
+        it->second.applyForce(drift);
+        // > Apply center gravity.
+        if (m_gravity)
+        {
+            temp = _mm_mul_ps(it->second.getCoordinates(), repulsion);
+            it->second.applyForce(temp);
+        }
+        // > Update velocity.
+        if (!it->second.getFixed())
+        {
+            temp = _mm_mul_ps(it->second.getForce(), timeVector);
+            __m128 velocity = _mm_add_ps(it->second.getVelocity(), temp);
+            value.data[0] = 1.0f - m_friction;
+            temp = _mm_load_ps(value.data);
+            temp = _mm_shuffle_ps(temp, temp, 0);
+            velocity = _mm_mul_ps(velocity, temp);
+            if (simd_cpu_capabilities::sse41())
+            {
+                temp = _mm_dp_ps(velocity, velocity, 0b00111111);
+            }
+            else
+            {
+                temp = _mm_shuffle_ps(velocity, velocity, 0b01000100);
+                temp = _mm_mul_ps(temp, temp);
+                temp = _mm_hadd_ps(temp, temp);
+            }
+            temp = _mm_sqrt_ps(temp);
+#if defined(__ICL)
+            value.data[0] = 1000.0f;
+#else
+            value.data[0] = 1'000.0f;
+#endif
+            __m128 temp2 = _mm_load_ps(value.data);
+            temp2 = _mm_shuffle_ps(temp2, temp2, 0);
+            if (0b1111 & _mm_movemask_ps(_mm_cmpgt_ps(temp, temp2)))
+            {
+                temp = _mm_mul_ps(temp, temp);
+                velocity = _mm_mul_ps(velocity, _mm_rcp_ps(temp));
+            }
+            it->second.setVelocity(velocity);
+        }
+        else
+        {
+            it->second.setVelocity(zero);
+        }
+        it->second.setForce(zero);
+        // > Update positions.
+        __m128 velocity = it->second.getVelocity();
+        temp = _mm_mul_ps(velocity, timeVector);
+        temp = _mm_add_ps(it->second.getCoordinates(), temp);
+        it->second.setCoordinates(temp);
+        // > Update energy.
+        if (simd_cpu_capabilities::sse41())
+        {
+            temp = _mm_dp_ps(velocity, velocity, 0b00111111);
+        }
+        else
+        {
+            temp = _mm_shuffle_ps(velocity, velocity, 0b01000100);
+            temp = _mm_mul_ps(temp, temp);
+            temp = _mm_hadd_ps(temp, temp);
+        }
+        energyTotal = _mm_add_ps(energyTotal, temp);
+    }
+    temp = _mm_mul_ps(energyTotal, _mm_rcp_ps(size));
+    _mm_store_ps(value.data, temp);
+    m_meanOfEnergy = value.data[0];
 }
 
 ARBOR_END

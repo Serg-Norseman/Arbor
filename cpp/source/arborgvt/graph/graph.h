@@ -142,7 +142,8 @@ public:
         m_engine {},
         m_distribution {-2.0f, 2.0f},
         m_verticesLock {},
-        m_edgesLock {}
+        m_edgesLock {},
+        m_meanOfEnergy {0.0f}
     {
         std::random_device rd {};
         m_engine.seed(rd());
@@ -219,8 +220,18 @@ private:
     vertex* addVertex(_In_ STLADD string_type&& name);
     vertex* __vectorcall addVertex(_In_ STLADD string_type&& name, _In_ const __m128 coordinates);
     void applySprings();
+    void updateVelocityAndPosition(_In_ const float time);
 
     static constexpr float m_stiffness = 600.0f;
+#if defined(__ICL)
+    // Intel C++ 16.0 doesn't support single-quotation mark as a digit separator for floating point types,
+    // it's a known bug with internal tracker DPD200379927.
+    static constexpr float m_repulsion = 10000.0f;
+#else
+    static constexpr float m_repulsion = 10'000.0f;
+#endif
+    static constexpr float m_friction = 0.1f;
+    static constexpr bool m_gravity = false;
 
     /*
      * `m_graphBound` is the area used by Barnes Hut algorithm. This is a coordinate space where all graph vertices
@@ -253,6 +264,7 @@ private:
     std::uniform_real_distribution<float> m_distribution;
     WAPI srw_lock m_verticesLock;
     WAPI srw_lock m_edgesLock;
+    float m_meanOfEnergy;
 };
 
 ARBOR_END
