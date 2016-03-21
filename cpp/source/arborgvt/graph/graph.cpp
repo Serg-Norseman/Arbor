@@ -156,7 +156,7 @@ vertex* __vectorcall graph::addVertex(_In_ STLADD string_type&& name, _In_ const
 
 
 /**
- * Change forces, applied to both vertices of each edge.
+ * Recalculates bounds of the rectangle containing all vertices. New rectangle is stored as updated `m_graphBound`.
  *
  * Parameters:
  * None.
@@ -165,6 +165,69 @@ vertex* __vectorcall graph::addVertex(_In_ STLADD string_type&& name, _In_ const
  * N/A.
  *
  * Remarks:
+ * This method DOES NOT obtain any lock while it accesses the graph's vertices. Caller of this method must guarantee
+ * that other threads can't access graph's data while this method works. This method doesn't lock the vertices because
+ * edges and vertices locks must be obtained in the specific order only (see remarks section for the `graph::addEdge`
+ * method), but noone knows when this method will be called (after of before edges lock was/will be obtained).
+ *
+ * This is `ArborGVT::ArborSystem::updateGraphBounds` method in the original C# code.
+ */
+void graph::updateGraphBound()
+{
+    sse_t value;
+    value.data[0] = m_distribution.a();
+    value.data[1] = m_distribution.b();
+    __m128 temp = _mm_load_ps(value.data);
+    temp  = _mm_shuffle_ps(temp, temp, 0b01010000);
+    for (auto it = m_vertices.cbegin(); m_vertices.cend() != it; ++it)
+    {
+        __m128 coordinate = it->second.getCoordinates();
+        if (0b0011 == (0b0011 & _mm_movemask_ps(_mm_cmpeq_ps(coordinate, coordinate))))
+        {
+            int compare = _mm_movemask_ps(_mm_cmplt_ps(coordinate, temp));
+            if (0b0001 & compare)
+            {
+                __m128 temp2 = _mm_shuffle_ps(coordinate, temp, 0b01100100);
+                temp = _mm_shuffle_ps(temp2, temp, 0b11101100);
+            }
+            if (0b0010 & compare)
+            {
+                __m128 temp2 = _mm_shuffle_ps(coordinate, temp, 0b00100100);
+                temp = _mm_shuffle_ps(temp2, temp, 0b11100111);
+            }
+            temp = _mm_shuffle_ps(temp, temp, 0b01001110);
+            compare = _mm_movemask_ps(_mm_cmpgt_ps(coordinate, temp));
+            if (0b0001 & compare)
+            {
+                __m128 temp2 = _mm_shuffle_ps(coordinate, temp, 0b01100100);
+                temp = _mm_shuffle_ps(temp2, temp, 0b11101100);
+            }
+            if (0b0010 & compare)
+            {
+                __m128 temp2 = _mm_shuffle_ps(coordinate, temp, 0b00100100);
+                temp = _mm_shuffle_ps(temp2, temp, 0b11100111);
+            }
+        }
+    }
+    m_graphBound = _mm_shuffle_ps(temp, temp, 0b11011000);
+}
+
+
+/**
+ * Changes forces, applied to both vertices of each edge.
+ *
+ * Parameters:
+ * None.
+ *
+ * Returns:
+ * N/A.
+ *
+ * Remarks:
+ * This method DOES NOT obtain any lock while it accesses the graph's edges. Caller of this method must guarantee that
+ * other threads can't access graph's data while this method works. This method doesn't lock the edges because edges
+ * and vertices locks must be obtained in the specific order only (see remarks section for the `graph::addEdge` method),
+ * but noone knows when this method will be called (after of before vertices lock was/will be obtained).
+ *
  * This is `ArborGVT::ArborSystem::applySprings` method in the original C# code.
  */
 void graph::applySprings()
@@ -224,20 +287,25 @@ void graph::applySprings()
 
 
 /**
- *
+ * Updates velocity and position of each vertex in this graph. A force applied to each vertex is zeroed.
  *
  * Parameters:
  * >time
+ * Constant time slice between two consequent updates?
  *
  * Returns:
  * N/A.
  *
  * Remarks:
+ * This method DOES NOT obtain any lock while it accesses the graph's vertices. Caller of this method must guarantee
+ * that other threads can't access graph's data while this method works. This method doesn't lock the vertices because
+ * edges and vertices locks must be obtained in the specific order only (see remarks section for the `graph::addEdge`
+ * method), but noone knows when this method will be called (after of before edges lock was/will be obtained).
+ *
  * This is `ArborGVT::ArborSystem::updateVelocityAndPosition` method in the original C# code.
  */
 void graph::updateVelocityAndPosition(_In_ const float time)
 {
-    STLADD lock_guard_exclusive<WAPI srw_lock> verticesLock {m_verticesLock};
     if (!m_vertices.size())
     {
         m_meanOfEnergy = 0.0f;

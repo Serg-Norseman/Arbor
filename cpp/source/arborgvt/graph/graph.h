@@ -219,6 +219,7 @@ public:
 private:
     vertex* addVertex(_In_ STLADD string_type&& name);
     vertex* __vectorcall addVertex(_In_ STLADD string_type&& name, _In_ const __m128 coordinates);
+    void updateGraphBound();
     void applySprings();
     void updateVelocityAndPosition(_In_ const float time);
 
@@ -241,7 +242,7 @@ private:
      * While physics calculation is active, the `m_viewBound` is always seeking to become as large as the
      * `m_graphBound` is. Size of the `m_viewBound` is inversely proportional to size of target HWND (where
      * `m_viewBound` is mapped). Therefore while the `m_viewBound` is growing, vertices are moving from outside of the
-     * HWND to its client area.
+     * HWND toward the center of its client area.
      *
      * This class exposes the `m_viewBound` area to caller, which must transform a vertex coordinate from `m_graphBound`
      * coordinate space to its own one (HWND client area, for example). Remember: the `m_viewBound` is just a way to
