@@ -197,7 +197,7 @@ void graph_window::draw()
                 for (auto it = m_graph.verticesBegin(); m_graph.verticesEnd() != it; ++it)
                 {
                     __m128 coordinate = it->getCoordinates();
-                    if (_mm_movemask_ps(_mm_cmpeq_ps(coordinate, coordinate)))
+                    if (0b0011 == (0b0011 & _mm_movemask_ps(_mm_cmpeq_ps(coordinate, coordinate))))
                     {
                         coordinate = graphToLogical(coordinate, size, viewBound);
                         auto draw = static_cast<vertex_draw*> (it->getData());
@@ -263,11 +263,11 @@ void graph_window::draw()
                 {
                     const ARBOR vertex* tail = (*it)->getTail();
                     __m128 tailCoordinate = tail->getCoordinates();
-                    if (_mm_movemask_ps(_mm_cmpeq_ps(tailCoordinate, tailCoordinate)))
+                    if (0b0011 == (0b0011 & _mm_movemask_ps(_mm_cmpeq_ps(tailCoordinate, tailCoordinate))))
                     {
                         const ARBOR vertex* head = (*it)->getHead();
                         __m128 headCoordinate = head->getCoordinates();
-                        if (_mm_movemask_ps(_mm_cmpeq_ps(headCoordinate, headCoordinate)))
+                        if (0b0011 == (0b0011 & _mm_movemask_ps(_mm_cmpeq_ps(headCoordinate, headCoordinate))))
                         {
                             tailCoordinate = graphToLogical(tailCoordinate, size, viewBound);
                             headCoordinate = graphToLogical(headCoordinate, size, viewBound);
@@ -862,9 +862,8 @@ _Success_(return) bool graph_window::getEllipsePoint(
         sse_t value;
         value = {tailArea.point.x, tailArea.radiusX, 1.0f, 0.0f};
         __m128 temp = _mm_load_ps(value.data);
-        __m128 temp2 = _mm_shuffle_ps(xy, temp, 0b11010100);
-        temp2 = _mm_shuffle_ps(temp2, temp2, 0b11101000);
-        temp2 = _mm_shuffle_ps(temp2, temp, 0b11100100);
+        __m128 temp2 = _mm_shuffle_ps(xy, temp, 0b01100100);
+        temp2 = _mm_shuffle_ps(temp2, temp, 0b11101100);
         temp = _mm_sub_ss(temp2, temp);
         temp = _mm_mul_ps(temp, temp);
         temp2 = _mm_shuffle_ps(temp, temp, 0b11100101);
@@ -874,9 +873,8 @@ _Success_(return) bool graph_window::getEllipsePoint(
         temp2 = _mm_shuffle_ps(temp2, temp2, 0b11100111);
         if (0x01 & _mm_movemask_ps(_mm_cmplt_ss(temp, temp2)))
         {
-            temp2 = _mm_shuffle_ps(temp2, temp, 0b11010100);
-            temp2 = _mm_shuffle_ps(temp2, temp2, 0b11101000);
-            temp = _mm_shuffle_ps(temp2, temp, 0b11100100);
+            __m128 temp3 = _mm_shuffle_ps(temp2, temp, 0b01100100);
+            temp = _mm_shuffle_ps(temp3, temp, 0b11101100);
         }
         temp = _mm_sqrt_ss(temp);
         value = {tailArea.radiusY, tailArea.point.y, 0.0f, 0.0f};
@@ -958,7 +956,7 @@ _Success_(return) bool graph_window::getArrow(
         temp = _mm_mul_ss(tan, temp);
         temp2 = _mm_shuffle_ps(temp2, temp2, 0b11100110);
         temp = _mm_add_ss(temp, temp2);
-        a = _mm_shuffle_ps(a, temp, 0b00000000);
+        a = _mm_shuffle_ps(a, temp, 0);
         a = _mm_shuffle_ps(a, a, 0b11101000);
 
         temp = _mm_rcp_ss(_mm_mul_ss(tan, tan));
