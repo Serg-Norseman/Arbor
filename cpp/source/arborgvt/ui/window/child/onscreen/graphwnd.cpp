@@ -924,17 +924,18 @@ _Success_(return) bool graph_window::getArrow(
     __m128 source = _mm_hsub_ps(temp, temp);
     if (simd_cpu_capabilities::sse41())
     {
-        temp = _mm_dp_ps(source, source, 0b00110001);
+        temp = _mm_dp_ps(source, source, 0b00111111);
     }
     else
     {
-        temp = _mm_mul_ps(source, source);
+        temp = _mm_shuffle_ps(source, source, 0b01000100);
+        temp = _mm_mul_ps(temp, temp);
         temp = _mm_hadd_ps(temp, temp);
     }
-    temp = _mm_sqrt_ss(temp);
+    temp = _mm_sqrt_ps(temp);
     value = {m_arrowLength, m_arrowHalfWidth, 0.0f, 0.0f};
     __m128 length = _mm_load_ps(value.data);
-    bool result = 0x01 & _mm_movemask_ps(_mm_cmplt_ss(length, temp));
+    bool result = 0x01 & _mm_movemask_ps(_mm_cmplt_ps(length, temp));
     if (result)
     {
         __m128 tan = _mm_div_ps(_mm_shuffle_ps(source, source, 0b11110101), source);
