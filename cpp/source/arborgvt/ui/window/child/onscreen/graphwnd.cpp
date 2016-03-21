@@ -811,6 +811,18 @@ _Success_(return) bool graph_window::getEllipsePoint(
         temp2 = _mm_shuffle_ps(temp2, temp2, 0b11100101);
         temp = _mm_shuffle_ps(temp, temp, 0b11100000);
         temp = _mm_addsub_ps(temp2, temp);
+        /*
+         * More longer sample, I believe:
+         *
+         * value.data[0] = headArea.point.y;
+         * temp2 = _mm_load_ps(value.data);
+         * temp2 = _mm_shuffle_ps(temp2, temp2, 0);
+         * defined =
+         *     (0b0001 & _mm_movemask_ps(_mm_cmplt_ps(temp2, temp))) ||
+         *     (0b0010 & _mm_movemask_ps(_mm_cmpgt_ps(temp2, temp)));
+         *
+         * This sample can replace the two lines below.
+         */
         _mm_store_ps(value.data, temp);
         defined = (value.data[0] > headArea.point.y) || (value.data[1] < headArea.point.y);
     }
@@ -822,11 +834,11 @@ _Success_(return) bool graph_window::getEllipsePoint(
         __m128 xy;
         if (tailArea.point.x != headArea.point.x)
         {
-            sse_t value = {headArea.point.x, tailArea.point.x, headArea.point.y, tailArea.point.y};
+            sse_t value = {headArea.point.x, headArea.point.y, tailArea.radiusX, tailArea.radiusY};
             __m128 temp = _mm_load_ps(value.data);
-            value = {tailArea.radiusX, 0.0f, tailArea.radiusY, 0.0f};
+            value = {tailArea.point.x, tailArea.point.y, 0.0f, 0.0f};
             __m128 temp2 = _mm_load_ps(value.data);
-            temp = _mm_hsub_ps(temp, temp2);
+            temp = _mm_sub_ps(temp, temp2);
             temp = _mm_mul_ps(temp, temp);
             temp2 = _mm_shuffle_ps(temp, temp, 0b11110101);
             temp = _mm_div_ps(temp2, temp);
