@@ -1,5 +1,4 @@
 #include "graph\graph.h"
-#include "graph\vector.h"
 
 ARBOR_BEGIN
 
@@ -215,6 +214,67 @@ void graph::updateGraphBound()
 
 
 /**
+ * Makes animation step. This method increments the "view area" by one step toward the "graph area".
+ *
+ * Parameters:
+ * >renderSurfaceSize
+ * Size (in DIPs, logical size) of a surface where this graph is rendered.
+ *
+ * Returns:
+ * N/A.
+ *
+ * Remarks:
+ * This method calls `updateGraphBound` and also doesn't obtain any lock.
+ *
+ * This is `ArborGVT::ArborSystem::updateViewBounds` method in the original C# code.
+ */
+void graph::updateViewBound(_In_ const __m128 renderSurfaceSize)
+{
+    updateGraphBound();
+    if (0b1111 != (0b1111 & _mm_movemask_ps(_mm_cmpeq_ps(m_viewBound, getZeroVector()))))
+    {
+        __m128 temp = _mm_sub_ps(m_graphBound, m_viewBound);
+        sse_t value;
+        value.data[0] = m_animationStep;
+        __m128 temp2 = _mm_load_ps(value.data);
+        temp2 = _mm_shuffle_ps(temp2, temp2, 0);
+        __m128 delta = _mm_mul_ps(temp, temp2);
+        __m128 leftTop;
+        __m128 rightBottom;
+        if (simd_cpu_capabilities::sse41())
+        {
+            leftTop = _mm_dp_ps(delta, delta, 0b10101111);
+            rightBottom = _mm_dp_ps(delta, delta, 0b01011111);
+        }
+        else
+        {
+            leftTop = _mm_shuffle_ps(delta, delta, 0b11011101);
+            leftTop = _mm_mul_ps(leftTop, leftTop);
+            leftTop = _mm_hadd_ps(leftTop, leftTop);
+            rightBottom = _mm_shuffle_ps(delta, delta, 0b10001000);
+            rightBottom = _mm_mul_ps(rightBottom, rightBottom);
+            rightBottom = _mm_hadd_ps(rightBottom, rightBottom);
+        }
+        temp = _mm_shuffle_ps(leftTop, rightBottom, 0b01000100);
+        temp = _mm_shuffle_ps(temp, temp, 0b11011000);
+        temp = _mm_sqrt_ps(temp);
+        temp = _mm_mul_ps(temp, renderSurfaceSize);
+        value.data[0] = 1.0f;
+        temp2 = _mm_load_ps(value.data);
+        temp2 = _mm_shuffle_ps(temp2, temp2, 0);
+        if (0b0011 & _mm_movemask_ps(_mm_cmpgt_ps(temp, temp2)))
+        {
+            m_viewBound = _mm_add_ps(m_viewBound, delta);
+        }
+    }
+    else
+    {
+        m_viewBound = m_graphBound;
+    }
+}
+
+
+/**
  * Changes forces, applied to both vertices of each edge.
  *
  * Parameters:
@@ -233,10 +293,7 @@ void graph::updateGraphBound()
  */
 void graph::applySprings()
 {
-    sse_t value;
-    *(reinterpret_cast<uint32_t*> (value.data)) = 0;
-    __m128 zero = _mm_load_ps(value.data);
-    zero = _mm_shuffle_ps(zero, zero, 0);
+    __m128 zero = getZeroVector();
     for (auto it = m_edges.begin(); m_edges.end() != it; ++it)
     {
         vertex* tail = (*it)->getTail();
@@ -270,6 +327,7 @@ void graph::applySprings()
             temp2 = _mm_sqrt_ps(temp2);
         }
         temp = _mm_mul_ps(temp, _mm_rcp_ps(temp2));
+        sse_t value;
         value.data[0] = (*it)->getLength();
         temp2 = _mm_load_ps(value.data);
         temp2 = _mm_shuffle_ps(temp2, temp2, 0);
@@ -315,16 +373,14 @@ void graph::updateVelocityAndPosition(_In_ const float time)
     /*
      * > Calculate center drift.
      */
-    sse_t value;
-    *(reinterpret_cast<uint32_t*> (value.data)) = 0;
-    __m128 zero = _mm_load_ps(value.data);
-    zero = _mm_shuffle_ps(zero, zero, 0);
+    __m128 zero = getZeroVector();
     __m128 energyTotal = zero;
     __m128 drift = zero;
     for (auto it = m_vertices.cbegin(); m_vertices.cend() != it; ++it)
     {
         drift = _mm_sub_ps(drift, it->second.getCoordinates());
     }
+    sse_t value;
     value.data[0] = static_cast<float> (m_vertices.size());
     __m128 size = _mm_load_ps(value.data);
     size = _mm_shuffle_ps(size, size, 0);

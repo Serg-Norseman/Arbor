@@ -1,4 +1,5 @@
 #pragma once
+#include "graph\vector.h"
 #include "ns\arbor.h"
 #include "service\sse.h"
 #include "service\stladdon.h"
@@ -46,9 +47,7 @@ public:
         m_coordinates = _mm_load_ps(value.data);
         m_coordinates = _mm_shuffle_ps(m_coordinates, m_coordinates, 0);
         // Set `m_force` and `m_velocity` to zero.
-        *(reinterpret_cast<uint32_t*> (value.data)) = 0;
-        m_force = _mm_load_ps(value.data);
-        m_force = _mm_shuffle_ps(m_force, m_force, 0);
+        m_force = getZeroVector();
         m_velocity = m_force;
         // Set `m_color` to gray.
         value = {0.501960814f, 0.501960814f, 0.501960814f, 1.0f};

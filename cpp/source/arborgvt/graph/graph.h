@@ -1,6 +1,7 @@
 #pragma once
 #include "ns\arbor.h"
 #include "graph\edge.h"
+#include "graph\vector.h"
 #include "graph\vertex.h"
 #include "service\sse.h"
 #include "service\stladdon.h"
@@ -149,7 +150,7 @@ public:
         m_engine.seed(rd());
         sse_t value = {m_distribution.b(), m_distribution.a(), m_distribution.b(), m_distribution.a()};
         m_graphBound = _mm_load_ps(value.data);
-        m_viewBound = m_graphBound;
+        m_viewBound = getZeroVector();
     }
 
     WAPI srw_lock& getVerticesLock() noexcept
@@ -220,6 +221,7 @@ private:
     vertex* addVertex(_In_ STLADD string_type&& name);
     vertex* __vectorcall addVertex(_In_ STLADD string_type&& name, _In_ const __m128 coordinates);
     void updateGraphBound();
+    void updateViewBound(_In_ const __m128 renderSurfaceSize);
     void applySprings();
     void updateVelocityAndPosition(_In_ const float time);
 
@@ -232,6 +234,7 @@ private:
     static constexpr float m_repulsion = 10'000.0f;
 #endif
     static constexpr float m_friction = 0.1f;
+    static constexpr float m_animationStep = 0.04f;
     static constexpr bool m_gravity = false;
 
     /*

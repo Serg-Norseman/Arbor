@@ -4,6 +4,37 @@
 
 ARBOR_BEGIN
 
+static __m128 zero;
+
+class zero_initializer
+{
+public:
+    zero_initializer()
+    {
+        sse_t value;
+        *(reinterpret_cast<uint32_t*> (value.data)) = 0;
+        zero = _mm_load_ps(value.data);
+        zero = _mm_shuffle_ps(zero, zero, 0);
+    }
+};
+static zero_initializer zero_init {};
+
+
+/**
+ * Gets vector of four packed single precision floating-point zero values.
+ *
+ * Parameters:
+ * None.
+ *
+ * Returns:
+ * `__m128` zeroed value.
+ */
+__m128 __vectorcall getZeroVector()
+{
+    return zero;
+}
+
+
 /**
  * Generates new 2D vector with random coordinates.
  *
