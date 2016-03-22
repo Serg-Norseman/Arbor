@@ -207,9 +207,10 @@ void graph::updateGraphBound()
                 __m128 temp2 = _mm_shuffle_ps(coordinate, temp, 0b00100100);
                 temp = _mm_shuffle_ps(temp2, temp, 0b11100111);
             }
+            temp = _mm_shuffle_ps(temp, temp, 0b01001110);
         }
     }
-    m_graphBound = _mm_shuffle_ps(temp, temp, 0b11011000);
+    m_graphBound = _mm_shuffle_ps(temp, temp, 0b01110010);
 }
 
 
