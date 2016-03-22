@@ -590,6 +590,11 @@ void desktop_sample_window::addDataToTheGraph()
                         TEXT("vertex.1.2"s), TEXT("big vertex.1.2.5 derived\nfrom vertex.1.2"s), 1.75f);
                     if (SUCCEEDED(hr))
                     {
+                        m_visual->addEdge(TEXT("vertex.1"s), TEXT("vertex.1.4"s), 2.0f);
+                        m_visual->addEdge(TEXT("vertex.1"s), TEXT("vertex.1.5"s), 2.0f);
+                        m_visual->addEdge(TEXT("vertex.1.4"s), TEXT("vertex.1.4.1"s), 1.2f);
+                        m_visual->addEdge(TEXT("vertex.1.4"s), TEXT("\x221E vertex.1.4.2 \x221E"s), 1.3f);
+                        m_visual->addEdge(TEXT("vertex.1.2"s), TEXT("vertex.1.2.5"s), 3.75f);
                         HWND visualHWND;
                         hr = m_visual->getHWND(&visualHWND);
                         if (m_visual && (S_OK == hr))

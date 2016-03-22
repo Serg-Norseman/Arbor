@@ -29,7 +29,7 @@ void graph::addEdge(_In_ STLADD string_type&& tail, _In_ STLADD string_type&& he
     vertex* headVertex = addVertex(std::move(head));
     bool noEdge = false;
     {
-        STLADD lock_guard_shared<WAPI srw_lock> lock {m_edgesLock};
+        STLADD lock_guard_shared<WAPI srw_lock> edgesLock {m_edgesLock};
         noEdge = std::none_of(
             m_edges.cbegin(),
             m_edges.cend(),
@@ -41,7 +41,7 @@ void graph::addEdge(_In_ STLADD string_type&& tail, _In_ STLADD string_type&& he
     if (noEdge)
     {
         edge* p = new edge {tailVertex, headVertex, true, length, m_stiffness};
-        STLADD lock_guard_exclusive<WAPI srw_lock> lock {m_edgesLock};
+        STLADD lock_guard_exclusive<WAPI srw_lock> edgesLock {m_edgesLock};
         m_edges.emplace_back(p);
     }
 }
@@ -58,10 +58,39 @@ void graph::addEdge(_In_ STLADD string_type&& tail, _In_ STLADD string_type&& he
  */
 void graph::clear() noexcept
 {
+    m_meanOfEnergy = 0.0f;
     STLADD lock_guard_exclusive<WAPI srw_lock> verticesLock {m_verticesLock};
-    STLADD lock_guard_exclusive<WAPI srw_lock> lock {m_edgesLock};
+    STLADD lock_guard_exclusive<WAPI srw_lock> edgesLock {m_edgesLock};
     m_edges.clear();
     m_vertices.clear();
+}
+
+
+/**
+ * Updates physical and geometric parameters of this graph (moves to the next animation step).
+ *
+ * Parameters:
+ * >renderSurfaceSize
+ * Size (in DIPs, logical size) of a surface where this graph is rendered.
+ *
+ * Returns:
+ * N/A.
+ *
+ * Remarks:
+ * This is analogue of `ArborGVT::ArborSystem::tickTimer` method in the original C# code.
+ */
+void graph::update(_In_ const __m128 renderSurfaceSize)
+{
+    STLADD lock_guard_exclusive<WAPI srw_lock> verticesLock {m_verticesLock, std::try_to_lock};
+    if (verticesLock)
+    {
+        STLADD lock_guard_exclusive<WAPI srw_lock> edgesLock {m_edgesLock, std::try_to_lock};
+        if (edgesLock)
+        {
+            updatePhysics();
+            updateViewBound(renderSurfaceSize);
+        }
+    }
 }
 
 
@@ -271,6 +300,41 @@ void graph::updateViewBound(_In_ const __m128 renderSurfaceSize)
     {
         m_viewBound = m_graphBound;
     }
+}
+
+
+/**
+ * Updates physical parameters of this graph (moves to the next animation step).
+ *
+ * Parameters:
+ * None.
+ *
+ * Returns:
+ * N/A.
+ *
+ * Remarks:
+ * This method obtains no lock.
+ *
+ * This is `ArborGVT::ArborSystem::updatePhysics` method in the original C# code.
+ */
+void graph::updatePhysics()
+{
+    // > Tend particles.
+    __m128 zero = getZeroVector();
+    for (auto it = m_vertices.begin(); m_vertices.end() != it; ++it)
+    {
+        it->second.setVelocity(zero);
+    }
+//    if (0 < m_stiffness) -- these are "warning C4127: conditional expression is constant".
+    {
+        applySprings();
+    }
+    // > Euler integrator.
+//    if (0 < m_repulsion)
+    {
+//        applyBarnesHutRepulsion();
+    }
+    updateVelocityAndPosition(m_timeSlice);
 }
 
 

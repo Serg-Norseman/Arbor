@@ -208,7 +208,14 @@ public:
 
     bool active() const noexcept
     {
-        return false;
+        if (m_autoStop)
+        {
+            return (m_energyThreshold < m_meanOfEnergy) || (0.0f == m_meanOfEnergy);
+        }
+        else
+        {
+            return true;
+        }
     }
 
     __m128 __vectorcall getViewBound() const noexcept
@@ -216,16 +223,19 @@ public:
         return m_viewBound;
     }
 
+    void update(_In_ const __m128 renderSurfaceSize);
+
 
 private:
     vertex* addVertex(_In_ STLADD string_type&& name);
     vertex* __vectorcall addVertex(_In_ STLADD string_type&& name, _In_ const __m128 coordinates);
     void updateGraphBound();
     void updateViewBound(_In_ const __m128 renderSurfaceSize);
+    void updatePhysics();
     void applySprings();
     void updateVelocityAndPosition(_In_ const float time);
 
-    static constexpr float m_stiffness = 600.0f;
+    static constexpr float m_stiffness = 250.0f;
 #if defined(__ICL)
     // Intel C++ 16.0 doesn't support single-quotation mark as a digit separator for floating point types,
     // it's a known bug with internal tracker DPD200379927.
@@ -235,7 +245,10 @@ private:
 #endif
     static constexpr float m_friction = 0.1f;
     static constexpr float m_animationStep = 0.04f;
+    static constexpr float m_timeSlice = 0.01f;
+    static constexpr float m_energyThreshold = 0.7f;
     static constexpr bool m_gravity = false;
+    static constexpr bool m_autoStop = false;
 
     /*
      * `m_graphBound` is the area used by Barnes Hut algorithm. This is a coordinate space where all graph vertices

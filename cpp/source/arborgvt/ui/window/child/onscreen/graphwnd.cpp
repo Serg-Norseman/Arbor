@@ -321,6 +321,7 @@ void graph_window::draw()
 #endif
     if (m_graph.active())
     {
+        m_graph.update(size);
         Invalidate(FALSE);
     }
 }
