@@ -263,8 +263,7 @@ void graph::applySprings()
             }
             else
             {
-                temp2 = _mm_shuffle_ps(temp, temp, 0b01000100);
-                temp2 = _mm_mul_ps(temp2, temp2);
+                temp2 = _mm_mul_ps(temp, temp);
                 temp2 = _mm_hadd_ps(temp2, temp2);
             }
             temp2 = _mm_sqrt_ps(temp2);

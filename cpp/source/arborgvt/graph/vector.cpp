@@ -12,7 +12,10 @@ ARBOR_BEGIN
  * Some coefficient.
  *
  * Returns:
- * Vector with random coordinates.
+ * Vector with random coordinates using the following format:
+ *     [y, x, y, x]
+ * The result vector has the same the first and the third floating-point values, and the same the second and the fourth
+ * values.
  *
  * Remarks:
  * This is `ArborGVT::ArborPoint::newRnd` method translated from the original C# code.
