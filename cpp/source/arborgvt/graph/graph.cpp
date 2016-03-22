@@ -323,8 +323,7 @@ void graph::updateVelocityAndPosition(_In_ const float time)
     __m128 drift = zero;
     for (auto it = m_vertices.cbegin(); m_vertices.cend() != it; ++it)
     {
-        __m128 temp = it->second.getCoordinates();
-        drift = _mm_sub_ps(drift, temp);
+        drift = _mm_sub_ps(drift, it->second.getCoordinates());
     }
     value.data[0] = static_cast<float> (m_vertices.size());
     __m128 size = _mm_load_ps(value.data);
@@ -373,17 +372,23 @@ void graph::updateVelocityAndPosition(_In_ const float time)
                 temp = _mm_mul_ps(temp, temp);
                 temp = _mm_hadd_ps(temp, temp);
             }
-            temp = _mm_sqrt_ps(temp);
+            /*
+             * Original C# code compares `velocity` vector length against the predefined constant (1'000). To avoid
+             * redundant square root op (SQRTPS) I use `velocity * velocity` dot product as is and compare it against
+             * 1'000'000 value.
+             *
+             * lim (x * x) = 1'000'000
+             * x -> 1'000
+             */
 #if defined(__ICL)
-            value.data[0] = 1000.0f;
+            value.data[0] = 1000000.0f;
 #else
-            value.data[0] = 1'000.0f;
+            value.data[0] = 1'000'000.0f;
 #endif
             __m128 temp2 = _mm_load_ps(value.data);
             temp2 = _mm_shuffle_ps(temp2, temp2, 0);
             if (0b1111 & _mm_movemask_ps(_mm_cmpgt_ps(temp, temp2)))
             {
-                temp = _mm_mul_ps(temp, temp);
                 velocity = _mm_mul_ps(velocity, _mm_rcp_ps(temp));
             }
             it->second.setVelocity(velocity);
@@ -409,6 +414,7 @@ void graph::updateVelocityAndPosition(_In_ const float time)
             temp = _mm_mul_ps(temp, temp);
             temp = _mm_hadd_ps(temp, temp);
         }
+        // The following dot product: `velocity` * `velocity` gives energy? Never knew.
         energyTotal = _mm_add_ps(energyTotal, temp);
     }
     temp = _mm_mul_ps(energyTotal, _mm_rcp_ps(size));
