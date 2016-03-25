@@ -63,7 +63,11 @@ std::vector<WORD> version_info::getApplicationExeVersionAsVector()
 STLADD string_unique_ptr_t version_info::getApplicationExeVersion()
 {
     STLADD string_unique_ptr_t szResult {};
+#if defined(__ICL)
     auto version(getApplicationExeVersionAsVector());
+#else
+    auto version {getApplicationExeVersionAsVector()};
+#endif
     if (version.size())
     {
         STLADD wostringstream stream {};

@@ -223,17 +223,18 @@ public:
         return m_viewBound;
     }
 
-    void update(_In_ const __m128 renderSurfaceSize);
+    void __vectorcall update(_In_ const __m128 renderSurfaceSize);
 
 
 private:
     vertex* addVertex(_In_ STLADD string_type&& name);
     vertex* __vectorcall addVertex(_In_ STLADD string_type&& name, _In_ const __m128 coordinates);
     void updateGraphBound();
-    void updateViewBound(_In_ const __m128 renderSurfaceSize);
+    void __vectorcall updateViewBound(_In_ const __m128 renderSurfaceSize);
     void updatePhysics();
+    void applyBarnesHutRepulsion();
     void applySprings();
-    void updateVelocityAndPosition(_In_ const float time);
+    void __fastcall updateVelocityAndPosition(_In_ const float time);
 
     static constexpr float m_stiffness = 250.0f;
 #if defined(__ICL)
@@ -247,6 +248,7 @@ private:
     static constexpr float m_animationStep = 0.04f;
     static constexpr float m_timeSlice = 0.01f;
     static constexpr float m_energyThreshold = 0.7f;
+    static constexpr float m_theta = 0.4f;
     static constexpr bool m_gravity = false;
     static constexpr bool m_autoStop = false;
 

@@ -200,6 +200,8 @@
     <None Include="..\..\source\arborgvt\exports\arborgvt.def" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\source\arborgvt\barnhut\barnhut.cpp" />
+    <ClCompile Include="..\..\source\arborgvt\barnhut\bhutquad.cpp" />
     <ClCompile Include="..\..\source\arborgvt\dlllayer\arbor.cpp" />
     <ClCompile Include="..\..\source\arborgvt\dlllayer\dllmain.cpp" />
     <ClCompile Include="..\..\source\arborgvt\graph\graph.cpp" />
@@ -213,6 +215,8 @@
     <ClCompile Include="..\..\source\arborgvt\ui\window\wi.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\source\arborgvt\barnhut\barnhut.h" />
+    <ClInclude Include="..\..\source\arborgvt\barnhut\bhutquad.h" />
     <ClInclude Include="..\..\source\arborgvt\dlllayer\arbor.h" />
     <ClInclude Include="..\..\source\arborgvt\dlllayer\arborvis.h" />
     <ClInclude Include="..\..\source\arborgvt\graph\edge.h" />
@@ -221,6 +225,7 @@
     <ClInclude Include="..\..\source\arborgvt\graph\vertex.h" />
     <ClInclude Include="..\..\source\arborgvt\ns\arbor.h" />
     <ClInclude Include="..\..\source\arborgvt\ns\atladd.h" />
+    <ClInclude Include="..\..\source\arborgvt\ns\barnhut.h" />
     <ClInclude Include="..\..\source\arborgvt\ns\dxu.h" />
     <ClInclude Include="..\..\source\arborgvt\ns\miscutil.h" />
     <ClInclude Include="..\..\source\arborgvt\ns\stladd.h" />

@@ -70,8 +70,9 @@ but
 
 Therefore when a compiler has implicitly instantiated `foo` at `foo_t<__m128, 33> foo {}`, it makes compile-time calculation to check the assertion. And here '14.7.3' comes into play. But ICC ignores it and handles `foo_t` template class as a normal class type.
 
-The problem is discussed in ["static_assert and Intel C++ compiler"]
-(http://stackoverflow.com/questions/35764069/static-assert-and-intel-c-compiler) topic.
+The problem is discussed in ["static_assert and Intel C++ compiler"](http://stackoverflow.com/questions/35764069/static-assert-and-intel-c-compiler) topic.
+
+*(according to this [topic](https://software.intel.com/en-us/forums/intel-c-compiler/topic/610395) on Intel DZ now that's a known bug)*
 
 ### ICC can't deduce variable type when a variable is declared using a placeholder type
 
@@ -120,3 +121,124 @@ the variable or return type is obtained by substituting the deduced U into P.
 See ["ICL can't deduce variable type when a variable is declared using a placeholder type (auto) [bug since C++17]"](https://software.intel.com/en-us/forums/intel-c-compiler/topic/611948) topic for more information.
 
 *(this is a bug confirmed by Intel; it is to be fixed in Intel C++ Compiler 17.0 -- see the forum topic I specified above)*
+
+### ICC can't use direct-list-initialization for variables of \_\_m128/\_\_m256 SIMD types
+
+ICC fails when compiles the following code:
+
+```cpp
+__m128 boo;
+__m128 foo {boo};
+```
+
+Intel C++ compiler considers code ill-formed because:
+
+```
+error : no suitable conversion function from "__m128" to "float" exists
+              __m128 foo {boo};
+                          ^
+```
+
+This violates '8.5.4 List-initialization [dcl.init.list]':
+
+> 8.5.4.3.7 Otherwise, **if the initializer list has a single element of type E** and either **T is not a reference type** or
+its referenced type is reference-related to E, **the object** or reference **is initialized from that element** (by
+copy-initialization for copy-list-initialization, or **by direct-initialization for direct-list-initialization**)...
+
+See ["Direct-list-initialization of \_\_m128/\_\_m256 variable [bug]"](https://software.intel.com/en-us/forums/intel-c-compiler/topic/621832) topic for more information.
+
+*(now this a known bug; CQ: DPD200408653)*
+
+### Intel C++ compiler stops emit warnings when unsupported `/Gw` switch is specified
+
+`/Gw` switch (optimize global data) is used by MSFT VC++ compiler to package global data in individual COMDAT sections. This switch is not supported by ICL 16.0.
+
+However, `/Gw` can force ICL not to warn about possible issues. Therefore this switch works just like `/w` switch -- suppress all warnings.
+
+Moreover, any switch having `/?w` format (where '?' stands for any character; except valid switches, of course) works like `/w`.
+
+See ["Intel C++ compiler stops emit warnings when unsupported `/Gw` switch is specified"](https://software.intel.com/en-us/forums/intel-c-compiler/topic/612271) topic for more information.
+
+*(now this a known bug; CQ: DPD200408254)*
+
+### Intel C++ compiler can't use single quotation mark as a digit separator on floating-point literals
+
+ICC always treats floating point literals with single quotation mark as zero.
+
+```cpp
+float foo = 3'234.56;
+printf("%f", number);
+```
+
+Executable created with ICC will show `0.000000` on the stdout. Because `foo` was initialized with `0.0` but not with `3234.56`.
+
+This is known bug DPD200379927 ([C++14 Features Supported by Intel® C++ Compiler](https://software.intel.com/en-us/articles/c14-features-supported-by-intel-c-compiler))
+
+## Microsoft Visual C++ Compiler
+
+### Non default inherited constructor accesses data member using improper alignment
+
+MSVC creates illegal executable from the following source code:
+
+```cpp
+#include <intrin.h>
+
+class B
+{
+public:
+    B()
+        :
+        m_value {_mm_set_ps1(0.0f)}
+    {
+    }
+
+    B(_In_ __m128 value)
+        :
+        m_value {value}
+    {
+    }
+
+protected:
+    __m128 m_value;
+};
+
+class D: public B
+{
+    using B::B;
+};
+
+int main()
+{
+    __m128 foo = _mm_set_ps1(0.0f);
+    D d1 {};     // line #1
+    D d2 {foo};  // line #2
+    return 0;
+}
+```
+
+The line #1:
+
+```cpp
+    D d1 {};
+```
+
+produces correct code. `B::B` inherited default constructor accesses `m_value` as memory aligned on a 16-byte boundary. That's OK.
+
+But the line #2:
+
+```cpp
+    D d2 {foo};
+```
+
+forces MSVC to create failure code for `B::B(__m128)` inherited constructor. MSVC generates `MOVAPS` SIMD instruction that accesses `m_value` as memory NOT aligned on a 16-byte boundary:
+
+```asm
+movaps     xmmword ptr [ebp-14h], xmm0
+```
+
+where `ebp-14h` is address of `m_value`. And for a debug session `ebp-14h` equals to 0x0018f9f4 -- this address is not aligned on a 16-byte boundary.
+This causes MOVAPS to fail.
+
+Intel C++ compiler generates correct code for both inherited constructors.
+
+See [MSFT Connect feedback](https://connect.microsoft.com/VisualStudio/feedback/details/2506362/non-default-inherited-constructor-and-data-member-alignment) for more information.

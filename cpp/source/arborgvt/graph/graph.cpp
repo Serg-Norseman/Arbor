@@ -1,3 +1,4 @@
+#include "barnhut\barnhut.h"
 #include "graph\graph.h"
 
 ARBOR_BEGIN
@@ -332,9 +333,39 @@ void graph::updatePhysics()
     // > Euler integrator.
 //    if (0 < m_repulsion)
     {
-//        applyBarnesHutRepulsion();
+        applyBarnesHutRepulsion();
     }
     updateVelocityAndPosition(m_timeSlice);
+}
+
+
+/**
+ * Creates Barnes Hut simulation over this graph's vertices.
+ *
+ * Parameters:
+ * None.
+ *
+ * Returns:
+ * N/A.
+ *
+ * Remarks:
+ * This method obtains no lock.
+ *
+ * This is `ArborGVT::ArborSystem::applyBarnesHutRepulsion` method in the original C# code.
+ */
+void graph::applyBarnesHutRepulsion()
+{
+    BHUT barnes_hut_tree simulation {m_graphBound, m_theta};
+    for (auto it = m_vertices.cbegin(); m_vertices.cend() != it; ++it)
+    {
+        simulation.insert(&(it->second));
+    }
+/*
+    for (auto it = m_vertices.cbegin(); m_vertices.cend() != it; ++it)
+    {
+        simulation.applyForce(&(it->second), m_repulsion);
+    }
+*/
 }
 
 

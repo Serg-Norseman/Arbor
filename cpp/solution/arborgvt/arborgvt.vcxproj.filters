@@ -92,6 +92,12 @@
     <Filter Include="source files\ui\non-windowed\arbor visual implementation">
       <UniqueIdentifier>{a1f24c30-1f76-457a-8a3a-1f8f2394aa10}</UniqueIdentifier>
     </Filter>
+    <Filter Include="header files\Barnes Hut">
+      <UniqueIdentifier>{60f85167-d35a-4afb-bc37-3240c1b02831}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source files\Barnes Hut">
+      <UniqueIdentifier>{e478655f-870f-47ab-95ca-9010b05bb3bf}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\source\arborgvt\exports\arborgvt.def">
@@ -131,6 +137,12 @@
     </ClCompile>
     <ClCompile Include="..\..\source\arborgvt\graph\vector.cpp">
       <Filter>source files\graph</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\arborgvt\barnhut\barnhut.cpp">
+      <Filter>source files\Barnes Hut</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\arborgvt\barnhut\bhutquad.cpp">
+      <Filter>source files\Barnes Hut</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -229,6 +241,15 @@
     </ClInclude>
     <ClInclude Include="..\..\source\arborgvt\graph\vector.h">
       <Filter>header files\graph</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\barnhut\barnhut.h">
+      <Filter>header files\Barnes Hut</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\ns\barnhut.h">
+      <Filter>header files\namespaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\arborgvt\barnhut\bhutquad.h">
+      <Filter>header files\Barnes Hut</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

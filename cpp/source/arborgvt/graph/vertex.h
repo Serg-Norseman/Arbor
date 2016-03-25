@@ -41,7 +41,18 @@ public:
          * I use QNaN (as .NET Framework 4.6 does (remember about roots of the code)); therefore the code mostly doesn't
          * throw an exception. But if one turns to SNaN, the code may throw an exception on SSE instructions once a
          * floating-point exception was unmasked.
+         *
          * By default, the C++ run-time libraries mask all floating-point exceptions. And I don't change it.
+         *
+         * I believe this all is totally unnecessary -- initializing `m_coordinates` with NaN. Code never uses this
+         * ctor but always use another one, which initialize `m_coordinates` with a specific floating-point value.
+         * Having this ctor available just forces code to do additinal checks before use vertex coordinates, just like
+         * this:
+         *
+         * if (0b0011 == (0b0011 & _mm_movemask_ps(_mm_cmpeq_ps(m_coordinate, m_coordinate))))
+         * { ... }
+         *
+         * Both `CMPPS` and `MOVMSKPS` are far from being the fastest instructions.
          */
         *(reinterpret_cast<uint32_t*> (value.data)) = 0x7FC00000;
         m_coordinates = _mm_load_ps(value.data);
@@ -66,6 +77,8 @@ public:
      * Although all the affected memory location are aligned on a 16-byte boundary. But when CL makes "release" build
      * (x86 or x64), it generates the `MOVAPS` instruction (one that I need). So it ain't required to use `_mm_load_ps`
      * and `_mm_store_ps` intrinsics.
+     *
+     * Moreover, sometime even Debug builds use `MOVAPS` instruction.
      */
     vertex(_In_ STLADD string_type&& name, _In_ __m128 coordinates)
         :
@@ -165,6 +178,16 @@ public:
         m_data = value;
     }
 
+    float getMass() const noexcept
+    {
+        return m_mass;
+    }
+
+    bool getFixed() const noexcept
+    {
+        return m_fixed;
+    }
+
     void __vectorcall applyForce(_In_ const __m128 value) noexcept
     {
         // `value` must not be zero.
@@ -173,11 +196,6 @@ public:
         __m128 mass = _mm_load_ps(massData.data);
         mass = _mm_shuffle_ps(mass, mass, 0);
         m_force = _mm_add_ps(m_force, _mm_mul_ps(value, _mm_rcp_ps(mass)));
-    }
-
-    bool getFixed() const noexcept
-    {
-        return m_fixed;
     }
 
 
