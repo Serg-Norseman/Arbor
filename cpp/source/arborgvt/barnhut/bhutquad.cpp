@@ -16,8 +16,6 @@ BHUT_BEGIN
  * Quad of the `b` where `p` is located.
  * >particles
  * Container with particles to be handled.
- * >v
- * Graph vertex. This is the vertex `p` is based on.
  *
  * Returns:
  * Pointer to a branch to be set as the current one.
@@ -25,8 +23,7 @@ BHUT_BEGIN
  * Remarks:
  * This is `ArborGVT::BarnesHutTree::insert` method in the original C# code.
  */
-branch* branch::handleParticle(
-    _In_ const particle* p, _In_ branch* b, _In_ quad_index, _In_ particles_cont_t*, _In_ ARBOR vertex*)
+branch* branch::handleParticle(_In_ const particle* p, _In_ branch* b, _In_ quad_index, _In_ particles_cont_t*)
 {
     b->increaseParameters(p);
     return this;
@@ -144,8 +141,6 @@ void branch::increaseParameters(_In_ const particle* p) noexcept
  * Quad of the `b` where `p` is located.
  * >particles
  * Container with particles to be handled.
- * >v
- * Graph vertex. This is the vertex `p` is based on.
  *
  * Returns:
  * Pointer to a branch to be set as the current one.
@@ -154,11 +149,7 @@ void branch::increaseParameters(_In_ const particle* p) noexcept
  * This is `ArborGVT::BarnesHutTree::insert` method in the original C# code.
  */
 branch* particle::handleParticle(
-    _In_ const particle* p,
-    _In_ branch* b,
-    _In_ quad_index quad,
-    _In_ particles_cont_t* particles,
-    _In_ ARBOR vertex* v)
+    _In_ const particle* p, _In_ branch* b, _In_ quad_index quad, _In_ particles_cont_t* particles)
 {
     __m128 temp = b->getArea();
     __m128 temp2 = _mm_shuffle_ps(temp, temp, 0b11111101);
@@ -191,7 +182,7 @@ branch* particle::handleParticle(
     temp2 = p->getCoordinates();
     temp = _mm_mul_ps(temp2, temp);
     b->setCoordinates(temp);
-    if (0b0011 == (0b0011 & _mm_movemask_ps(_mm_cmpeq_ps(m_coordinates, temp2))))
+    if (0b0011 == (0b0011 & _mm_movemask_ps(_mm_cmpeq_ps(m_vertex->getCoordinates(), temp2))))
     {
         value.data[0] = 0.08f;
         temp = _mm_load_ps(value.data);
@@ -199,15 +190,14 @@ branch* particle::handleParticle(
         __m128 coefficient = _mm_mul_ps(halfSize, temp);
         coefficient = _mm_shuffle_ps(coefficient, coefficient, 0b10001000);
         temp = ARBOR randomVector(coefficient);
-        temp = _mm_add_ps(m_coordinates, temp);
+        temp = _mm_add_ps(m_vertex->getCoordinates(), temp);
         temp2 = _mm_shuffle_ps(origin, origin, 0b10001000);
         temp = _mm_max_ps(temp, temp2);
         temp2 = _mm_add_ps(origin, halfSize);
         temp2 = _mm_shuffle_ps(temp2, temp2, 0b10001000);
-        m_coordinates = _mm_min_ps(temp, temp2);
-        v->setCoordinates(m_coordinates);
+        m_vertex->setCoordinates(_mm_min_ps(temp, temp2));
     }
-    particles->push_back(std::make_unique<particle>(m_coordinates, m_mass));
+    particles->push_back(std::make_unique<particle>(m_vertex));
     branch* result = newBranch.get();
     // The following line definitely will `delete this`.
     b->setQuadContent(quad, std::move(newBranch));

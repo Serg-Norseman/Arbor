@@ -19,7 +19,7 @@ BHUT_BEGIN
 void barnes_hut_tree::insert(_In_ ARBOR vertex* v)
 {
     branch* currentBranch = m_root.get();
-    auto currentParticle = std::make_unique<particle>(v->getCoordinates(), v->getMass());
+    auto currentParticle = std::make_unique<particle>(v);
     quad_element::particles_cont_t particles {};
     while (currentParticle || particles.size())
     {
@@ -40,7 +40,7 @@ void barnes_hut_tree::insert(_In_ ARBOR vertex* v)
             }
             else
             {
-                currentBranch = quadElement->handleParticle(currentParticle.get(), currentBranch, quad, &particles, v);
+                currentBranch = quadElement->handleParticle(currentParticle.get(), currentBranch, quad, &particles);
             }
         }
     }

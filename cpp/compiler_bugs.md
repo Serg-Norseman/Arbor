@@ -172,7 +172,7 @@ printf("%f", number);
 
 Executable created with ICC will show `0.000000` on the stdout. Because `foo` was initialized with `0.0` but not with `3234.56`.
 
-This is known bug DPD200379927 ([C++14 Features Supported by Intel® C++ Compiler](https://software.intel.com/en-us/articles/c14-features-supported-by-intel-c-compiler))
+This is a known bug DPD200379927 ([C++14 Features Supported by Intel® C++ Compiler](https://software.intel.com/en-us/articles/c14-features-supported-by-intel-c-compiler))
 
 ## Microsoft Visual C++ Compiler
 

@@ -38,104 +38,14 @@ public:
 
     typedef std::deque<std::unique_ptr<particle>, STLADD default_allocator<std::unique_ptr<particle>>> particles_cont_t;
 
-    quad_element() noexcept
-        :
-#if defined(__ICL)
-        m_coordinates(ARBOR getZeroVector()),
-#else
-        m_coordinates {ARBOR getZeroVector()},
-#endif
-        m_mass {0.0f}
-    {
-    }
-
-    quad_element(_In_ const quad_element&) = delete;
-
-    quad_element(_In_ quad_element&& right) noexcept
-    {
-        if (this != &right)
-        {
-            right.swap(*this);
-        }
-    }
-
-    quad_element(_In_ __m128 coordinates, _In_ const float mass) noexcept
-        :
-#if defined(__ICL)
-        m_coordinates(coordinates),
-#else
-        m_coordinates {coordinates},
-#endif
-        m_mass {mass}
-    {
-    }
-
     virtual ~quad_element() = default;
 
-    quad_element& operator =(_In_ const quad_element&) = delete;
-
-    quad_element& operator =(_In_ quad_element&& right) noexcept
-    {
-        if (this != &right)
-        {
-            right.swap(*this);
-        }
-        return *this;
-    }
-
-    static void* operator new(_In_ const size_t size)
-    {
-        STLADD aligned_sse_allocator<quad_element> allocator {};
-        return allocator.allocate(size, 0);
-    }
-
-    static void operator delete(_In_ void* p)
-    {
-        STLADD aligned_sse_allocator<quad_element> allocator {};
-        allocator.deallocate(p);
-    }
-
-    void swap(_Inout_ quad_element& right) noexcept
-    {
-        // `m_coordinates` can be NaN, but `XORPS` doesn't fail on NaNs.
-        // 'Cos this method uses XOR-swapping never call it to swap an object with itself.
-        m_coordinates = _mm_xor_ps(m_coordinates, right.m_coordinates);
-        right.m_coordinates = _mm_xor_ps(m_coordinates, right.m_coordinates);
-        m_coordinates = _mm_xor_ps(m_coordinates, right.m_coordinates);
-        std::swap(m_mass, right.m_mass);
-    }
-
     virtual branch* __fastcall handleParticle(
-        _In_ const particle* p,
-        _In_ branch* b,
-        _In_ quad_index quad,
-        _In_ particles_cont_t* particles,
-        _In_ ARBOR vertex* v) = 0;
-
-    __m128 __vectorcall getCoordinates() const noexcept
-    {
-        return m_coordinates;
-    }
-
-    void __vectorcall setCoordinates(_In_ __m128 value) noexcept
-    {
-        m_coordinates = value;
-    }
-
-    float getMass() const noexcept
-    {
-        return m_mass;
-    }
-
-    void setMass(_In_ float value) noexcept
-    {
-        m_mass = value;
-    }
+        _In_ const particle* p, _In_ branch* b, _In_ quad_index quad, _In_ particles_cont_t* particles) = 0;
 
 
-protected:
-    __m128 m_coordinates;
-    float m_mass;
+private:
+    __m128 m_padding;
 };
 
 
@@ -156,10 +66,13 @@ public:
         :
 #if defined(__ICL)
         m_area(area),
+        m_coordinates(ARBOR getZeroVector()),
 #else
         m_area {area},
+        m_coordinates {ARBOR getZeroVector()},
 #endif
-        m_quads {4}
+        m_quads {4},
+        m_mass {0.0f}
     {
     }
 
@@ -174,17 +87,33 @@ public:
         return *this;
     }
 
+    static void* operator new(_In_ const size_t size)
+    {
+        STLADD aligned_sse_allocator<branch> allocator {};
+        return allocator.allocate(size, 0);
+    }
+
+    static void operator delete(_In_ void* p)
+    {
+        STLADD aligned_sse_allocator<branch> allocator {};
+        allocator.deallocate(p);
+    }
+
     void swap(_Inout_ branch& right) noexcept
     {
-        base_class_t::swap(right);
+        // 'Cos this method uses XOR-swapping never call it to swap an object with itself.
         m_area = _mm_xor_ps(m_area, right.m_area);
         right.m_area = _mm_xor_ps(m_area, right.m_area);
         m_area = _mm_xor_ps(m_area, right.m_area);
+        m_coordinates = _mm_xor_ps(m_coordinates, right.m_coordinates);
+        right.m_coordinates = _mm_xor_ps(m_coordinates, right.m_coordinates);
+        m_coordinates = _mm_xor_ps(m_coordinates, right.m_coordinates);
         std::swap(m_quads, right.m_quads);
+        std::swap(m_mass, right.m_mass);
     }
 
     virtual branch* __fastcall handleParticle(
-        _In_ const particle* p, _In_ branch* b, _In_ quad_index, _In_ particles_cont_t*, _In_ ARBOR vertex*) override;
+        _In_ const particle* p, _In_ branch* b, _In_ quad_index, _In_ particles_cont_t*) override;
 
     quad_index __fastcall getQuad(_In_ const particle* p) const noexcept;
     _Check_return_ bool __fastcall getQuadContent(
@@ -198,12 +127,22 @@ public:
         }
     }
 
+    void increaseParameters(_In_ const particle* p) noexcept;
+
     __m128 __vectorcall getArea() const noexcept
     {
         return m_area;
     }
 
-    void increaseParameters(_In_ const particle* p) noexcept;
+    void __vectorcall setCoordinates(_In_ __m128 value) noexcept
+    {
+        m_coordinates = value;
+    }
+
+    void setMass(_In_ float value) noexcept
+    {
+        m_mass = value;
+    }
 
 
 private:
@@ -213,37 +152,56 @@ private:
 
     // Quad bound. The vectors formatted as [top-y, bottom-y, left-x, right-x].
     __m128 m_area;
+    __m128 m_coordinates;
     quads_cont_t m_quads;
+    float m_mass;
 };
 
 
 class particle final: public quad_element
 {
 public:
-    using quad_element::quad_element;
+    explicit particle(_In_ ARBOR vertex* vertex)
+        :
+        m_vertex {vertex}
+    {
+    }
 
-    particle() = delete;
+    static void* operator new(_In_ const size_t size)
+    {
+        STLADD aligned_sse_allocator<particle> allocator {};
+        return allocator.allocate(size, 0);
+    }
+
+    static void operator delete(_In_ void* p)
+    {
+        STLADD aligned_sse_allocator<particle> allocator {};
+        allocator.deallocate(p);
+    }
 
     virtual branch* __fastcall handleParticle(
-        _In_ const particle* p,
-        _In_ branch* b,
-        _In_ quad_index quad,
-        _In_ particles_cont_t* particles,
-        _In_ ARBOR vertex* v) override;
+        _In_ const particle* p, _In_ branch* b, _In_ quad_index quad, _In_ particles_cont_t* particles) override;
+
+    __m128 __vectorcall getCoordinates() const noexcept
+    {
+        return m_vertex->getCoordinates();
+    }
+
+    float getMass() const noexcept
+    {
+        return m_vertex->getMass();
+    }
 
 
 private:
     typedef quad_element base_class_t;
+
+    ARBOR vertex* m_vertex;
 };
 
 BHUT_END
 
 inline void swap(_Inout_ BHUT branch& left, _Inout_ BHUT branch& right)
-{
-    left.swap(right);
-}
-
-inline void swap(_Inout_ BHUT particle& left, _Inout_ BHUT particle& right)
 {
     left.swap(right);
 }
