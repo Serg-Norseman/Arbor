@@ -356,7 +356,7 @@ void graph::updatePhysics()
 void graph::applyBarnesHutRepulsion()
 {
     BHUT barnes_hut_tree simulation {m_graphBound, m_theta};
-    for (auto it = m_vertices.cbegin(); m_vertices.cend() != it; ++it)
+    for (auto it = m_vertices.begin(); m_vertices.end() != it; ++it)
     {
         simulation.insert(&(it->second));
     }

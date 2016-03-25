@@ -1,5 +1,6 @@
 #pragma once
 #include "graph\vector.h"
+#include "graph\vertex.h"
 #include "ns\barnhut.h"
 #include "service\stladdon.h"
 #include <deque>
@@ -105,7 +106,11 @@ public:
     }
 
     virtual branch* __fastcall handleParticle(
-        _In_ const particle* p, _In_ branch* b, _In_ quad_index quad, _In_ particles_cont_t* particles) = 0;
+        _In_ const particle* p,
+        _In_ branch* b,
+        _In_ quad_index quad,
+        _In_ particles_cont_t* particles,
+        _In_ ARBOR vertex* v) = 0;
 
     __m128 __vectorcall getCoordinates() const noexcept
     {
@@ -179,7 +184,7 @@ public:
     }
 
     virtual branch* __fastcall handleParticle(
-        _In_ const particle* p, _In_ branch* b, _In_ quad_index, _In_ particles_cont_t*) override;
+        _In_ const particle* p, _In_ branch* b, _In_ quad_index, _In_ particles_cont_t*, _In_ ARBOR vertex*) override;
 
     quad_index __fastcall getQuad(_In_ const particle* p) const noexcept;
     _Check_return_ bool __fastcall getQuadContent(
@@ -220,7 +225,11 @@ public:
     particle() = delete;
 
     virtual branch* __fastcall handleParticle(
-        _In_ const particle* p, _In_ branch* b, _In_ quad_index quad, _In_ particles_cont_t* particles) override;
+        _In_ const particle* p,
+        _In_ branch* b,
+        _In_ quad_index quad,
+        _In_ particles_cont_t* particles,
+        _In_ ARBOR vertex* v) override;
 
 
 private:

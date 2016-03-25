@@ -16,6 +16,8 @@ BHUT_BEGIN
  * Quad of the `b` where `p` is located.
  * >particles
  * Container with particles to be handled.
+ * >v
+ * Graph vertex. This is the vertex `p` is based on.
  *
  * Returns:
  * Pointer to a branch to be set as the current one.
@@ -23,7 +25,8 @@ BHUT_BEGIN
  * Remarks:
  * This is `ArborGVT::BarnesHutTree::insert` method in the original C# code.
  */
-branch* branch::handleParticle(_In_ const particle* p, _In_ branch* b, _In_ quad_index, _In_ particles_cont_t*)
+branch* branch::handleParticle(
+    _In_ const particle* p, _In_ branch* b, _In_ quad_index, _In_ particles_cont_t*, _In_ ARBOR vertex*)
 {
     b->increaseParameters(p);
     return this;
@@ -141,6 +144,8 @@ void branch::increaseParameters(_In_ const particle* p) noexcept
  * Quad of the `b` where `p` is located.
  * >particles
  * Container with particles to be handled.
+ * >v
+ * Graph vertex. This is the vertex `p` is based on.
  *
  * Returns:
  * Pointer to a branch to be set as the current one.
@@ -149,7 +154,11 @@ void branch::increaseParameters(_In_ const particle* p) noexcept
  * This is `ArborGVT::BarnesHutTree::insert` method in the original C# code.
  */
 branch* particle::handleParticle(
-    _In_ const particle* p, _In_ branch* b, _In_ quad_index quad, _In_ particles_cont_t* particles)
+    _In_ const particle* p,
+    _In_ branch* b,
+    _In_ quad_index quad,
+    _In_ particles_cont_t* particles,
+    _In_ ARBOR vertex* v)
 {
     __m128 temp = b->getArea();
     __m128 temp2 = _mm_shuffle_ps(temp, temp, 0b11111101);
@@ -196,6 +205,7 @@ branch* particle::handleParticle(
         temp2 = _mm_add_ps(origin, halfSize);
         temp2 = _mm_shuffle_ps(temp2, temp2, 0b10001000);
         m_coordinates = _mm_min_ps(temp, temp2);
+        v->setCoordinates(m_coordinates);
     }
     particles->push_back(std::make_unique<particle>(m_coordinates, m_mass));
     branch* result = newBranch.get();

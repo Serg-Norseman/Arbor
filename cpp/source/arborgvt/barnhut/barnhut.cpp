@@ -16,7 +16,7 @@ BHUT_BEGIN
  * Remarks:
  * This is `ArborGVT::BarnesHutTree::insert` method in the original C# code.
  */
-void barnes_hut_tree::insert(_In_ const ARBOR vertex* v)
+void barnes_hut_tree::insert(_In_ ARBOR vertex* v)
 {
     branch* currentBranch = m_root.get();
     auto currentParticle = std::make_unique<particle>(v->getCoordinates(), v->getMass());
@@ -40,7 +40,7 @@ void barnes_hut_tree::insert(_In_ const ARBOR vertex* v)
             }
             else
             {
-                currentBranch = quadElement->handleParticle(currentParticle.get(), currentBranch, quad, &particles);
+                currentBranch = quadElement->handleParticle(currentParticle.get(), currentBranch, quad, &particles, v);
             }
         }
     }

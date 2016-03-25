@@ -16,7 +16,7 @@ public:
     {
     }
 
-    void __fastcall insert(_In_ const ARBOR vertex* v);
+    void __fastcall insert(_In_ ARBOR vertex* v);
 
 
 private:
