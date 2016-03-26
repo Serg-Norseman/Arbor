@@ -31,7 +31,6 @@ public:
         :
         m_name {std::move(name)},
         m_data {nullptr},
-        m_mass {1.0f},
         m_fixed {false}
     {
         sse_t value;
@@ -57,6 +56,9 @@ public:
         *(reinterpret_cast<uint32_t*> (value.data)) = 0x7FC00000;
         m_coordinates = _mm_load_ps(value.data);
         m_coordinates = _mm_shuffle_ps(m_coordinates, m_coordinates, 0);
+        value.data[0] = 1.0f;
+        m_mass = _mm_load_ps(value.data);
+        m_mass = _mm_shuffle_ps(m_mass, m_mass, 0);
         // Set `m_force` and `m_velocity` to zero.
         m_force = getZeroVector();
         m_velocity = m_force;
@@ -111,6 +113,9 @@ public:
         m_textColor = _mm_xor_ps(m_textColor, right.m_textColor);
         right.m_textColor = _mm_xor_ps(m_textColor, right.m_textColor);
         m_textColor = _mm_xor_ps(m_textColor, right.m_textColor);
+        m_mass = _mm_xor_ps(m_mass, right.m_mass);
+        right.m_mass = _mm_xor_ps(m_mass, right.m_mass);
+        m_mass = _mm_xor_ps(m_mass, right.m_mass);
         m_force = _mm_xor_ps(m_force, right.m_force);
         right.m_force = _mm_xor_ps(m_force, right.m_force);
         m_force = _mm_xor_ps(m_force, right.m_force);
@@ -119,7 +124,6 @@ public:
         m_velocity = _mm_xor_ps(m_velocity, right.m_velocity);
         std::swap(m_name, right.m_name);
         std::swap(m_data, right.m_data);
-        std::swap(m_mass, right.m_mass);
         std::swap(m_fixed, right.m_fixed);
     }
 
@@ -141,6 +145,11 @@ public:
     __m128 __vectorcall getTextColor() const noexcept
     {
         return m_textColor;
+    }
+
+    __m128 __vectorcall getMass() const noexcept
+    {
+        return m_mass;
     }
 
     __m128 __vectorcall getForce() const noexcept
@@ -178,11 +187,6 @@ public:
         m_data = value;
     }
 
-    float getMass() const noexcept
-    {
-        return m_mass;
-    }
-
     bool getFixed() const noexcept
     {
         return m_fixed;
@@ -191,11 +195,7 @@ public:
     void __vectorcall applyForce(_In_ const __m128 value) noexcept
     {
         // `value` must not be zero.
-        sse_t massData;
-        massData.data[0] = m_mass;
-        __m128 mass = _mm_load_ps(massData.data);
-        mass = _mm_shuffle_ps(mass, mass, 0);
-        m_force = _mm_add_ps(m_force, _mm_mul_ps(value, _mm_rcp_ps(mass)));
+        m_force = _mm_add_ps(m_force, _mm_mul_ps(value, _mm_rcp_ps(m_mass)));
     }
 
 
@@ -213,11 +213,11 @@ private:
     __m128 m_coordinates;
     __m128 m_color;
     __m128 m_textColor;
+    __m128 m_mass;
     __m128 m_force;
     __m128 m_velocity;
     STLADD string_type m_name;
     void* m_data;
-    float m_mass;
     bool m_fixed;
 };
 
