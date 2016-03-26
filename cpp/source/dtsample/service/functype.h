@@ -36,32 +36,32 @@ using get_dpi_for_monitor_func_t = HRESULT (STDAPICALLTYPE *)(
  * When necessary this function loads the specified module.
  *
  * Parameters:
- * >pszModuleName
- * Name of module that contains 'pszFunctionName'.
- * >pszFunctionName
- * Function of type T that is implemented in the 'pszModuleName'.
- * >hLib
+ * >moduleName
+ * Name of module that contains 'functionName'.
+ * >functionName
+ * Function of type T that is implemented in the 'moduleName'.
+ * >lib
  * Handle to the loaded library module. When caller passes a valid handle the method uses it. Otherwise the method
  * returns here handle to the found/loaded library and caller must use 'FreeLibrary' to release it. If caller uses valid
- * 'hLib' when call this function the 'pszModuleName' is ignored.
+ * 'lib' when call this function the 'moduleName' is ignored.
  *
  * Returns:
  * Pointer to the function.
  */
 template<typename T>
 _Check_return_ T getFunction(
-    _In_opt_z_ LPCTSTR pszModuleName, _In_z_ LPCSTR pszFunctionName, _Inout_ HMODULE& hLib)
+    _In_opt_z_ LPCTSTR moduleName, _In_z_ LPCSTR functionName, _Inout_ HMODULE& lib)
 {
-    if (nullptr == hLib)
+    if (nullptr == lib)
     {
-        if (!GetModuleHandleEx(0, pszModuleName, &hLib) && (ERROR_MOD_NOT_FOUND == GetLastError()) && pszModuleName)
+        if (!GetModuleHandleEx(0, moduleName, &lib) && (ERROR_MOD_NOT_FOUND == GetLastError()) && moduleName)
         {
-            hLib = LoadLibraryEx(pszModuleName, nullptr, 0);
+            lib = LoadLibraryEx(moduleName, nullptr, 0);
         }
     }
-    if (nullptr != hLib)
+    if (nullptr != lib)
     {
-        return reinterpret_cast<T> (GetProcAddress(hLib, pszFunctionName));
+        return reinterpret_cast<T> (GetProcAddress(lib, functionName));
     }
     else
     {

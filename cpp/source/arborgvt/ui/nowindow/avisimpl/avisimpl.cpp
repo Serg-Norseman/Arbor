@@ -145,8 +145,8 @@ void arbor_visual_impl::createWindowImpl(
         m_window = std::make_unique<ATLADD graph_window>(dpiChangedMessage);
         if (m_window)
         {
-            HWND hWnd = m_window->create(parent, style, exStyle);
-            if (nullptr != hWnd)
+            HWND hwnd = m_window->create(parent, style, exStyle);
+            if (nullptr != hwnd)
             {
                 SetEvent(hwndReadyEvent);
                 MSG msg;

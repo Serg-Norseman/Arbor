@@ -51,15 +51,15 @@ public:
         allocator.deallocate(p);
     }
 
-    _Check_return_ virtual HWND create(_In_ const HWND hParent) override;
+    _Check_return_ virtual HWND create(_In_ const HWND parent) override;
     _Check_return_ virtual HWND create(_In_opt_ const HWND parent, _In_ DWORD style, _In_ DWORD exStyle);
     virtual BOOL ProcessWindowMessage(
-        _In_ HWND hWnd,
-        _In_ UINT nMessage,
-        _In_ WPARAM nWParam,
-        _In_ LPARAM nLParam,
-        _Inout_ LRESULT& nLResult,
-        _In_ DWORD nMsgMapID) override;
+        _In_ HWND hwnd,
+        _In_ UINT message,
+        _In_ WPARAM wParam,
+        _In_ LPARAM lParam,
+        _Inout_ LRESULT& lResult,
+        _In_ DWORD msgMapID) override;
 
     void addEdge(_In_ STLADD string_type&& tail, _In_ STLADD string_type&& head, _In_ float length)
     {
@@ -94,8 +94,8 @@ private:
     static __m128 __vectorcall graphToLogical(
         _In_ const __m128 value, _In_ const __m128 logicalSize, _In_ const __m128 viewBound);
 
-    void scrollHandler(_In_ int nBar, _In_ const WORD nScrollingRequest, _In_ const WORD nPosition);
-    void scrollContent(_In_ int nBar, _In_ const int nPos);
+    void scrollHandler(_In_ int bar, _In_ const WORD scrollingRequest, _In_ const WORD position);
+    void scrollContent(_In_ int bar, _In_ const int pos);
     HRESULT createTextLayout(
         _In_ const STLADD string_type* text, _COM_Outptr_result_maybenull_ IDWriteTextLayout** textLayout) const;
     void __fastcall connectAreas(

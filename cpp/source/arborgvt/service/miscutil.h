@@ -18,7 +18,7 @@ public:
 
 
 private:
-    static STLADD string_unique_ptr_t getApplicationExeVersionInfoStringTableEntry(_In_ LPCTSTR pszName);
+    static STLADD string_unique_ptr_t getApplicationExeVersionInfoStringTableEntry(_In_ LPCTSTR name);
 };
 
 
@@ -26,9 +26,9 @@ private:
 class windows_system
 {
 public:
-    _Check_return_ static HANDLE createEvent(_In_opt_z_ LPCWSTR pszName);
-    static void setProcessExplicitAppUserModelID(_In_ PCWSTR pszAppID);
-    static void changeWindowMessageFilter(_In_ const HWND hWnd, _In_ const UINT nMessage);
+    _Check_return_ static HANDLE createEvent(_In_opt_z_ LPCWSTR name);
+    static void setProcessExplicitAppUserModelID(_In_ PCWSTR appID);
+    static void changeWindowMessageFilter(_In_ const HWND hwnd, _In_ const UINT message);
 };
 
 MISCUTIL_END

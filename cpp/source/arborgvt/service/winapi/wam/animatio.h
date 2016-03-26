@@ -23,14 +23,14 @@ public:
         }
     }
 
-    HRESULT createVariable(_In_ const double fInitialValue, _Outptr_ IUIAnimationVariable2** ppVariable)
+    HRESULT createVariable(_In_ const double initialValue, _Outptr_ IUIAnimationVariable2** variable)
     {
-        return m_animationManager ? m_animationManager->CreateAnimationVariable(fInitialValue, ppVariable) : E_POINTER;
+        return m_animationManager ? m_animationManager->CreateAnimationVariable(initialValue, variable) : E_POINTER;
     }
 
-    HRESULT createStoryboard(_Outptr_ IUIAnimationStoryboard2** ppStoryboard)
+    HRESULT createStoryboard(_Outptr_ IUIAnimationStoryboard2** storyboard)
     {
-        return m_animationManager ? m_animationManager->CreateStoryboard(ppStoryboard) : E_POINTER;
+        return m_animationManager ? m_animationManager->CreateStoryboard(storyboard) : E_POINTER;
     }
 
     HRESULT update()
@@ -38,38 +38,38 @@ public:
         HRESULT hr = m_animationManager && m_animationTimer ? S_OK : E_POINTER;
         if (SUCCEEDED(hr))
         {
-            UI_ANIMATION_SECONDS fCurrentTime;
-            hr = m_animationTimer->GetTime(&fCurrentTime);
+            UI_ANIMATION_SECONDS currentTime;
+            hr = m_animationTimer->GetTime(&currentTime);
             if (SUCCEEDED(hr))
             {
-                hr = m_animationManager->Update(fCurrentTime);
+                hr = m_animationManager->Update(currentTime);
             }
         }
         return hr;
     }
 
-    HRESULT scheduleStoryboard(_In_ IUIAnimationStoryboard2* pStoryboard)
+    HRESULT scheduleStoryboard(_In_ IUIAnimationStoryboard2* storyboard)
     {
         HRESULT hr = m_animationTimer ? S_OK : E_POINTER;
         if (SUCCEEDED(hr))
         {
-            hr = pStoryboard->Abandon();
+            hr = storyboard->Abandon();
             if (SUCCEEDED(hr))
             {
-                UI_ANIMATION_SECONDS fCurrentTime;
-                hr = m_animationTimer->GetTime(&fCurrentTime);
+                UI_ANIMATION_SECONDS currentTime;
+                hr = m_animationTimer->GetTime(&currentTime);
                 if (SUCCEEDED(hr))
                 {
-                    hr = pStoryboard->Schedule(fCurrentTime);
+                    hr = storyboard->Schedule(currentTime);
                 }
             }
         }
         return hr;
     }
 
-    HRESULT getStatus(_Out_ UI_ANIMATION_MANAGER_STATUS* pStatus) const
+    HRESULT getStatus(_Out_ UI_ANIMATION_MANAGER_STATUS* status) const
     {
-        return m_animationManager ? m_animationManager->GetStatus(pStatus) : E_POINTER;
+        return m_animationManager ? m_animationManager->GetStatus(status) : E_POINTER;
     }
 
 

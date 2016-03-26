@@ -9,9 +9,9 @@ template <typename T>
 class child_window_impl abstract: public window_impl<T>
 {
 public:
-    explicit child_window_impl(_In_ bool bCreateOnDedicatedThread)
+    explicit child_window_impl(_In_ bool createOnDedicatedThread)
         :
-        m_bCreateOnDedicatedThread {bCreateOnDedicatedThread}
+        m_createOnDedicatedThread {createOnDedicatedThread}
     {
     }
 
@@ -19,23 +19,23 @@ public:
 protected:
     virtual LRESULT createHandler() override
     {
-        LRESULT nResult = base_class_t::createHandler();
-        if (!nResult)
+        LRESULT result = base_class_t::createHandler();
+        if (!result)
         {
             HRESULT hr = S_OK;
-            if (m_bCreateOnDedicatedThread && !m_animation)
+            if (m_createOnDedicatedThread && !m_animation)
             {
                 m_animation = std::make_unique<WAPI animation>();
                 hr = m_animation ? S_OK : HRESULT_FROM_WIN32(ERROR_NOT_ENOUGH_MEMORY);
             }
-            nResult = SUCCEEDED(hr) ? 0 : -1;
+            result = SUCCEEDED(hr) ? 0 : -1;
         }
-        return nResult;
+        return result;
     }
 
     virtual void destroyHandler() override
     {
-        if (m_bCreateOnDedicatedThread)
+        if (m_createOnDedicatedThread)
         {
             PostQuitMessage(0);
             /*
@@ -50,7 +50,7 @@ protected:
 private:
     typedef window_impl<T> base_class_t;
 
-    bool m_bCreateOnDedicatedThread;
+    bool m_createOnDedicatedThread;
 };
 
 ATLADD_END

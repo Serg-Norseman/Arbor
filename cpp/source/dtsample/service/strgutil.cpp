@@ -8,7 +8,7 @@
 #include <type_traits>
 
 string_util::unique_ptr_t string_util::m_instance;
-LPTSTR* string_util::m_ppszEnumDateFormatsProcExData;
+LPTSTR* string_util::m_enumDateFormatsProcExData;
 
 // Default character(s) used to separate list items (default for a case when attempt to take it from the regional
 // settings failed).
@@ -68,111 +68,110 @@ string_util::pointer_t string_util::getInstance() noexcept(false)
 
 
 /**
- * Loads a string resource from the m_hModuleWithResource module, copies the string into a buffer,
+ * Loads a string resource from the m_moduleWithResource module, copies the string into a buffer,
  * and appends a terminating NULL character.
  *
  * Parameters:
- * >nStringResourceId
+ * >stringResourceId
  * Specifies the integer identifier of the string to be loaded.
- * >pszAllocatedBuffer
+ * >allocatedBuffer
  * Pointer to the buffer to receive the string.
- * >nBufferLength
+ * >bufferLength
  * Specifies the size of the buffer, in characters.
  *
  * Returns:
  * true value in case of success, false -- otherwise.
  */
 _Success_(return) bool string_util::loadString(
-    _In_ UINT nStringResourceId,
-    _Out_writes_opt_z_(nBufferLength) LPTSTR pszAllocatedBuffer,
-    _In_ size_t nBufferLength) const
+    _In_ UINT stringResourceId,
+    _Out_writes_opt_z_(bufferLength) LPTSTR allocatedBuffer,
+    _In_ size_t bufferLength) const
 {
-    bool bResult = false;
-    if (nullptr != pszAllocatedBuffer)
+    bool result = false;
+    if (nullptr != allocatedBuffer)
     {
-        *pszAllocatedBuffer = TEXT('\x00');
+        *allocatedBuffer = TEXT('\x00');
 
-        LPTSTR pszResourceText;
-        size_t nTextLength =
-            ::LoadString(m_hModuleWithResource, nStringResourceId, reinterpret_cast<LPTSTR> (&pszResourceText), 0);
-        if (nTextLength && (nTextLength < nBufferLength))
+        LPTSTR resourceText;
+        const size_t textLength =
+            ::LoadString(m_moduleWithResource, stringResourceId, reinterpret_cast<LPTSTR> (&resourceText), 0);
+        if (textLength && (textLength < bufferLength))
         {
-            _tcsncpy_s(pszAllocatedBuffer, nBufferLength, pszResourceText, nTextLength);
-            bResult = true;
+            _tcsncpy_s(allocatedBuffer, bufferLength, resourceText, textLength);
+            result = true;
         }
     }
 
-    return bResult;
+    return result;
 }
 
 
 /**
- * Loads a string resource from the m_hModuleWithResource module, allocates a buffer w/ necessary length,
+ * Loads a string resource from the m_moduleWithResource module, allocates a buffer w/ necessary length,
  * copies the string into a buffer, and appends a terminating NULL character.
  *
  * Parameters:
- * >nStringResourceId
+ * >stringResourceId
  * Specifies the integer identifier of the string to be loaded.
- * >ppszResourceString
+ * >resourceString
  * Pointer to pointer that stores address of the buffer that receives resource string. This buffer's content
  * is valid only when the method returns true value. In all other cases the loadString method sets the
- * '*ppszResourceString' to nullptr.
- * >pnResourceLength
+ * '*resourceString' to nullptr.
+ * >resourceLength
  * Pointer to variable that receives loaded string length in TCHARs, not including NULL terminating character.
  * Caller should ignores this value when the loadString failed.
  * This parameter can be nullptr.
  *
  * Returns:
- * true value in case of success, false -- otherwise. In the first case caller should free the *ppszResult buffer
+ * true value in case of success, false -- otherwise. In the first case caller should free the `*resourceString` buffer
  * w/ `default_allocator` or `delete` operator.
  */
 _Success_(return) bool string_util::loadString(
-    _In_ UINT nStringResourceId,
+    _In_ UINT stringResourceId,
     _When_(0 != return, _Outptr_result_z_)
-    _When_(0 == return, _Outptr_result_maybenull_z_) LPTSTR* ppszResourceString,
-    _Out_opt_ size_t* pnResourceLength) const
+    _When_(0 == return, _Outptr_result_maybenull_z_) LPTSTR* resourceString,
+    _Out_opt_ size_t* resourceLength) const
 {
-    size_t nNotUsedResourceLength;
-    if (!pnResourceLength)
+    size_t notUsedResourceLength;
+    if (!resourceLength)
     {
-        pnResourceLength = &nNotUsedResourceLength;
+        resourceLength = &notUsedResourceLength;
     }
-    *ppszResourceString = nullptr;
-    bool bResult = false;
-    LPTSTR pszResourceText;
-    *pnResourceLength =
-        ::LoadString(m_hModuleWithResource, nStringResourceId, reinterpret_cast<LPTSTR> (&pszResourceText), 0);
-    if (*pnResourceLength)
+    *resourceString = nullptr;
+    bool result = false;
+    LPTSTR resourceText;
+    *resourceLength = ::LoadString(m_moduleWithResource, stringResourceId, reinterpret_cast<LPTSTR> (&resourceText), 0);
+    if (*resourceLength)
     {
-        *ppszResourceString = new TCHAR[*pnResourceLength + 1];
-        if (*ppszResourceString)
+        *resourceString = new TCHAR[*resourceLength + 1];
+        if (*resourceString)
         {
-            _tcsncpy_s(*ppszResourceString, *pnResourceLength + 1, pszResourceText, *pnResourceLength);
-            bResult = true;
+            _tcsncpy_s(*resourceString, *resourceLength + 1, resourceText, *resourceLength);
+            result = true;
         }
     }
 
-    return bResult;
+    return result;
 }
 
 
 /**
- * Loads a string resource from the m_hModuleWithResource module. If any error has occurred result is empty pointer.
+ * Loads a string resource from the m_moduleWithResource module. If any error has occurred result is empty pointer.
  *
  * Parameters:
- * >nStringResourceId
+ * >stringResourceId
  * Specifies the integer identifier of the string to be loaded.
  *
  * Returns:
  * Unique pointer to a STLADD string_type object instance. Can be empty pointer.
  */
-STLADD string_unique_ptr_t string_util::loadString(_In_ UINT nStringResourceId) const
+STLADD string_unique_ptr_t string_util::loadString(_In_ UINT stringResourceId) const
 {
-    LPCTSTR pszText;
-    size_t nLength;
-    if (loadReadOnlyString(nStringResourceId, &pszText, &nLength))
+    LPCTSTR text;
+    size_t length;
+    if (loadReadOnlyString(stringResourceId, &text, &length))
     {
-        return std::make_unique<STLADD string_type>(pszText, nLength);
+        return std::make_unique<STLADD string_type>(text, length);
     }
     else
     {
@@ -182,44 +181,41 @@ STLADD string_unique_ptr_t string_util::loadString(_In_ UINT nStringResourceId) 
 
 
 /**
- * Loads a string resource from the m_hModuleWithResource module and returns read-only pointer to the resource itself.
+ * Loads a string resource from the m_moduleWithResource module and returns read-only pointer to the resource itself.
  *
  * Parameters:
- * >nStringResourceId
+ * >stringResourceId
  * Specifies the integer identifier of the string to be loaded.
- * >ppszResourceString
+ * >resourceString
  * Receives a _read-only_ pointer to the resource itself. This pointer is valid only when the method returns true value.
- * In all other cases the loadReadOnlyString method sets the '*ppszResourceString' to nullptr.
- * A caller must not change content of the *ppszResourceString string 'cause this is DIRECT pointer to the resource
+ * In all other cases the loadReadOnlyString method sets the '*resourceString' to nullptr.
+ * A caller must not change content of the *resourceString string 'cause this is DIRECT pointer to the resource
  * itself. Of course, this ain't NULL terminated string.
- * >pnResourceLength
+ * >resourceLength
  * Pointer to variable that receives resource string length in TCHARs. Caller should ignore this value when the
  * 'loadReadOnlyString' failed.
  *
  * Returns:
  * true value in case of success, false -- otherwise.
- * The ppszResourceString contains read-only pointer to the resource itself; caller must not try to free this buffer.
+ * The resourceString contains read-only pointer to the resource itself; caller must not try to free this buffer.
  */
 _Success_(return) bool string_util::loadReadOnlyString(
-    _In_ UINT nStringResourceId,
-    _Outptr_result_z_ LPCTSTR* ppszResourceString,
-    _Out_ size_t* pnResourceLength) const
+    _In_ UINT stringResourceId,
+    _Outptr_result_z_ LPCTSTR* resourceString,
+    _Out_ size_t* resourceLength) const
 {
-    bool bResult;
-    LPTSTR pszPointer;
-    *pnResourceLength =
-        ::LoadString(m_hModuleWithResource, nStringResourceId, reinterpret_cast<LPTSTR> (&pszPointer), 0);
-    if (*pnResourceLength)
+    LPTSTR p;
+    *resourceLength = ::LoadString(m_moduleWithResource, stringResourceId, reinterpret_cast<LPTSTR> (&p), 0);
+    if (*resourceLength)
     {
-        *ppszResourceString = pszPointer;
-        bResult = true;
+        *resourceString = p;
+        return true;
     }
     else
     {
-        *ppszResourceString = nullptr;
-        bResult = false;
+        *resourceString = nullptr;
+        return false;
     }
-    return bResult;
 }
 
 
@@ -228,60 +224,57 @@ _Success_(return) bool string_util::loadReadOnlyString(
  * Format string from resource should have only one "%s" field and this field only.
  *
  * Parameters:
- * >nResultFormatId
+ * >resultFormatId
  * Resource identifier of string, that holds format-control string. This member checks it after loading from
  * resource and fails when that formatting string has fields other than "%s", or doesn't have "%s" at all, or
  * has more than one "%s" field.
- * >pszArgument
+ * >argument
  * NULL-terminated string -- argument for the "%s" field in the formatting string.
- * >nArgumentLength
- * Length of the pszArgument NOT including NULL-terminating character.
- * >ppszResult
+ * >argumentLength
+ * Length of the argument NOT including NULL-terminating character.
+ * >string
  * Address of variable, that receives address of formatted (result) string. This member allocates this buffer and
  * it's a caller's responsibility to free it. Of course, when the method fails, caller must ignore values of this and
  * the next parameters.
- * >pnResultLength
+ * >resultLength
  * Pointer to variable that receives length of resultant formatted string. This value DOES NOT include NULL-terminating
  * character. Caller can pass NULL pointer here.
  *
  * Returns:
- * true value in case of success, false -- otherwise. In the first case caller should free the *ppszResult buffer
+ * true value in case of success, false -- otherwise. In the first case caller should free the *string buffer
  * w/ memory_manager::free<LPTSTR> method.
  */
 _Success_(return)
 bool string_util::formatOneStringField(
-    _In_ UINT nResultFormatId,
-    _In_z_ LPCTSTR pszArgument,
-    _In_ size_t nArgumentLength,
+    _In_ UINT resultFormatId,
+    _In_z_ LPCTSTR argument,
+    _In_ size_t argumentLength,
     _When_(0 != return, _Outptr_result_z_)
-    _When_(0 == return, _Outptr_result_maybenull_z_) LPTSTR* ppszResult,
-    _Out_opt_ size_t* pnResultLength) const
+    _When_(0 == return, _Outptr_result_maybenull_z_) LPTSTR* string,
+    _Out_opt_ size_t* resultLength) const
 {
-    size_t nNotUsedResultLength;
-    if (!pnResultLength)
+    size_t notUsedResultLength;
+    if (!resultLength)
     {
-        pnResultLength = &nNotUsedResultLength;
+        resultLength = &notUsedResultLength;
     }
-    *ppszResult = nullptr;
-    bool bResult = false;
-    LPTSTR pszResultFormat;
-    if (loadString(nResultFormatId, &pszResultFormat, pnResultLength))
+    *string = nullptr;
+    bool result = false;
+    LPTSTR resultFormat;
+    if (loadString(resultFormatId, &resultFormat, resultLength))
     {
-        STLADD t_char_unique_ptr_t guard {pszResultFormat};
+        STLADD t_char_unique_ptr_t guard {resultFormat};
         const STLADD regex_type regexOfFormat(TEXT("(?:[^%]*)(?:%s){1,1}(?:[^%]*)"));
-        if (std::regex_match(pszResultFormat, pszResultFormat + (*pnResultLength), regexOfFormat))
+        if (std::regex_match(resultFormat, resultFormat + (*resultLength), regexOfFormat))
         {
-            *pnResultLength += (nArgumentLength - 1);
-            *ppszResult = new TCHAR[*pnResultLength];
-            if (*ppszResult)
-            {
-                _stprintf_s(*ppszResult, *pnResultLength, pszResultFormat, pszArgument);
-                --(*pnResultLength);
-                bResult = true;
-            }
+            *resultLength += argumentLength - 1;
+            *string = new TCHAR[*resultLength];
+            _stprintf_s(*string, *resultLength, resultFormat, argument);
+            --(*resultLength);
+            result = true;
         }
     }
-    return bResult;
+    return result;
 }
 
 
@@ -292,20 +285,20 @@ bool string_util::formatOneStringField(
  * When return value is not NULL, a caller have to free that memory w/ call to the freeString member.
  *
  * Parameters:
- * >pSystemTime
+ * >systemTime
  * System time to be converted to string representation.
- * >bUseLongDateFormat
+ * >useLongDateFormat
  * Pass true to use long date format (the LOCALE_SLONGDATE) in the result; false to use the short one (the
  * LOCALE_SSHORTDATE).
- * >bSearchForTwoDigitsFormat
+ * >searchForTwoDigitsFormat
  * Pass true to force the method to search a value for the LOCALE_SLONGDATE/LOCALE_SSHORTDATE format where year part has
  * only two digits. Pass false to use the first value of the LOCALE_SLONGDATE/LOCALE_SSHORTDATE format.
  * I don't believe one can find the LOCALE_SLONGDATE format w/ year part two digits long in _default_ locale settings.
- * >ppszString
+ * >string
  * Pointer to variable, that receives address of string buffer w/ result. This buffer is allocated by this method, and
  * when it completes its works successfully it is a caller responsibility to free that memory with `delete` operator.
  * But when the method fails a caller must ignore this and the next out parameters.
- * >pnStringLength
+ * >stringLength
  * Pointer to variable that receives string result length not including NULL-terminating character. Caller can pass
  * NULL pointer here.
  *
@@ -317,271 +310,275 @@ bool string_util::formatOneStringField(
  */
 _Success_(return)
 bool string_util::convertSystemTimeToString(
-    _In_ const SYSTEMTIME* pSystemTime,
-    _In_ const bool bUseLongDateFormat,
-    _In_ const bool bSearchForTwoDigitsFormat,
+    _In_ const SYSTEMTIME* systemTime,
+    _In_ const bool useLongDateFormat,
+    _In_ const bool searchForTwoDigitsFormat,
     _When_(0 != return, _Outptr_result_z_)
-    _When_(0 == return, _Outptr_result_maybenull_z_) LPTSTR* const ppszString,
-    _Out_opt_ size_t* pnStringLength) const
+    _When_(0 == return, _Outptr_result_maybenull_z_) LPTSTR* const string,
+    _Out_opt_ size_t* stringLength) const
 {
     using enum_date_formats_ex_ex_func_t = BOOL (WINAPI *)(
         _In_ DATEFMT_ENUMPROCEXEX, _In_opt_ LPCWSTR, _In_ DWORD, _In_ LPARAM);
     using enum_date_formats_ex_func_t = BOOL (WINAPI *)(_In_ DATEFMT_ENUMPROCEXW, _In_ LCID, _In_ DWORD);
 
-    using get_date_format_ex_func_t = int (WINAPI *)(_In_opt_ LPCWSTR,
-                                                     _In_ DWORD,
-                                                     _In_opt_ CONST SYSTEMTIME*,
-                                                     _In_opt_ LPCWSTR,
-                                                     _Out_writes_opt_(cchDate) LPWSTR,
-                                                     _In_ int cchDate,
-                                                     _In_opt_ LPCWSTR);
-    using get_date_format_func_t = int (WINAPI *)(_In_ LCID,
-                                                  _In_ DWORD,
-                                                  _In_opt_ CONST SYSTEMTIME*,
-                                                  _In_opt_ LPCWSTR,
-                                                  _Out_writes_opt_(cchDate) LPWSTR,
-                                                  _In_ int cchDate);
-    using get_time_format_ex_func_t = int (WINAPI *)(_In_opt_ LPCWSTR,
-                                                     _In_ DWORD,
-                                                     _In_opt_ CONST SYSTEMTIME*,
-                                                     _In_opt_ LPCWSTR,
-                                                     _Out_writes_opt_(cchTime) LPWSTR,
-                                                     _In_ int cchTime);
-    using get_time_format_func_t = int (WINAPI *)(_In_ LCID,
-                                                  _In_ DWORD,
-                                                  _In_opt_ CONST SYSTEMTIME*,
-                                                  _In_opt_ LPCWSTR,
-                                                  _Out_writes_opt_(cchTime) LPWSTR,
-                                                  _In_ int cchTime);
+    using get_date_format_ex_func_t = int (WINAPI *)(
+        _In_opt_ LPCWSTR,
+        _In_ DWORD,
+        _In_opt_ CONST SYSTEMTIME*,
+        _In_opt_ LPCWSTR,
+        _Out_writes_opt_(cchDate) LPWSTR,
+        _In_ int cchDate,
+        _In_opt_ LPCWSTR);
+    using get_date_format_func_t = int (WINAPI *)(
+        _In_ LCID,
+        _In_ DWORD,
+        _In_opt_ CONST SYSTEMTIME*,
+        _In_opt_ LPCWSTR,
+        _Out_writes_opt_(cchDate) LPWSTR,
+        _In_ int cchDate);
+    using get_time_format_ex_func_t = int (WINAPI *)(
+        _In_opt_ LPCWSTR,
+        _In_ DWORD,
+        _In_opt_ CONST SYSTEMTIME*,
+        _In_opt_ LPCWSTR,
+        _Out_writes_opt_(cchTime) LPWSTR,
+        _In_ int cchTime);
+    using get_time_format_func_t = int (WINAPI *)(
+        _In_ LCID,
+        _In_ DWORD,
+        _In_opt_ CONST SYSTEMTIME*,
+        _In_opt_ LPCWSTR,
+        _Out_writes_opt_(cchTime) LPWSTR,
+        _In_ int cchTime);
 
-    get_locale_info_ex_func_t pGetLocaleInfoEx = nullptr;
-    get_locale_info_func_t pGetLocaleInfo = nullptr;
-    enum_date_formats_ex_ex_func_t pEnumDateFormatsExEx = nullptr;
-    enum_date_formats_ex_func_t pEnumDateFormatsEx = nullptr;
-    get_date_format_ex_func_t pGetDateFormatEx = nullptr;
-    get_date_format_func_t pGetDateFormat = nullptr;
-    get_time_format_ex_func_t pGetTimeFormatEx = nullptr;
-    get_time_format_func_t pGetTimeFormat = nullptr;
+    get_locale_info_ex_func_t getLocaleInfoEx = nullptr;
+    get_locale_info_func_t getLocaleInfo = nullptr;
+    enum_date_formats_ex_ex_func_t enumDateFormatsExEx = nullptr;
+    enum_date_formats_ex_func_t enumDateFormatsEx = nullptr;
+    get_date_format_ex_func_t getDateFormatEx = nullptr;
+    get_date_format_func_t getDateFormat = nullptr;
+    get_time_format_ex_func_t getTimeFormatEx = nullptr;
+    get_time_format_func_t getTimeFormat = nullptr;
 
-    bool bWindowsVistaOrLater = false;
-    HMODULE hKernel32 = nullptr;
-    if (GetModuleHandleEx(0, TEXT("kernel32.dll"), &hKernel32) && hKernel32)
+    bool vistaOrLater = false;
+    HMODULE kernel32 = nullptr;
+    if (GetModuleHandleEx(0, TEXT("kernel32.dll"), &kernel32) && kernel32)
     {
-        pGetLocaleInfoEx = getFunction<get_locale_info_ex_func_t>(nullptr, "GetLocaleInfoEx", hKernel32);
-        pEnumDateFormatsExEx = getFunction<enum_date_formats_ex_ex_func_t>(nullptr, "EnumDateFormatsExEx", hKernel32);
-        pGetDateFormatEx = getFunction<get_date_format_ex_func_t>(nullptr, "GetDateFormatEx", hKernel32);
-        pGetTimeFormatEx = getFunction<get_time_format_ex_func_t>(nullptr, "GetTimeFormatEx", hKernel32);
-        bWindowsVistaOrLater = (pGetLocaleInfoEx && pEnumDateFormatsExEx && pGetDateFormatEx && pGetTimeFormatEx);
-        if (!bWindowsVistaOrLater)
+        getLocaleInfoEx = getFunction<get_locale_info_ex_func_t>(nullptr, "GetLocaleInfoEx", kernel32);
+        enumDateFormatsExEx = getFunction<enum_date_formats_ex_ex_func_t>(nullptr, "EnumDateFormatsExEx", kernel32);
+        getDateFormatEx = getFunction<get_date_format_ex_func_t>(nullptr, "GetDateFormatEx", kernel32);
+        getTimeFormatEx = getFunction<get_time_format_ex_func_t>(nullptr, "GetTimeFormatEx", kernel32);
+        vistaOrLater = (getLocaleInfoEx && enumDateFormatsExEx && getDateFormatEx && getTimeFormatEx);
+        if (!vistaOrLater)
         {
 #if defined(_UNICODE)
-            pGetLocaleInfo = getFunction<get_locale_info_func_t>(nullptr, "GetLocaleInfoW", hKernel32);
-            pEnumDateFormatsEx = getFunction<enum_date_formats_ex_func_t>(nullptr, "EnumDateFormatsExW", hKernel32);
-            pGetDateFormat = getFunction<get_date_format_func_t>(nullptr, "GetDateFormatW", hKernel32);
-            pGetTimeFormat = getFunction<get_time_format_func_t>(nullptr, "GetTimeFormatW", hKernel32);
+            getLocaleInfo = getFunction<get_locale_info_func_t>(nullptr, "GetLocaleInfoW", kernel32);
+            enumDateFormatsEx = getFunction<enum_date_formats_ex_func_t>(nullptr, "EnumDateFormatsExW", kernel32);
+            getDateFormat = getFunction<get_date_format_func_t>(nullptr, "GetDateFormatW", kernel32);
+            getTimeFormat = getFunction<get_time_format_func_t>(nullptr, "GetTimeFormatW", kernel32);
 #else
-            pGetLocaleInfo = getFunction<get_locale_info_func_t>(nullptr, "GetLocaleInfoA", hKernel32);
-            pEnumDateFormatsEx = getFunction<enum_date_formats_ex_func_t>(nullptr, "EnumDateFormatsExA", hKernel32);
-            pGetDateFormat = getFunction<get_date_format_func_t>(nullptr, "GetDateFormatA", hKernel32);
-            pGetTimeFormat = getFunction<get_time_format_func_t>(nullptr, "GetTimeFormatA", hKernel32);
+            getLocaleInfo = getFunction<get_locale_info_func_t>(nullptr, "GetLocaleInfoA", kernel32);
+            enumDateFormatsEx = getFunction<enum_date_formats_ex_func_t>(nullptr, "EnumDateFormatsExA", kernel32);
+            getDateFormat = getFunction<get_date_format_func_t>(nullptr, "GetDateFormatA", kernel32);
+            getTimeFormat = getFunction<get_time_format_func_t>(nullptr, "GetTimeFormatA", kernel32);
 #endif
-            // Well, the pGetLocaleInfo, pEnumDateFormatsEx, pGetDateFormat and pGetTimeFormat must be valid here.
+            // Well, the getLocaleInfo, enumDateFormatsEx, getDateFormat and getTimeFormat must be valid here.
             // I don't check it.
         }
     }
 
-    size_t nNotUsedResultLength;
-    if (!pnStringLength)
+    size_t notUsedResultLength;
+    if (!stringLength)
     {
-        pnStringLength = &nNotUsedResultLength;
+        stringLength = &notUsedResultLength;
     }
-    *pnStringLength = 0;
-    bool bResult = false;
-    if (bWindowsVistaOrLater || (pGetLocaleInfo && pEnumDateFormatsEx && pGetDateFormat && pGetTimeFormat))
+    *stringLength = 0;
+    bool result = false;
+    if (vistaOrLater || (getLocaleInfo && enumDateFormatsEx && getDateFormat && getTimeFormat))
     {
-        LCTYPE nLocaleDateFormat = bUseLongDateFormat ? LOCALE_SLONGDATE : LOCALE_SSHORTDATE;
-        int nFormatLength = (pGetLocaleInfoEx ?
-                            (pGetLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT, nLocaleDateFormat, nullptr, 0) :
-                            (pGetLocaleInfo)(LOCALE_USER_DEFAULT, nLocaleDateFormat, nullptr, 0));
-        if (nFormatLength)
+        LCTYPE localeDateFormat = useLongDateFormat ? LOCALE_SLONGDATE : LOCALE_SSHORTDATE;
+        int formatLength =
+            (getLocaleInfoEx ?
+            (getLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT, localeDateFormat, nullptr, 0) :
+            (getLocaleInfo)(LOCALE_USER_DEFAULT, localeDateFormat, nullptr, 0));
+        if (formatLength)
         {
-            STLADD t_char_unique_ptr_t format {new TCHAR[nFormatLength]};
-            LPTSTR pszFormat {format.get()};
-            if (pGetLocaleInfoEx)
+            STLADD t_char_unique_ptr_t formatGuard {new TCHAR[formatLength]};
+            LPTSTR format {formatGuard.get()};
+            if (getLocaleInfoEx)
             {
-                if (!(pGetLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT, nLocaleDateFormat, pszFormat, nFormatLength))
+                if (!(getLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT, localeDateFormat, format, formatLength))
                 {
-                    format.reset();
-                    pszFormat = nullptr;
+                    formatGuard.reset();
+                    format = nullptr;
                 }
             }
             else
             {
-                if (!(pGetLocaleInfo)(LOCALE_USER_DEFAULT, nLocaleDateFormat, pszFormat, nFormatLength))
+                if (!(getLocaleInfo)(LOCALE_USER_DEFAULT, localeDateFormat, format, formatLength))
                 {
-                    format.reset();
-                    pszFormat = nullptr;
+                    formatGuard.reset();
+                    format = nullptr;
                 }
             }
 
-            DWORD nFlags = bUseLongDateFormat ? DATE_LONGDATE : DATE_SHORTDATE;
-            if (bSearchForTwoDigitsFormat)
+            DWORD flags = useLongDateFormat ? DATE_LONGDATE : DATE_SHORTDATE;
+            if (searchForTwoDigitsFormat)
             {
-                if (nullptr != pszFormat)
+                if (nullptr != format)
                 {
-                    // Check if the pszFormat formatting string has only two-digits year type.
+                    // Check if the format formatting string has only two-digits year type.
                     const STLADD regex_type regexOfFormat {TEXT("(?:^yy[^y].*)|(?:.*[^y]yy[^y].*)|(?:.*[^y]yy$)")};
-                    if (!std::regex_match(pszFormat, pszFormat + nFormatLength, regexOfFormat))
+                    if (!std::regex_match(format, format + formatLength, regexOfFormat))
                     {
-                        format.reset();
-                        pszFormat = nullptr;
+                        formatGuard.reset();
+                        format = nullptr;
                     }
                 }
 
-                if (nullptr == pszFormat)
+                if (nullptr == format)
                 {
                     /*
                      * Search other, non-default LOCALE_SSHORTDATE formatting string.
                      * The m_pszEnumDateFormatsProcExData data memeber is used by the
                      * `string_util::enumDateFormatsProcEx` static method.
                      */
-                    m_ppszEnumDateFormatsProcExData = &pszFormat;
-                    BOOL bEnumResult =
-                        pEnumDateFormatsExEx ?
-                        (pEnumDateFormatsExEx)(enumDateFormatsProcExEx,
-                                               LOCALE_NAME_USER_DEFAULT,
-                                               nFlags,
-                                               reinterpret_cast<LPARAM> (&pszFormat)) :
-                        (pEnumDateFormatsEx)(enumDateFormatsProcEx, LOCALE_USER_DEFAULT, nFlags);
-                    if (!bEnumResult && pszFormat)
+                    m_enumDateFormatsProcExData = &format;
+                    BOOL enumResult =
+                        enumDateFormatsExEx ?
+                        (enumDateFormatsExEx)(enumDateFormatsProcExEx,
+                                              LOCALE_NAME_USER_DEFAULT,
+                                              flags,
+                                              reinterpret_cast<LPARAM> (&format)) :
+                        (enumDateFormatsEx)(enumDateFormatsProcEx, LOCALE_USER_DEFAULT, flags);
+                    if (!enumResult && format)
                     {
-                        format.reset();
-                        pszFormat = nullptr;
+                        formatGuard.reset();
+                        format = nullptr;
                     }
                 }
             }
 
-            // Use found or standard formatting string to format the pSystemTime.
-            const DWORD nGetDateFlags = pszFormat ? 0 : nFlags;
-            STLADD string_unique_ptr_t szListSeparator = getListSeparator();
-            size_t nSplitterLength = szListSeparator->size();
-            size_t nDateBufferSize;
-            // Shut the C4701 down ("potentially uninitialized local variable 'nTimeBufferSize' used").
-            size_t nTimeBufferSize = 0;
+            // Use found or standard formatting string to format the systemTime.
+            const DWORD getDateFlags = format ? 0 : flags;
+            STLADD string_unique_ptr_t listSeparator = getListSeparator();
+            size_t splitterLength = listSeparator->size();
+            size_t dateBufferSize;
+            // Shut the C4701 down ("potentially uninitialized local variable 'timeBufferSize' used").
+            size_t timeBufferSize = 0;
             // Calculate buffer size big enough to hold date, time and list separator.
-            if (pGetDateFormatEx)
+            if (getDateFormatEx)
             {
-                nDateBufferSize = (pGetDateFormatEx)(
-                    LOCALE_NAME_USER_DEFAULT, nGetDateFlags, pSystemTime, pszFormat, nullptr, 0, nullptr);
-                if (nDateBufferSize)
+                dateBufferSize = (getDateFormatEx)(
+                    LOCALE_NAME_USER_DEFAULT, getDateFlags, systemTime, format, nullptr, 0, nullptr);
+                if (dateBufferSize)
                 {
-                    nTimeBufferSize = (pGetTimeFormatEx)(
-                        LOCALE_NAME_USER_DEFAULT, TIME_NOSECONDS, pSystemTime, nullptr, nullptr, 0);
-                    if (nTimeBufferSize)
+                    timeBufferSize = (getTimeFormatEx)(
+                        LOCALE_NAME_USER_DEFAULT, TIME_NOSECONDS, systemTime, nullptr, nullptr, 0);
+                    if (timeBufferSize)
                     {
-                        *pnStringLength = nDateBufferSize + nTimeBufferSize - 1 + nSplitterLength;
+                        *stringLength = dateBufferSize + timeBufferSize - 1 + splitterLength;
                     }
                     else
                     {
-                        *pnStringLength = 0;
+                        *stringLength = 0;
                     }
                 }
                 else
                 {
-                    *pnStringLength = 0;
+                    *stringLength = 0;
                 }
             }
             else
             {
                 // "Pre-Vista" path.
-                nDateBufferSize = (pGetDateFormat)(
-                    LOCALE_USER_DEFAULT, nGetDateFlags, pSystemTime, pszFormat, nullptr, 0);
-                if (nDateBufferSize)
+                dateBufferSize = (getDateFormat)(LOCALE_USER_DEFAULT, getDateFlags, systemTime, format, nullptr, 0);
+                if (dateBufferSize)
                 {
-                    nTimeBufferSize = (pGetTimeFormat)(
-                        LOCALE_USER_DEFAULT, TIME_NOSECONDS, pSystemTime, nullptr, nullptr, 0);
-                    if (nTimeBufferSize)
+                    timeBufferSize =
+                        (getTimeFormat)(LOCALE_USER_DEFAULT, TIME_NOSECONDS, systemTime, nullptr, nullptr, 0);
+                    if (timeBufferSize)
                     {
-                        *pnStringLength = nDateBufferSize + nTimeBufferSize - 1 + nSplitterLength;
+                        *stringLength = dateBufferSize + timeBufferSize - 1 + splitterLength;
                     }
                     else
                     {
-                        *pnStringLength = 0;
+                        *stringLength = 0;
                     }
                 }
                 else
                 {
-                    *pnStringLength = 0;
+                    *stringLength = 0;
                 }
             }
-            if (*pnStringLength)
+            if (*stringLength)
             {
-                *ppszString = new TCHAR[*pnStringLength];
-                if (pGetDateFormatEx)
+                *string = new TCHAR[*stringLength];
+                if (getDateFormatEx)
                 {
-                    nDateBufferSize = (pGetDateFormatEx)(
+                    dateBufferSize = (getDateFormatEx)(
                         LOCALE_NAME_USER_DEFAULT,
-                        nGetDateFlags,
-                        pSystemTime,
-                        pszFormat,
-                        *ppszString,
-                        static_cast<int> (nDateBufferSize),
+                        getDateFlags,
+                        systemTime,
+                        format,
+                        *string,
+                        static_cast<int> (dateBufferSize),
                         nullptr);
-                    if (nDateBufferSize)
+                    if (dateBufferSize)
                     {
-                        _tcscat_s(*ppszString, *pnStringLength, szListSeparator->c_str());
-                        nTimeBufferSize = (pGetTimeFormatEx)(
+                        _tcscat_s(*string, *stringLength, listSeparator->c_str());
+                        timeBufferSize = (getTimeFormatEx)(
                             LOCALE_NAME_USER_DEFAULT,
                             TIME_NOSECONDS,
-                            pSystemTime,
+                            systemTime,
                             nullptr,
-                            (*ppszString) + nDateBufferSize + nSplitterLength - 1,
-                            static_cast<int> (nTimeBufferSize));
+                            (*string) + dateBufferSize + splitterLength - 1,
+                            static_cast<int> (timeBufferSize));
                     }
                 }
                 else
                 {
-                    nDateBufferSize = (pGetDateFormat)(
+                    dateBufferSize = (getDateFormat)(
                         LOCALE_USER_DEFAULT,
-                        nGetDateFlags,
-                        pSystemTime,
-                        pszFormat,
-                        *ppszString,
-                        static_cast<int> (nDateBufferSize));
-                    if (nDateBufferSize)
+                        getDateFlags,
+                        systemTime,
+                        format,
+                        *string,
+                        static_cast<int> (dateBufferSize));
+                    if (dateBufferSize)
                     {
-                        _tcscat_s(*ppszString, *pnStringLength, szListSeparator->c_str());
-                        nTimeBufferSize = (pGetTimeFormat)(
+                        _tcscat_s(*string, *stringLength, listSeparator->c_str());
+                        timeBufferSize = (getTimeFormat)(
                             LOCALE_USER_DEFAULT,
                             TIME_NOSECONDS,
-                            pSystemTime,
+                            systemTime,
                             nullptr,
-                            (*ppszString) + nDateBufferSize + nSplitterLength - 1,
-                            static_cast<int> (nTimeBufferSize));
+                            (*string) + dateBufferSize + splitterLength - 1,
+                            static_cast<int> (timeBufferSize));
                     }
                 }
-                if (nDateBufferSize && nTimeBufferSize)
+                if (dateBufferSize && timeBufferSize)
                 {
                     // Exclude NULL terminating character.
-                    --(*pnStringLength);
-                    bResult = true;
+                    --(*stringLength);
+                    result = true;
                 }
                 else
                 {
                     // Error has occurred.
-                    delete[] *ppszString;
-                    *ppszString = nullptr;
-                    *pnStringLength = 0;
+                    delete[] *string;
+                    *string = nullptr;
+                    *stringLength = 0;
                 }
             }
         }
     }
-    if (nullptr != hKernel32)
+    if (nullptr != kernel32)
     {
-        FreeLibrary(hKernel32);
+        FreeLibrary(kernel32);
     }
 
-    return bResult;
+    return result;
 }
 
 
@@ -591,20 +588,20 @@ bool string_util::convertSystemTimeToString(
  * or GetTimeFormat function for old systems.
  *
  * Parameters:
- * >pSystemTime
+ * >systemTime
  * System time to be converted to string representation.
- * >bUseLongDateFormat
+ * >useLongDateFormat
  * Pass true to use long date format (the LOCALE_SLONGDATE) in the result; false to use the short one (the
  * LOCALE_SSHORTDATE).
- * >bSearchForTwoDigitsFormat
+ * >searchForTwoDigitsFormat
  * Pass true to force the method to search a value for the LOCALE_SLONGDATE/LOCALE_SSHORTDATE format where year part has
  * only two digits. Pass false to use the first value of the LOCALE_SLONGDATE/LOCALE_SSHORTDATE format.
  * I don't believe one can find the LOCALE_SLONGDATE format w/ year part two digits long in _default_ locale settings.
- * >ppszString
+ * >string
  * Pointer to variable, that receives address of string buffer w/ result. This buffer is allocated by this method, and
  * when it completes its works successfully it is a caller responsibility to free that memory with `delete` opeartor.
  * But when the method fails a caller must ignore this and the next out parameters.
- * >pnStringLength
+ * >stringLength
  * Pointer to variable that receives string result length not including NULL-terminating character. Caller can pass
  * NULL pointer here.
  *
@@ -616,12 +613,12 @@ bool string_util::convertSystemTimeToString(
  */
 _Success_(return)
 bool string_util::convertSystemDateOnlyToString(
-    _In_ const SYSTEMTIME* pSystemTime,
-    _In_ const bool bUseLongDateFormat,
-    _In_ const bool bSearchForTwoDigitsFormat,
+    _In_ const SYSTEMTIME* systemTime,
+    _In_ const bool useLongDateFormat,
+    _In_ const bool searchForTwoDigitsFormat,
     _When_(0 != return, _Outptr_result_z_)
-    _When_(0 == return, _Outptr_result_maybenull_z_) LPTSTR* const ppszString,
-    _Out_opt_ size_t* pnStringLength) const
+    _When_(0 == return, _Outptr_result_maybenull_z_) LPTSTR* const string,
+    _Out_opt_ size_t* stringLength) const
 {
     using enum_date_formats_ex_ex_func_t = BOOL (WINAPI *)(
         _In_ DATEFMT_ENUMPROCEXEX, _In_opt_ LPCWSTR, _In_ DWORD, _In_ LPARAM);
@@ -643,163 +640,163 @@ bool string_util::convertSystemDateOnlyToString(
         _Out_writes_opt_(cchDate) LPWSTR,
         _In_ int cchDate);
 
-    get_locale_info_ex_func_t pGetLocaleInfoEx = nullptr;
-    get_locale_info_func_t pGetLocaleInfo = nullptr;
-    enum_date_formats_ex_ex_func_t pEnumDateFormatsExEx = nullptr;
-    enum_date_formats_ex_func_t pEnumDateFormatsEx = nullptr;
-    get_date_format_ex_func_t pGetDateFormatEx = nullptr;
-    get_date_format_func_t pGetDateFormat = nullptr;
+    get_locale_info_ex_func_t getLocaleInfoEx = nullptr;
+    get_locale_info_func_t getLocaleInfo = nullptr;
+    enum_date_formats_ex_ex_func_t enumDateFormatsExEx = nullptr;
+    enum_date_formats_ex_func_t enumDateFormatsEx = nullptr;
+    get_date_format_ex_func_t getDateFormatEx = nullptr;
+    get_date_format_func_t getDateFormat = nullptr;
 
-    bool bWindowsVistaOrLater = false;
-    HMODULE hKernel32 = nullptr;
-    if (GetModuleHandleEx(0, TEXT("kernel32.dll"), &hKernel32) && hKernel32)
+    bool vistaOrLater = false;
+    HMODULE kernel32 = nullptr;
+    if (GetModuleHandleEx(0, TEXT("kernel32.dll"), &kernel32) && kernel32)
     {
-        pGetLocaleInfoEx = getFunction<get_locale_info_ex_func_t>(nullptr, "GetLocaleInfoEx", hKernel32);
-        pEnumDateFormatsExEx = getFunction<enum_date_formats_ex_ex_func_t>(nullptr, "EnumDateFormatsExEx", hKernel32);
-        pGetDateFormatEx = getFunction<get_date_format_ex_func_t>(nullptr, "GetDateFormatEx", hKernel32);
-        bWindowsVistaOrLater = (pGetLocaleInfoEx && pEnumDateFormatsExEx && pGetDateFormatEx);
-        if (!bWindowsVistaOrLater)
+        getLocaleInfoEx = getFunction<get_locale_info_ex_func_t>(nullptr, "GetLocaleInfoEx", kernel32);
+        enumDateFormatsExEx = getFunction<enum_date_formats_ex_ex_func_t>(nullptr, "EnumDateFormatsExEx", kernel32);
+        getDateFormatEx = getFunction<get_date_format_ex_func_t>(nullptr, "GetDateFormatEx", kernel32);
+        vistaOrLater = (getLocaleInfoEx && enumDateFormatsExEx && getDateFormatEx);
+        if (!vistaOrLater)
         {
 #if defined(_UNICODE)
-            pGetLocaleInfo = getFunction<get_locale_info_func_t>(nullptr, "GetLocaleInfoW", hKernel32);
-            pEnumDateFormatsEx = getFunction<enum_date_formats_ex_func_t>(nullptr, "EnumDateFormatsExW", hKernel32);
-            pGetDateFormat = getFunction<get_date_format_func_t>(nullptr, "GetDateFormatW", hKernel32);
+            getLocaleInfo = getFunction<get_locale_info_func_t>(nullptr, "GetLocaleInfoW", kernel32);
+            enumDateFormatsEx = getFunction<enum_date_formats_ex_func_t>(nullptr, "EnumDateFormatsExW", kernel32);
+            getDateFormat = getFunction<get_date_format_func_t>(nullptr, "GetDateFormatW", kernel32);
 #else
-            pGetLocaleInfo = getFunction<get_locale_info_func_t>(nullptr, "GetLocaleInfoA", hKernel32);
-            pEnumDateFormatsEx = getFunction<enum_date_formats_ex_func_t>(nullptr, "EnumDateFormatsExA", hKernel32);
-            pGetDateFormat = getFunction<get_date_format_func_t>(nullptr, "GetDateFormatA", hKernel32);
+            getLocaleInfo = getFunction<get_locale_info_func_t>(nullptr, "GetLocaleInfoA", kernel32);
+            enumDateFormatsEx = getFunction<enum_date_formats_ex_func_t>(nullptr, "EnumDateFormatsExA", kernel32);
+            getDateFormat = getFunction<get_date_format_func_t>(nullptr, "GetDateFormatA", kernel32);
 #endif
-            // Well, the pGetLocaleInfo, pEnumDateFormatsEx and pGetDateFormat must be valid here. I don't check it.
+            // Well, the getLocaleInfo, enumDateFormatsEx and getDateFormat must be valid here. I don't check it.
         }
     }
 
-    size_t nNotUsedResultLength;
-    if (!pnStringLength)
+    size_t notUsedResultLength;
+    if (!stringLength)
     {
-        pnStringLength = &nNotUsedResultLength;
+        stringLength = &notUsedResultLength;
     }
-    bool bResult = false;
-    if (bWindowsVistaOrLater || (pGetLocaleInfo && pEnumDateFormatsEx && pGetDateFormat))
+    bool result = false;
+    if (vistaOrLater || (getLocaleInfo && enumDateFormatsEx && getDateFormat))
     {
-        const LCTYPE nLocaleDateFormat = bUseLongDateFormat ? LOCALE_SLONGDATE : LOCALE_SSHORTDATE;
-        int nFormatLength = (pGetLocaleInfoEx ?
-                            (pGetLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT, nLocaleDateFormat, nullptr, 0) :
-                            (pGetLocaleInfo)(LOCALE_USER_DEFAULT, nLocaleDateFormat, nullptr, 0));
-        if (nFormatLength)
+        const LCTYPE localeDateFormat = useLongDateFormat ? LOCALE_SLONGDATE : LOCALE_SSHORTDATE;
+        int formatLength =
+            (getLocaleInfoEx ?
+            (getLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT, localeDateFormat, nullptr, 0) :
+            (getLocaleInfo)(LOCALE_USER_DEFAULT, localeDateFormat, nullptr, 0));
+        if (formatLength)
         {
-            STLADD t_char_unique_ptr_t format {new TCHAR[nFormatLength]};
-            LPTSTR pszFormat {format.get()};
-            if (pGetLocaleInfoEx)
+            STLADD t_char_unique_ptr_t formatGuard {new TCHAR[formatLength]};
+            LPTSTR format {formatGuard.get()};
+            if (getLocaleInfoEx)
             {
-                if (!(pGetLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT, nLocaleDateFormat, pszFormat, nFormatLength))
+                if (!(getLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT, localeDateFormat, format, formatLength))
                 {
-                    format.reset();
-                    pszFormat = nullptr;
+                    formatGuard.reset();
+                    format = nullptr;
                 }
             }
             else
             {
-                if (!(pGetLocaleInfo)(LOCALE_USER_DEFAULT, nLocaleDateFormat, pszFormat, nFormatLength))
+                if (!(getLocaleInfo)(LOCALE_USER_DEFAULT, localeDateFormat, format, formatLength))
                 {
-                    format.reset();
-                    pszFormat = nullptr;
+                    formatGuard.reset();
+                    format = nullptr;
                 }
             }
 
-            const DWORD nFlags = bUseLongDateFormat ? DATE_LONGDATE : DATE_SHORTDATE;
-            if (bSearchForTwoDigitsFormat)
+            const DWORD flags = useLongDateFormat ? DATE_LONGDATE : DATE_SHORTDATE;
+            if (searchForTwoDigitsFormat)
             {
-                if (nullptr != pszFormat)
+                if (nullptr != format)
                 {
-                    // Check if the pszFormat formatting string has only two-digits year type.
+                    // Check if the format formatting string has only two-digits year type.
                     const STLADD regex_type regexOfFormat {TEXT("(?:^yy[^y].*)|(?:.*[^y]yy[^y].*)|(?:.*[^y]yy$)")};
-                    if (!std::regex_match(pszFormat, pszFormat + nFormatLength, regexOfFormat))
+                    if (!std::regex_match(format, format + formatLength, regexOfFormat))
                     {
-                        format.reset();
-                        pszFormat = nullptr;
+                        formatGuard.reset();
+                        format = nullptr;
                     }
                 }
 
-                if (nullptr == pszFormat)
+                if (nullptr == format)
                 {
                     /*
                      * Search other, non-default LOCALE_SSHORTDATE formatting string.
                      * The m_pszEnumDateFormatsProcExData data memeber is used by the
                      * `string_util::enumDateFormatsProcEx` static method.
                      */
-                    m_ppszEnumDateFormatsProcExData = &pszFormat;
-                    BOOL bEnumResult =
-                        (pEnumDateFormatsExEx ?
-                        (pEnumDateFormatsExEx)(enumDateFormatsProcExEx,
-                                               LOCALE_NAME_USER_DEFAULT,
-                                               nFlags,
-                                               reinterpret_cast<LPARAM> (&pszFormat)) :
-                        (pEnumDateFormatsEx)(enumDateFormatsProcEx, LOCALE_USER_DEFAULT, nFlags));
-                    if (!bEnumResult && pszFormat)
+                    m_enumDateFormatsProcExData = &format;
+                    BOOL enumResult =
+                        (enumDateFormatsExEx ?
+                        (enumDateFormatsExEx)(enumDateFormatsProcExEx,
+                                              LOCALE_NAME_USER_DEFAULT,
+                                              flags,
+                                              reinterpret_cast<LPARAM> (&format)) :
+                        (enumDateFormatsEx)(enumDateFormatsProcEx, LOCALE_USER_DEFAULT, flags));
+                    if (!enumResult && format)
                     {
-                        format.reset();
-                        pszFormat = nullptr;
+                        formatGuard.reset();
+                        format = nullptr;
                     }
                 }
             }
 
-            // Use found or standard formatting string to format the pSystemTime.
-            const DWORD nGetDateFlags = pszFormat ? 0 : nFlags;
-            if (pGetDateFormatEx)
+            // Use found or standard formatting string to format the systemTime.
+            const DWORD getDateFlags = format ? 0 : flags;
+            if (getDateFormatEx)
             {
-                *pnStringLength = (pGetDateFormatEx)(
-                    LOCALE_NAME_USER_DEFAULT, nGetDateFlags, pSystemTime, pszFormat, nullptr, 0, nullptr);
+                *stringLength = (getDateFormatEx)(
+                    LOCALE_NAME_USER_DEFAULT, getDateFlags, systemTime, format, nullptr, 0, nullptr);
             }
             else
             {
-                *pnStringLength = (pGetDateFormat)(
-                    LOCALE_USER_DEFAULT, nGetDateFlags, pSystemTime, pszFormat, nullptr, 0);
+                *stringLength = (getDateFormat)(LOCALE_USER_DEFAULT, getDateFlags, systemTime, format, nullptr, 0);
             }
-            if (*pnStringLength)
+            if (*stringLength)
             {
-                *ppszString = new TCHAR[*pnStringLength];
-                if (pGetDateFormatEx)
+                *string = new TCHAR[*stringLength];
+                if (getDateFormatEx)
                 {
-                    *pnStringLength = (pGetDateFormatEx)(
+                    *stringLength = (getDateFormatEx)(
                         LOCALE_NAME_USER_DEFAULT,
-                        nGetDateFlags,
-                        pSystemTime,
-                        pszFormat,
-                        *ppszString,
-                        static_cast<int> ((*pnStringLength)),
+                        getDateFlags,
+                        systemTime,
+                        format,
+                        *string,
+                        static_cast<int> ((*stringLength)),
                         nullptr);
                 }
                 else
                 {
-                    *pnStringLength = (pGetDateFormat)(
+                    *stringLength = (getDateFormat)(
                         LOCALE_USER_DEFAULT,
-                        nGetDateFlags,
-                        pSystemTime,
-                        pszFormat,
-                        *ppszString,
-                        static_cast<int> ((*pnStringLength)));
+                        getDateFlags,
+                        systemTime,
+                        format,
+                        *string,
+                        static_cast<int> ((*stringLength)));
                 }
-                if (*pnStringLength)
+                if (*stringLength)
                 {
                     // Exclude NULL terminating character.
-                    --(*pnStringLength);
-                    bResult = true;
+                    --(*stringLength);
+                    result = true;
                 }
                 else
                 {
                     // Error has occurred.
-                    delete[] *ppszString;
-                    *ppszString = nullptr;
+                    delete[] *string;
+                    *string = nullptr;
                 }
             }
         }
     }
-    if (nullptr != hKernel32)
+    if (nullptr != kernel32)
     {
-        FreeLibrary(hKernel32);
+        FreeLibrary(kernel32);
     }
 
-    return bResult;
+    return result;
 }
 
 
@@ -809,13 +806,13 @@ bool string_util::convertSystemDateOnlyToString(
  * or GetTimeFormat function for old systems.
  *
  * Parameters:
- * >pSystemTime
+ * >systemTime
  * System time to be converted to string representation.
- * >ppszString
+ * >string
  * Pointer to variable, that receives address of string buffer w/ result. This buffer is allocated by this method, and
  * when it completes its works successfully it is a caller responsibility to free that memory with `delete` operator.
  * But when the method fails a caller must ignore this and the next out parameters.
- * >pnStringLength
+ * >stringLength
  * Pointer to variable that receives string result length not including NULL-terminating character.
  *
  * Returns:
@@ -823,10 +820,10 @@ bool string_util::convertSystemDateOnlyToString(
  */
 _Success_(return)
 bool string_util::convertSystemTimeOnlyToString(
-    _In_ const SYSTEMTIME* pSystemTime,
+    _In_ const SYSTEMTIME* systemTime,
     _When_(0 != return, _Outptr_result_z_)
-    _When_(0 == return, _Outptr_result_maybenull_z_) LPTSTR* const ppszString,
-    _Out_ size_t* pnStringLength) const
+    _When_(0 == return, _Outptr_result_maybenull_z_) LPTSTR* const string,
+    _Out_ size_t* stringLength) const
 {
     using get_time_format_ex_func_t = int (WINAPI *)(
         _In_opt_ LPCWSTR,
@@ -843,74 +840,73 @@ bool string_util::convertSystemTimeOnlyToString(
         _Out_writes_opt_(cchTime) LPWSTR,
         _In_ int cchTime);
 
-    bool bResult = false;
-    get_time_format_func_t pGetTimeFormat = nullptr;
-    HMODULE hKernel32 = nullptr;
-    get_time_format_ex_func_t pGetTimeFormatEx =
-        getFunction<get_time_format_ex_func_t>(TEXT("kernel32.dll"), "GetTimeFormatEx", hKernel32);
-    if (!pGetTimeFormatEx)
+    bool result = false;
+    get_time_format_func_t getTimeFormat = nullptr;
+    HMODULE kernel32 = nullptr;
+    get_time_format_ex_func_t getTimeFormatEx =
+        getFunction<get_time_format_ex_func_t>(TEXT("kernel32.dll"), "GetTimeFormatEx", kernel32);
+    if (!getTimeFormatEx)
     {
 #if defined(_UNICODE)
-        pGetTimeFormat = getFunction<get_time_format_func_t>(TEXT("kernel32.dll"), "GetTimeFormatW", hKernel32);
+        getTimeFormat = getFunction<get_time_format_func_t>(TEXT("kernel32.dll"), "GetTimeFormatW", kernel32);
 #else
-        pGetTimeFormat = getFunction<get_time_format_func_t>(TEXT("kernel32.dll"), "GetTimeFormatA", hKernel32);
+        getTimeFormat = getFunction<get_time_format_func_t>(TEXT("kernel32.dll"), "GetTimeFormatA", kernel32);
 #endif
     }
 
-    *pnStringLength = 0;
-    if (pGetTimeFormatEx)
+    *stringLength = 0;
+    if (getTimeFormatEx)
     {
-        *pnStringLength =
-            (pGetTimeFormatEx)(LOCALE_NAME_USER_DEFAULT, TIME_NOSECONDS, pSystemTime, nullptr, nullptr, 0);
+        *stringLength = (getTimeFormatEx)(LOCALE_NAME_USER_DEFAULT, TIME_NOSECONDS, systemTime, nullptr, nullptr, 0);
     }
-    else if (pGetTimeFormat)
+    else if (getTimeFormat)
     {
         // For system older than Vista(tm).
-        *pnStringLength = (pGetTimeFormat)(LOCALE_USER_DEFAULT, TIME_NOSECONDS, pSystemTime, nullptr, nullptr, 0);
+        *stringLength = (getTimeFormat)(LOCALE_USER_DEFAULT, TIME_NOSECONDS, systemTime, nullptr, nullptr, 0);
     }
-    if (*pnStringLength)
+    if (*stringLength)
     {
-        *ppszString = new TCHAR[*pnStringLength];
-        if (pGetTimeFormatEx)
+        *string = new TCHAR[*stringLength];
+        if (getTimeFormatEx)
         {
-            *pnStringLength = (pGetTimeFormatEx)(
+            *stringLength = (getTimeFormatEx)(
                 LOCALE_NAME_USER_DEFAULT,
                 TIME_NOSECONDS,
-                pSystemTime,
+                systemTime,
                 nullptr,
-                *ppszString,
-                static_cast<int> ((*pnStringLength)));
+                *string,
+                static_cast<int> ((*stringLength)));
         }
-        else if (pGetTimeFormat)
+        else if (getTimeFormat)
         {
-            *pnStringLength = (pGetTimeFormat)(
+            *stringLength = (getTimeFormat)(
                 LOCALE_USER_DEFAULT,
                 TIME_NOSECONDS,
-                pSystemTime,
+                systemTime,
                 nullptr,
-                *ppszString,
-                static_cast<int> ((*pnStringLength)));
+                *string,
+                static_cast<int> ((*stringLength)));
         }
 
-        if (*pnStringLength)
+        if (*stringLength)
         {
             // Exclude NULL terminating character.
-            --(*pnStringLength);
-            bResult = true;
+            --(*stringLength);
+            result = true;
         }
         else
         {
             // Error has occurred.
-            delete[] *ppszString;
-            *ppszString = nullptr;
+            delete[] *string;
+            *string = nullptr;
         }
     }
-    if (nullptr != hKernel32)
+    if (nullptr != kernel32)
     {
-        FreeLibrary(hKernel32);
+        FreeLibrary(kernel32);
     }
 
-    return bResult;
+    return result;
 }
 
 
@@ -927,51 +923,53 @@ bool string_util::convertSystemTimeOnlyToString(
 template <typename T>
 _Check_return_ STLADD string_unique_ptr_t string_util::formatNumber(_In_ const T value) const
 {
-    using get_number_format_ex_func_t = int (WINAPI *)(_In_opt_ LPCWSTR,
-                                                       _In_ DWORD,
-                                                       _In_ LPCWSTR,
-                                                       _In_opt_ CONST NUMBERFMTW*,
-                                                       _Out_writes_opt_(cchNumber) LPWSTR,
-                                                       _In_ int cchNumber);
-    using get_number_format_func_t = int (WINAPI *)(_In_ LCID,
-                                                    _In_ DWORD,
-                                                    _In_ LPCTSTR,
-                                                    _In_opt_ CONST NUMBERFMT*,
-                                                    _Out_writes_opt_(cchNumber) LPTSTR,
-                                                    _In_ int cchNumber);
+    using get_number_format_ex_func_t = int (WINAPI *)(
+        _In_opt_ LPCWSTR,
+        _In_ DWORD,
+        _In_ LPCWSTR,
+        _In_opt_ CONST NUMBERFMTW*,
+        _Out_writes_opt_(cchNumber) LPWSTR,
+        _In_ int cchNumber);
+    using get_number_format_func_t = int (WINAPI *)(
+        _In_ LCID,
+        _In_ DWORD,
+        _In_ LPCTSTR,
+        _In_opt_ CONST NUMBERFMT*,
+        _Out_writes_opt_(cchNumber) LPTSTR,
+        _In_ int cchNumber);
 
-    STLADD string_unique_ptr_t szResult {};
-    size_t nNumberLength = 32;
-    STLADD t_char_unique_ptr_t szNumber {new TCHAR[nNumberLength]};
-    nNumberLength = _stprintf_s(szNumber, nNumberLength, printf_value_trait<T>::get(), value);
+    STLADD string_unique_ptr_t result {};
+    const size_t numberLength = 32;
+    STLADD t_char_unique_ptr_t number {new TCHAR[numberLength]};
+    numberLength = _stprintf_s(number, numberLength, printf_value_trait<T>::get(), value);
 
     /*
      * Call the GetNumberFormatEx or GetNumberFormat function.
      */
-    get_number_format_ex_func_t pGetNumberFormatEx = nullptr;
-    get_number_format_func_t pGetNumberFormat = nullptr;
-    get_locale_info_ex_func_t pGetLocaleInfoEx = nullptr;
-    get_locale_info_func_t pGetLocaleInfo = nullptr;
+    get_number_format_ex_func_t getNumberFormatEx = nullptr;
+    get_number_format_func_t getNumberFormat = nullptr;
+    get_locale_info_ex_func_t getLocaleInfoEx = nullptr;
+    get_locale_info_func_t getLocaleInfo = nullptr;
 
-    HMODULE hKernel32 = nullptr;
-    if (GetModuleHandleEx(0, TEXT("kernel32.dll"), &hKernel32) && hKernel32)
+    HMODULE kernel32 = nullptr;
+    if (GetModuleHandleEx(0, TEXT("kernel32.dll"), &kernel32) && kernel32)
     {
-        pGetNumberFormatEx = getFunction<get_number_format_ex_func_t>(nullptr, "GetNumberFormatEx", hKernel32);
-        pGetLocaleInfoEx = getFunction<get_locale_info_ex_func_t>(nullptr, "GetLocaleInfoEx", hKernel32);
-        if (!(pGetNumberFormatEx && pGetLocaleInfoEx))
+        getNumberFormatEx = getFunction<get_number_format_ex_func_t>(nullptr, "GetNumberFormatEx", kernel32);
+        getLocaleInfoEx = getFunction<get_locale_info_ex_func_t>(nullptr, "GetLocaleInfoEx", kernel32);
+        if (!(getNumberFormatEx && getLocaleInfoEx))
         {
 #if defined(_UNICODE)
-            pGetNumberFormat = getFunction<get_number_format_func_t>(nullptr, "GetNumberFormatW", hKernel32);
-            pGetLocaleInfo = getFunction<get_locale_info_func_t>(nullptr, "GetLocaleInfoW", hKernel32);
+            getNumberFormat = getFunction<get_number_format_func_t>(nullptr, "GetNumberFormatW", kernel32);
+            getLocaleInfo = getFunction<get_locale_info_func_t>(nullptr, "GetLocaleInfoW", kernel32);
 #else
-            pGetNumberFormat = getFunction<get_number_format_func_t>(nullptr, "GetNumberFormatA", hKernel32);
-            pGetLocaleInfo = getFunction<get_locale_info_func_t>(nullptr, "GetLocaleInfoA", hKernel32);
+            getNumberFormat = getFunction<get_number_format_func_t>(nullptr, "GetNumberFormatA", kernel32);
+            getLocaleInfo = getFunction<get_locale_info_func_t>(nullptr, "GetLocaleInfoA", kernel32);
 #endif
-            // Well, the pGetNumberFormat and pGetLocaleInfo must be valid here. I don't check it.
+            // Well, the getNumberFormat and getLocaleInfo must be valid here. I don't check it.
         }
     }
 
-    if ((pGetNumberFormatEx && pGetLocaleInfoEx) || (pGetNumberFormat && pGetLocaleInfo))
+    if ((getNumberFormatEx && getLocaleInfoEx) || (getNumberFormat && getLocaleInfo))
     {
         NUMBERFMT numberFormat;
         /*
@@ -981,22 +979,22 @@ _Check_return_ STLADD string_unique_ptr_t string_util::formatNumber(_In_ const T
 #pragma warning(disable: 4127)
         if (std::is_floating_point<T>::value)
         {
-            if (pGetLocaleInfoEx)
+            if (getLocaleInfoEx)
             {
-                if (!(pGetLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT,
-                                        LOCALE_IDIGITS | LOCALE_RETURN_NUMBER,
-                                        reinterpret_cast<LPTSTR> (&(numberFormat.NumDigits)),
-                                        sizeof(numberFormat.NumDigits) / sizeof(TCHAR)))
+                if (!(getLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT,
+                                       LOCALE_IDIGITS | LOCALE_RETURN_NUMBER,
+                                       reinterpret_cast<LPTSTR> (&(numberFormat.NumDigits)),
+                                       sizeof(numberFormat.NumDigits) / sizeof(TCHAR)))
                 {
                     numberFormat.NumDigits = 2;
                 }
             }
             else
             {
-                if (!(pGetLocaleInfo)(LOCALE_USER_DEFAULT,
-                                      LOCALE_IDIGITS | LOCALE_RETURN_NUMBER,
-                                      reinterpret_cast<LPTSTR> (&(numberFormat.NumDigits)),
-                                      sizeof(numberFormat.NumDigits) / sizeof(TCHAR)))
+                if (!(getLocaleInfo)(LOCALE_USER_DEFAULT,
+                                     LOCALE_IDIGITS | LOCALE_RETURN_NUMBER,
+                                     reinterpret_cast<LPTSTR> (&(numberFormat.NumDigits)),
+                                     sizeof(numberFormat.NumDigits) / sizeof(TCHAR)))
                 {
                     numberFormat.NumDigits = 2;
                 }
@@ -1008,140 +1006,140 @@ _Check_return_ STLADD string_unique_ptr_t string_util::formatNumber(_In_ const T
         }
 #pragma warning(default: 4127)
         // Leading zeros.
-        if (pGetLocaleInfoEx)
+        if (getLocaleInfoEx)
         {
-            if (!(pGetLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT,
-                                    LOCALE_ILZERO | LOCALE_RETURN_NUMBER,
-                                    reinterpret_cast<LPTSTR> (&(numberFormat.LeadingZero)),
-                                    sizeof(numberFormat.LeadingZero) / sizeof(TCHAR)))
+            if (!(getLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT,
+                                   LOCALE_ILZERO | LOCALE_RETURN_NUMBER,
+                                   reinterpret_cast<LPTSTR> (&(numberFormat.LeadingZero)),
+                                   sizeof(numberFormat.LeadingZero) / sizeof(TCHAR)))
             {
                 numberFormat.LeadingZero = 1;
             }
         }
         else
         {
-            if (!(pGetLocaleInfo)(LOCALE_USER_DEFAULT,
-                                  LOCALE_ILZERO | LOCALE_RETURN_NUMBER,
-                                  reinterpret_cast<LPTSTR> (&(numberFormat.LeadingZero)),
-                                  sizeof(numberFormat.LeadingZero) / sizeof(TCHAR)))
+            if (!(getLocaleInfo)(LOCALE_USER_DEFAULT,
+                                 LOCALE_ILZERO | LOCALE_RETURN_NUMBER,
+                                 reinterpret_cast<LPTSTR> (&(numberFormat.LeadingZero)),
+                                 sizeof(numberFormat.LeadingZero) / sizeof(TCHAR)))
             {
                 numberFormat.LeadingZero = 1;
             }
         }
         // Set default (hard-coded) value to the numberFormat.Grouping.
         numberFormat.Grouping = 3;
-        LPTSTR pszInfo;
-        int nInfoLength =
-            pGetLocaleInfoEx ?
-            (pGetLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT, LOCALE_SGROUPING, nullptr, 0) :
-            (pGetLocaleInfo)(LOCALE_USER_DEFAULT, LOCALE_SGROUPING, nullptr, 0);
-        if (nInfoLength)
+        LPTSTR info;
+        int infoLength =
+            getLocaleInfoEx ?
+            (getLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT, LOCALE_SGROUPING, nullptr, 0) :
+            (getLocaleInfo)(LOCALE_USER_DEFAULT, LOCALE_SGROUPING, nullptr, 0);
+        if (infoLength)
         {
-            STLADD t_char_unique_ptr_t guard {new TCHAR[(static_cast<size_t> (nInfoLength)) << 1]};
-            pszInfo = guard.get();
-            nInfoLength =
-                pGetLocaleInfoEx ?
-                (pGetLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT, LOCALE_SGROUPING, pszInfo, nInfoLength) :
-                (pGetLocaleInfo)(LOCALE_USER_DEFAULT, LOCALE_SGROUPING, pszInfo, nInfoLength);
-            if (nInfoLength)
+            STLADD t_char_unique_ptr_t guard {new TCHAR[(static_cast<size_t> (infoLength)) << 1]};
+            info = guard.get();
+            infoLength =
+                getLocaleInfoEx ?
+                (getLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT, LOCALE_SGROUPING, info, infoLength) :
+                (getLocaleInfo)(LOCALE_USER_DEFAULT, LOCALE_SGROUPING, info, infoLength);
+            if (infoLength)
             {
-                LPTSTR pszSource = pszInfo;
-                LPTSTR pszDest = pszInfo + nInfoLength;
-                while (TEXT('\x00') != *pszSource)
+                LPTSTR source = info;
+                LPTSTR dest = info + infoLength;
+                while (TEXT('\x00') != *source)
                 {
                     // Skip ';' and '0' symbols at the end.
 
-                    if ((TEXT(';') != *pszSource) &&
-                        ((TEXT('0') != *pszSource) || (TEXT('\x00') != *(pszSource + 1))))
+                    if ((TEXT(';') != *source) &&
+                        ((TEXT('0') != *source) || (TEXT('\x00') != *(source + 1))))
                     {
-                        *pszDest = *pszSource;
-                        ++pszDest;
+                        *dest = *source;
+                        ++dest;
                     }
-                    ++pszSource;
+                    ++source;
                 }
-                *pszDest = TEXT('\x00');
+                *dest = TEXT('\x00');
 
-                numberFormat.Grouping = _tcstoul(pszInfo + nInfoLength, nullptr, 10);
+                numberFormat.Grouping = _tcstoul(info + infoLength, nullptr, 10);
             }
         }
         numberFormat.lpDecimalSep = nullptr;
-        nInfoLength =
-            pGetLocaleInfoEx ?
-            (pGetLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT, LOCALE_SDECIMAL, nullptr, 0) :
-            (pGetLocaleInfo)(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, nullptr, 0);
-        if (nInfoLength)
+        infoLength =
+            getLocaleInfoEx ?
+            (getLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT, LOCALE_SDECIMAL, nullptr, 0) :
+            (getLocaleInfo)(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, nullptr, 0);
+        if (infoLength)
         {
-            pszInfo = new TCHAR[nInfoLength];
-            if (pGetLocaleInfoEx)
+            info = new TCHAR[infoLength];
+            if (getLocaleInfoEx)
             {
-                if ((pGetLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT, LOCALE_SDECIMAL, pszInfo, nInfoLength))
+                if ((getLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT, LOCALE_SDECIMAL, info, infoLength))
                 {
-                    numberFormat.lpDecimalSep = pszInfo;
+                    numberFormat.lpDecimalSep = info;
                 }
                 else
                 {
-                    delete[] pszInfo;
+                    delete[] info;
                 }
             }
             else
             {
-                if ((pGetLocaleInfo)(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, pszInfo, nInfoLength))
+                if ((getLocaleInfo)(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, info, infoLength))
                 {
-                    numberFormat.lpDecimalSep = pszInfo;
+                    numberFormat.lpDecimalSep = info;
                 }
                 else
                 {
-                    delete[] pszInfo;
+                    delete[] info;
                 }
             }
         }
         numberFormat.lpThousandSep = nullptr;
-        nInfoLength =
-            pGetLocaleInfoEx ?
-            (pGetLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT, LOCALE_STHOUSAND, nullptr, 0) :
-            (pGetLocaleInfo)(LOCALE_USER_DEFAULT, LOCALE_STHOUSAND, nullptr, 0);
-        if (nInfoLength)
+        infoLength =
+            getLocaleInfoEx ?
+            (getLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT, LOCALE_STHOUSAND, nullptr, 0) :
+            (getLocaleInfo)(LOCALE_USER_DEFAULT, LOCALE_STHOUSAND, nullptr, 0);
+        if (infoLength)
         {
-            pszInfo = new TCHAR[nInfoLength];
-            if (pGetLocaleInfoEx)
+            info = new TCHAR[infoLength];
+            if (getLocaleInfoEx)
             {
-                if ((pGetLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT, LOCALE_STHOUSAND, pszInfo, nInfoLength))
+                if ((getLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT, LOCALE_STHOUSAND, info, infoLength))
                 {
-                    numberFormat.lpThousandSep = pszInfo;
+                    numberFormat.lpThousandSep = info;
                 }
                 else
                 {
-                    delete[] pszInfo;
+                    delete[] info;
                 }
             }
             else
             {
-                if ((pGetLocaleInfo)(LOCALE_USER_DEFAULT, LOCALE_STHOUSAND, pszInfo, nInfoLength))
+                if ((getLocaleInfo)(LOCALE_USER_DEFAULT, LOCALE_STHOUSAND, info, infoLength))
                 {
-                    numberFormat.lpThousandSep = pszInfo;
+                    numberFormat.lpThousandSep = info;
                 }
                 else
                 {
-                    delete[] pszInfo;
+                    delete[] info;
                 }
             }
         }
-        if (pGetLocaleInfoEx)
+        if (getLocaleInfoEx)
         {
-            if (!(pGetLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT,
-                                    LOCALE_INEGNUMBER | LOCALE_RETURN_NUMBER,
-                                    reinterpret_cast<LPTSTR> (&(numberFormat.NegativeOrder)),
-                                    sizeof(numberFormat.NegativeOrder) / sizeof(TCHAR)))
+            if (!(getLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT,
+                                   LOCALE_INEGNUMBER | LOCALE_RETURN_NUMBER,
+                                   reinterpret_cast<LPTSTR> (&(numberFormat.NegativeOrder)),
+                                   sizeof(numberFormat.NegativeOrder) / sizeof(TCHAR)))
             {
                 numberFormat.NegativeOrder = 1;
             }
         }
         else
         {
-            if (!(pGetLocaleInfo)(LOCALE_USER_DEFAULT,
-                                  LOCALE_INEGNUMBER | LOCALE_RETURN_NUMBER,
-                                  reinterpret_cast<LPTSTR> (&(numberFormat.NegativeOrder)),
-                                  sizeof(numberFormat.NegativeOrder) / sizeof(TCHAR)))
+            if (!(getLocaleInfo)(LOCALE_USER_DEFAULT,
+                                 LOCALE_INEGNUMBER | LOCALE_RETURN_NUMBER,
+                                 reinterpret_cast<LPTSTR> (&(numberFormat.NegativeOrder)),
+                                 sizeof(numberFormat.NegativeOrder) / sizeof(TCHAR)))
             {
                 numberFormat.NegativeOrder = 1;
             }
@@ -1150,25 +1148,25 @@ _Check_return_ STLADD string_unique_ptr_t string_util::formatNumber(_In_ const T
         /*
          * Format the number.
          */
-        int nFormattedNumberLength =
-            pGetNumberFormatEx ?
-            (pGetNumberFormatEx)(LOCALE_NAME_USER_DEFAULT, 0, szNumber, &numberFormat, nullptr, 0) :
-            (pGetNumberFormat)(LOCALE_USER_DEFAULT, 0, szNumber, &numberFormat, nullptr, 0);
-        if (nFormattedNumberLength)
+        int formattedNumberLength =
+            getNumberFormatEx ?
+            (getNumberFormatEx)(LOCALE_NAME_USER_DEFAULT, 0, number, &numberFormat, nullptr, 0) :
+            (getNumberFormat)(LOCALE_USER_DEFAULT, 0, number, &numberFormat, nullptr, 0);
+        if (formattedNumberLength)
         {
-            STLADD t_char_unique_ptr_t guard {new TCHAR[nFormattedNumberLength]};
-            LPTSTR pszFormattedNumber = guard.get();
-            if (pGetNumberFormatEx)
+            STLADD t_char_unique_ptr_t guard {new TCHAR[formattedNumberLength]};
+            LPTSTR formattedNumber = guard.get();
+            if (getNumberFormatEx)
             {
-                nFormattedNumberLength = (pGetNumberFormatEx)(
-                    LOCALE_NAME_USER_DEFAULT, 0, szNumber, &numberFormat, pszFormattedNumber, nFormattedNumberLength);
+                formattedNumberLength = (getNumberFormatEx)(
+                    LOCALE_NAME_USER_DEFAULT, 0, number, &numberFormat, formattedNumber, formattedNumberLength);
             }
             else
             {
-                nFormattedNumberLength = (pGetNumberFormat)(
-                    LOCALE_USER_DEFAULT, 0, szNumber, &numberFormat, pszFormattedNumber, nFormattedNumberLength);
+                formattedNumberLength = (getNumberFormat)(
+                    LOCALE_USER_DEFAULT, 0, number, &numberFormat, formattedNumber, formattedNumberLength);
             }
-            szResult = std::make_unique<STLADD string_type>(pszFormattedNumber, nFormattedNumberLength - 1);
+            result = std::make_unique<STLADD string_type>(formattedNumber, formattedNumberLength - 1);
         }
 
         if (numberFormat.lpThousandSep)
@@ -1180,16 +1178,16 @@ _Check_return_ STLADD string_unique_ptr_t string_util::formatNumber(_In_ const T
             delete[] numberFormat.lpDecimalSep;
         }
     }
-    if (nullptr != hKernel32)
+    if (nullptr != kernel32)
     {
-        FreeLibrary(hKernel32);
+        FreeLibrary(kernel32);
     }
 
-    if (!szResult)
+    if (!result)
     {
-        szResult = std::make_unique<STLADD string_type>(szNumber, nNumberLength);
+        result = std::make_unique<STLADD string_type>(number, numberLength);
     }
-    return szResult;
+    return result;
 }
 
 
@@ -1197,42 +1195,41 @@ _Check_return_ STLADD string_unique_ptr_t string_util::formatNumber(_In_ const T
  * A callback function for the EnumDateFormatsExEx function @ string_util::convertSystemDateOnlyToString method.
  *
  * Parameters:
- * >pszDateFormatString
+ * >dateFormatString
  * Pointer to a buffer containing a null-terminated date format string. This string is a short date format.
- * >nCalendarID
+ * >calendarID
  * Calendar identifier associated with the specified date format string.
- * >nParam
+ * >param
  * Pointer to a variable that should receive a pointer to application allocated memory.
  *
  * Returns:
  * TRUE to continue enumeration or FALSE otherwise.
  */
-BOOL CALLBACK string_util::enumDateFormatsProcExEx(_In_z_ LPWSTR pszDateFormatString,
-                                                   _In_ CALID nCalendarID,
-                                                   _In_ LPARAM nParam)
+BOOL CALLBACK string_util::enumDateFormatsProcExEx(
+    _In_z_ LPWSTR dateFormatString, _In_ CALID calendarID, _In_ LPARAM param)
 {
-    UNREFERENCED_PARAMETER(nCalendarID);
-    BOOL bResult = TRUE;
+    UNREFERENCED_PARAMETER(calendarID);
+    BOOL result = TRUE;
     const STLADD regex_type regexOfFormat(TEXT("(?:^yy[^y].*)|(?:.*[^y]yy[^y].*)|(?:.*[^y]yy$)"));
-    if (std::regex_match(pszDateFormatString, regexOfFormat))
+    if (std::regex_match(dateFormatString, regexOfFormat))
     {
-        size_t nFormatLength;
-        if (SUCCEEDED(StringCchLength(pszDateFormatString, LOCALE_SSHORTDATE_MAX_LENGTH, &nFormatLength)))
+        size_t formatLength;
+        if (SUCCEEDED(StringCchLength(dateFormatString, LOCALE_SSHORTDATE_MAX_LENGTH, &formatLength)))
         {
-            LPTSTR* ppszFormat = reinterpret_cast<LPTSTR*> (nParam);
-            *ppszFormat = new TCHAR[nFormatLength + 1];
-            if (SUCCEEDED(StringCchCopy(*ppszFormat, nFormatLength + 1, pszDateFormatString)))
+            LPTSTR* format = reinterpret_cast<LPTSTR*> (param);
+            *format = new TCHAR[formatLength + 1];
+            if (SUCCEEDED(StringCchCopy(*format, formatLength + 1, dateFormatString)))
             {
-                bResult = FALSE;
+                result = FALSE;
             }
             else
             {
-                delete[] *ppszFormat;
-                *ppszFormat = nullptr;
+                delete[] *format;
+                *format = nullptr;
             }
         }
     }
-    return bResult;
+    return result;
 }
 
 
@@ -1240,18 +1237,18 @@ BOOL CALLBACK string_util::enumDateFormatsProcExEx(_In_z_ LPWSTR pszDateFormatSt
  * A callback function for the EnumDateFormatsExEx function @ string_util::convertSystemDateOnlyToString method.
  *
  * Parameters:
- * >pszDateFormatString
+ * >dateFormatString
  * Pointer to a buffer containing a null-terminated date format string. This string is a short date format.
- * >nCalendarID
+ * >calendarID
  * Calendar identifier associated with the specified date format string.
  *
  * Returns:
  * TRUE to continue enumeration or FALSE otherwise.
  */
-BOOL CALLBACK string_util::enumDateFormatsProcEx(_In_z_ LPTSTR pszDateFormatString, _In_ CALID nCalendarID)
+BOOL CALLBACK string_util::enumDateFormatsProcEx(_In_z_ LPTSTR dateFormatString, _In_ CALID calendarID)
 {
     return enumDateFormatsProcExEx(
-        pszDateFormatString, nCalendarID, reinterpret_cast<LPARAM> (string_util::m_ppszEnumDateFormatsProcExData));
+        dateFormatString, calendarID, reinterpret_cast<LPARAM> (string_util::m_enumDateFormatsProcExData));
 }
 
 
@@ -1267,75 +1264,75 @@ BOOL CALLBACK string_util::enumDateFormatsProcEx(_In_z_ LPTSTR pszDateFormatStri
  */
 STLADD string_unique_ptr_t string_util::getListSeparator() const
 {
-    get_locale_info_func_t pGetLocaleInfo = nullptr;
-    HMODULE hKernel32 = nullptr;
-    get_locale_info_ex_func_t pGetLocaleInfoEx =
-        getFunction<get_locale_info_ex_func_t>(TEXT("kernel32.dll"), "GetLocaleInfoEx", hKernel32);
-    if (!pGetLocaleInfoEx)
+    get_locale_info_func_t getLocaleInfo = nullptr;
+    HMODULE kernel32 = nullptr;
+    get_locale_info_ex_func_t getLocaleInfoEx =
+        getFunction<get_locale_info_ex_func_t>(TEXT("kernel32.dll"), "GetLocaleInfoEx", kernel32);
+    if (!getLocaleInfoEx)
     {
 #if defined(_UNICODE)
-        pGetLocaleInfo = getFunction<get_locale_info_func_t>(nullptr, "GetLocaleInfoW", hKernel32);
+        getLocaleInfo = getFunction<get_locale_info_func_t>(nullptr, "GetLocaleInfoW", kernel32);
 #else
-        pGetLocaleInfo = getFunction<get_locale_info_func_t>(nullptr, "GetLocaleInfoA", hKernel32);
+        getLocaleInfo = getFunction<get_locale_info_func_t>(nullptr, "GetLocaleInfoA", kernel32);
 #endif
-        // Well, the pGetLocaleInfo must be valid here. I don't check it.
+        // Well, the getLocaleInfo must be valid here. I don't check it.
     }
 
-    STLADD string_unique_ptr_t szResult {};
+    STLADD string_unique_ptr_t result {};
 
-    if (pGetLocaleInfoEx || pGetLocaleInfo)
+    if (getLocaleInfoEx || getLocaleInfo)
     {
-        size_t nListSeparatorLength;
-        if (pGetLocaleInfoEx)
+        size_t listSeparatorLength;
+        if (getLocaleInfoEx)
         {
-            nListSeparatorLength = (pGetLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT, LOCALE_SLIST, nullptr, 0);
+            listSeparatorLength = (getLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT, LOCALE_SLIST, nullptr, 0);
         }
         else
         {
-            nListSeparatorLength = (pGetLocaleInfo)(LOCALE_USER_DEFAULT, LOCALE_SLIST, nullptr, 0);
+            listSeparatorLength = (getLocaleInfo)(LOCALE_USER_DEFAULT, LOCALE_SLIST, nullptr, 0);
         }
 
-        if (nListSeparatorLength)
+        if (listSeparatorLength)
         {
             // Allocate memory to store list separator string only.
-            STLADD t_char_unique_ptr_t guard {new TCHAR[nListSeparatorLength]};
-            LPTSTR pszResult {guard.get()};
-            if (pGetLocaleInfoEx)
+            STLADD t_char_unique_ptr_t guard {new TCHAR[listSeparatorLength]};
+            LPTSTR rawResult {guard.get()};
+            if (getLocaleInfoEx)
             {
-                nListSeparatorLength = (pGetLocaleInfoEx)(
-                    LOCALE_NAME_USER_DEFAULT, LOCALE_SLIST, pszResult, static_cast<int> (nListSeparatorLength));
+                listSeparatorLength = (getLocaleInfoEx)(
+                    LOCALE_NAME_USER_DEFAULT, LOCALE_SLIST, rawResult, static_cast<int> (listSeparatorLength));
             }
             else
             {
-                nListSeparatorLength = (pGetLocaleInfo)(
-                    LOCALE_USER_DEFAULT, LOCALE_SLIST, pszResult, static_cast<int> (nListSeparatorLength));
+                listSeparatorLength = (getLocaleInfo)(
+                    LOCALE_USER_DEFAULT, LOCALE_SLIST, rawResult, static_cast<int> (listSeparatorLength));
             }
-            if (nListSeparatorLength)
+            if (listSeparatorLength)
             {
-                if (TEXT('\x20') != *(pszResult + nListSeparatorLength - 2))
+                if (TEXT('\x20') != *(rawResult + listSeparatorLength - 2))
                 {
                     // Replace NULL termintaing character w/ 'space' character.
-                    *(pszResult + nListSeparatorLength - 1) = TEXT('\x20');
-                    szResult = std::make_unique<STLADD string_type>(pszResult, pszResult + nListSeparatorLength);
+                    *(rawResult + listSeparatorLength - 1) = TEXT('\x20');
+                    result = std::make_unique<STLADD string_type>(rawResult, rawResult + listSeparatorLength);
                 }
                 else
                 {
-                    szResult = std::make_unique<STLADD string_type>(pszResult, pszResult + nListSeparatorLength - 1);
+                    result = std::make_unique<STLADD string_type>(rawResult, rawResult + listSeparatorLength - 1);
                 }
             }
         }
     }
-    if (nullptr != hKernel32)
+    if (nullptr != kernel32)
     {
-        FreeLibrary(hKernel32);
+        FreeLibrary(kernel32);
     }
 
-    if (!szResult)
+    if (!result)
     {
-        szResult = std::make_unique<STLADD string_type>(DEFAULT_LIST_SEPARATOR, _countof(DEFAULT_LIST_SEPARATOR) - 1);
+        result = std::make_unique<STLADD string_type>(DEFAULT_LIST_SEPARATOR, _countof(DEFAULT_LIST_SEPARATOR) - 1);
     }
 
-    return szResult;
+    return result;
 }
 
 
@@ -1350,60 +1347,59 @@ STLADD string_unique_ptr_t string_util::getListSeparator() const
  */
 _Check_return_ STLADD string_unique_ptr_t string_util::getCurrentUserLocale() const
 {
-    get_locale_info_func_t pGetLocaleInfo = nullptr;
-    HMODULE hKernel32 = nullptr;
-    get_locale_info_ex_func_t pGetLocaleInfoEx =
-        getFunction<get_locale_info_ex_func_t>(TEXT("kernel32.dll"), "GetLocaleInfoEx", hKernel32);
-    if (!pGetLocaleInfoEx)
+    get_locale_info_func_t getLocaleInfo = nullptr;
+    HMODULE kernel32 = nullptr;
+    get_locale_info_ex_func_t getLocaleInfoEx =
+        getFunction<get_locale_info_ex_func_t>(TEXT("kernel32.dll"), "GetLocaleInfoEx", kernel32);
+    if (!getLocaleInfoEx)
     {
 #if defined(_UNICODE)
-        pGetLocaleInfo = getFunction<get_locale_info_func_t>(nullptr, "GetLocaleInfoW", hKernel32);
+        getLocaleInfo = getFunction<get_locale_info_func_t>(nullptr, "GetLocaleInfoW", kernel32);
 #else
-        pGetLocaleInfo = getFunction<get_locale_info_func_t>(nullptr, "GetLocaleInfoA", hKernel32);
+        getLocaleInfo = getFunction<get_locale_info_func_t>(nullptr, "GetLocaleInfoA", kernel32);
 #endif
-        // Well, the pGetLocaleInfo must be valid here. I don't check it.
+        // Well, the getLocaleInfo must be valid here. I don't check it.
     }
 
-    STLADD string_unique_ptr_t szResult {};
+    STLADD string_unique_ptr_t result {};
 
-    if (pGetLocaleInfoEx || pGetLocaleInfo)
+    if (getLocaleInfoEx || getLocaleInfo)
     {
-        size_t nLength;
-        if (pGetLocaleInfoEx)
+        size_t length;
+        if (getLocaleInfoEx)
         {
-            nLength = (pGetLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT, LOCALE_SNAME, nullptr, 0);
+            length = (getLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT, LOCALE_SNAME, nullptr, 0);
         }
         else
         {
-            nLength = (pGetLocaleInfo)(LOCALE_USER_DEFAULT, LOCALE_SNAME, nullptr, 0);
+            length = (getLocaleInfo)(LOCALE_USER_DEFAULT, LOCALE_SNAME, nullptr, 0);
         }
 
-        if (nLength)
+        if (length)
         {
             // Allocate memory to store list separator string only.
-            STLADD t_char_unique_ptr_t guard {new TCHAR[nLength]};
-            LPTSTR pszResult {guard.get()};
-            if (pGetLocaleInfoEx)
+            STLADD t_char_unique_ptr_t guard {new TCHAR[length]};
+            LPTSTR rawResult {guard.get()};
+            if (getLocaleInfoEx)
             {
-                nLength = (pGetLocaleInfoEx)(
-                    LOCALE_NAME_USER_DEFAULT, LOCALE_SNAME, pszResult, static_cast<int> (nLength));
+                length =
+                    (getLocaleInfoEx)(LOCALE_NAME_USER_DEFAULT, LOCALE_SNAME, rawResult, static_cast<int> (length));
             }
             else
             {
-                nLength = (pGetLocaleInfo)(
-                    LOCALE_USER_DEFAULT, LOCALE_SNAME, pszResult, static_cast<int> (nLength));
+                length = (getLocaleInfo)(LOCALE_USER_DEFAULT, LOCALE_SNAME, rawResult, static_cast<int> (length));
             }
-            if (nLength)
+            if (length)
             {
-                szResult = std::make_unique<STLADD string_type>(pszResult, pszResult + nLength - 1);
+                result = std::make_unique<STLADD string_type>(rawResult, rawResult + length - 1);
             }
         }
     }
-    if (nullptr != hKernel32)
+    if (nullptr != kernel32)
     {
-        FreeLibrary(hKernel32);
+        FreeLibrary(kernel32);
     }
 
-    return szResult;
+    return result;
 }
 #pragma endregion string_util class
