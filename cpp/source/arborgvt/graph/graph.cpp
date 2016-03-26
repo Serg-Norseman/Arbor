@@ -60,6 +60,9 @@ void graph::addEdge(_In_ STLADD string_type&& tail, _In_ STLADD string_type&& he
 void graph::clear() noexcept
 {
     m_meanOfEnergy = 0.0f;
+    sse_t value = {m_distribution.b(), m_distribution.a(), m_distribution.b(), m_distribution.a()};
+    m_graphBound = _mm_load_ps(value.data);
+    m_viewBound = getZeroVector();
     STLADD lock_guard_exclusive<WAPI srw_lock> verticesLock {m_verticesLock};
     STLADD lock_guard_exclusive<WAPI srw_lock> edgesLock {m_edgesLock};
     m_edges.clear();
@@ -360,12 +363,10 @@ void graph::applyBarnesHutRepulsion()
     {
         simulation.insert(&(it->second));
     }
-/*
-    for (auto it = m_vertices.cbegin(); m_vertices.cend() != it; ++it)
+    for (auto it = m_vertices.begin(); m_vertices.end() != it; ++it)
     {
         simulation.applyForce(&(it->second), m_repulsion);
     }
-*/
 }
 
 
@@ -407,7 +408,7 @@ void graph::applySprings()
         }
         temp2 = _mm_sqrt_ps(temp2);
         __m128 oldSize = temp2;
-        if (0b0001 & _mm_movemask_ps(_mm_cmpeq_ps(temp2, zero)))
+        if (0b1111 & _mm_movemask_ps(_mm_cmpeq_ps(temp2, zero)))
         {
             temp = randomVector(1.0f);
             if (simd_cpu_capabilities::sse41())

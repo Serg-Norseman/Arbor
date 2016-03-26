@@ -17,6 +17,7 @@ public:
     }
 
     void __fastcall insert(_In_ ARBOR vertex* v);
+    void __fastcall applyForce(_In_ ARBOR vertex* v, _In_ const float repulsion) const;
 
 
 private:

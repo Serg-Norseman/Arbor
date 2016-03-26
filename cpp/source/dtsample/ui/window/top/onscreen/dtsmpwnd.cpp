@@ -182,7 +182,6 @@ BOOL desktop_sample_window::ProcessWindowMessage(
             {
                 switch (nWParam)
                 {
-                    // Make this window WS_TABSTOP'd to handle the keys.
                     case VK_UP:
                     {
                         SendMessage(WM_VSCROLL, MAKELONG(SB_LINEUP, 0), 0);
@@ -194,6 +193,22 @@ BOOL desktop_sample_window::ProcessWindowMessage(
                     case VK_DOWN:
                     {
                         SendMessage(WM_VSCROLL, MAKELONG(SB_LINEDOWN, 0), 0);
+                        nLResult = 0;
+                        bHandled = TRUE;
+                    }
+                    break;
+
+                    case VK_LEFT:
+                    {
+                        SendMessage(WM_HSCROLL, MAKELONG(SB_LINELEFT, 0), 0);
+                        nLResult = 0;
+                        bHandled = TRUE;
+                    }
+                    break;
+
+                    case VK_RIGHT:
+                    {
+                        SendMessage(WM_HSCROLL, MAKELONG(SB_LINERIGHT, 0), 0);
                         nLResult = 0;
                         bHandled = TRUE;
                     }
@@ -278,7 +293,7 @@ BOOL desktop_sample_window::ProcessWindowMessage(
  */
 LRESULT desktop_sample_window::createHandler()
 {
-    typedef ATL::CWinTraits<WS_CHILD | WS_CLIPSIBLINGS | WS_TABSTOP | WS_VISIBLE, WS_EX_NOPARENTNOTIFY> style_traits_t;
+    typedef ATL::CWinTraits<WS_CHILD | WS_CLIPSIBLINGS | WS_VISIBLE, WS_EX_NOPARENTNOTIFY> style_traits_t;
     // This window and the graph window (`m_visual`'s HWND) are owned by different threads; nobody needs a deadlock,
     // therefore 'WS_EX_NOPARENTNOTIFY' is required.
 
@@ -538,12 +553,26 @@ void desktop_sample_window::resizeVisual()
             {
                 ::SendNotifyMessage(visualHWND, WM_HSCROLL, MAKELONG(SB_LEFT, 0), 0);
             }
+            else
+            {
+                si.fMask = SIF_POS;
+                GetScrollInfo(SB_HORZ, &si);
+                ::SendNotifyMessage(visualHWND, WM_HSCROLL, MAKELONG(SB_THUMBTRACK, si.nPos), 0);
+                si.fMask = SIF_PAGE | SIF_RANGE;
+            }
             SetScrollInfo(SB_HORZ, &si, TRUE);
             si.nPage = rect.bottom;
             si.nMax = max(rect.bottom, origin.y + static_cast<LONG> (size.height)) - 1;
             if (si.nMax < (static_cast<int> (si.nPage)))
             {
                 ::SendNotifyMessage(visualHWND, WM_VSCROLL, MAKELONG(SB_TOP, 0), 0);
+            }
+            else
+            {
+                si.fMask = SIF_POS;
+                GetScrollInfo(SB_VERT, &si);
+                ::SendNotifyMessage(visualHWND, WM_VSCROLL, MAKELONG(SB_THUMBTRACK, si.nPos), 0);
+                si.fMask = SIF_PAGE | SIF_RANGE;
             }
             SetScrollInfo(SB_VERT, &si, TRUE);
 
@@ -577,24 +606,24 @@ void desktop_sample_window::addDataToTheGraph()
     using namespace std::string_literals;
     try
     {
-        HRESULT hr = m_visual->addEdge(TEXT("vertex.1"s), TEXT("vertex.1.2"s), 1.5f);
+        HRESULT hr = m_visual->addEdge(TEXT("vertex.1"s), TEXT("vertex.1.2"s), 1.0f);
         if (SUCCEEDED(hr))
         {
-            hr = m_visual->addEdge(TEXT("vertex.1"s), TEXT("vertex.1.3"s), 1.75f);
+            hr = m_visual->addEdge(TEXT("vertex.1"s), TEXT("vertex.1.3"s), 1.0f);
             if (SUCCEEDED(hr))
             {
-                hr = m_visual->addEdge(TEXT("vertex.1.2"s), TEXT("vertex.1.2.4"s), 1.75f);
+                hr = m_visual->addEdge(TEXT("vertex.1.2"s), TEXT("vertex.1.2.4"s), 1.0f);
                 if (SUCCEEDED(hr))
                 {
                     hr = m_visual->addEdge(
-                        TEXT("vertex.1.2"s), TEXT("big vertex.1.2.5 derived\nfrom vertex.1.2"s), 1.75f);
+                        TEXT("vertex.1.2"s), TEXT("big vertex.1.2.5 derived\nfrom vertex.1.2"s), 1.0f);
                     if (SUCCEEDED(hr))
                     {
-                        m_visual->addEdge(TEXT("vertex.1"s), TEXT("vertex.1.4"s), 2.0f);
-                        m_visual->addEdge(TEXT("vertex.1"s), TEXT("vertex.1.5"s), 2.0f);
-                        m_visual->addEdge(TEXT("vertex.1.4"s), TEXT("vertex.1.4.1"s), 1.2f);
-                        m_visual->addEdge(TEXT("vertex.1.4"s), TEXT("\x221E vertex.1.4.2 \x221E"s), 1.3f);
-                        m_visual->addEdge(TEXT("vertex.1.2"s), TEXT("vertex.1.2.5"s), 3.75f);
+                        m_visual->addEdge(TEXT("vertex.1"s), TEXT("vertex.1.4"s), 1.0f);
+                        m_visual->addEdge(TEXT("vertex.1"s), TEXT("vertex.1.5"s), 1.0f);
+                        m_visual->addEdge(TEXT("vertex.1.4"s), TEXT("vertex.1.4.1"s), 1.0f);
+                        m_visual->addEdge(TEXT("vertex.1.4"s), TEXT("\x221E vertex.1.4.2 \x221E"s), 1.0f);
+                        m_visual->addEdge(TEXT("vertex.1.2"s), TEXT("vertex.1.2.5"s), 2.0f);
                         HWND visualHWND;
                         hr = m_visual->getHWND(&visualHWND);
                         if (m_visual && (S_OK == hr))

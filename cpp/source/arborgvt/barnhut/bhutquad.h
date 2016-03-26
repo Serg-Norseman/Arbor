@@ -37,11 +37,22 @@ public:
     quad_index;
 
     typedef std::deque<std::unique_ptr<particle>, STLADD default_allocator<std::unique_ptr<particle>>> particles_cont_t;
+    typedef std::deque<const quad_element*, STLADD default_allocator<const quad_element*>> quad_elements_cont_t;
 
     virtual ~quad_element() = default;
 
     virtual branch* __fastcall handleParticle(
         _In_ const particle* p, _In_ branch* b, _In_ quad_index quad, _In_ particles_cont_t* particles) = 0;
+    virtual void __fastcall applyForce(
+        _In_ ARBOR vertex* v,
+        _In_ const float repulsion,
+        _In_ const float dist,
+        _In_ quad_elements_cont_t* elements) const = 0;
+
+    virtual ARBOR vertex* getVertex() const
+    {
+        return nullptr;
+    }
 
 
 private:
@@ -114,6 +125,11 @@ public:
 
     virtual branch* __fastcall handleParticle(
         _In_ const particle* p, _In_ branch* b, _In_ quad_index, _In_ particles_cont_t*) override;
+    virtual void __fastcall applyForce(
+        _In_ ARBOR vertex* v,
+        _In_ const float repulsion,
+        _In_ const float dist,
+        _In_ quad_elements_cont_t* elements) const override;
 
     quad_index __fastcall getQuad(_In_ const particle* p) const noexcept;
     _Check_return_ bool __fastcall getQuadContent(
@@ -181,6 +197,16 @@ public:
 
     virtual branch* __fastcall handleParticle(
         _In_ const particle* p, _In_ branch* b, _In_ quad_index quad, _In_ particles_cont_t* particles) override;
+    virtual void __fastcall applyForce(
+        _In_ ARBOR vertex* v,
+        _In_ const float repulsion,
+        _In_ const float dist,
+        _In_ quad_elements_cont_t*) const override;
+
+    virtual ARBOR vertex* getVertex() const override
+    {
+        return m_vertex;
+    }
 
     __m128 __vectorcall getCoordinates() const noexcept
     {

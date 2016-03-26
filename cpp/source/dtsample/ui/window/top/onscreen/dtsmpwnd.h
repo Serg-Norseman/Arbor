@@ -39,7 +39,9 @@ public:
 
     _Check_return_ bool preTranslateMessage(_In_ MSG* pMsg)
     {
-        return IsWindow() && IsDialogMessage(pMsg);
+        UNREFERENCED_PARAMETER(pMsg);
+        return FALSE;
+//        return IsWindow() && IsDialogMessage(pMsg);
     }
 
     virtual BOOL ProcessWindowMessage(

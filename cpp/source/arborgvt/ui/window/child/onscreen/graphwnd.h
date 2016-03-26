@@ -122,7 +122,8 @@ private:
     static constexpr float m_vertexNameWidth = 0.3f;
     static constexpr float m_arrowLength = 7.75f;
     static constexpr float m_arrowHalfWidth = 1.5f;
-    static constexpr float m_margin = 120.0f;
+    // Value of the `m_margin` depends on size of a vertex area.
+    static constexpr float m_margin = 100.0f;
 
     ARBOR graph m_graph;
     vertices_draw_cont_t m_vertices;

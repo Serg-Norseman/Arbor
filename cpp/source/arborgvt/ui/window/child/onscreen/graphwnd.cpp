@@ -483,17 +483,19 @@ __m128 graph_window::logicalToGraph(_In_ const __m128 value, _In_ const __m128 l
 __m128 graph_window::graphToLogical(_In_ const __m128 value, _In_ const __m128 logicalSize, _In_ const __m128 viewBound)
 {
     // Here XMM's the first and the second zeros can be omitted.
-    sse_t marginMem = {m_margin, m_margin, 0.0f, 0.0f};
+    sse_t marginMem;
+    marginMem.data[0] = m_margin;
     __m128 margin = _mm_load_ps(marginMem.data);
+    margin = _mm_shuffle_ps(margin, margin, 0);
     __m128 temp = _mm_sub_ps(logicalSize, margin);
     __m128 viewSize = _mm_hsub_ps(viewBound, viewBound);
-    viewSize = _mm_div_ps(temp, viewSize);
+    viewSize = _mm_mul_ps(temp, _mm_rcp_ps(viewSize));
     temp = _mm_shuffle_ps(viewBound, value, 0b11101101);
     temp = _mm_sub_ps(value, temp);
     temp = _mm_mul_ps(temp, viewSize);
     marginMem.data[0] = 0.5f;
-    marginMem.data[1] = 0.5f;
     viewSize = _mm_load_ps(marginMem.data);
+    viewSize = _mm_shuffle_ps(viewSize, viewSize, 0);
     margin = _mm_mul_ps(margin, viewSize);
     return _mm_add_ps(temp, margin);
 }
@@ -519,7 +521,6 @@ void graph_window::scrollHandler(_In_ int nBar, _In_ const WORD nScrollingReques
     si.cbSize = sizeof(si);
     si.fMask = SIF_RANGE | SIF_PAGE | SIF_POS;
     ::GetScrollInfo(::GetParent(m_hWnd), nBar, &si);
-    int nPrevPos = si.nPos;
     switch (nScrollingRequest)
     {
         case SB_TOP:
@@ -578,11 +579,7 @@ void graph_window::scrollHandler(_In_ int nBar, _In_ const WORD nScrollingReques
     ::SetScrollInfo(::GetParent(m_hWnd), nBar, &si, TRUE);
     ::GetScrollInfo(::GetParent(m_hWnd), nBar, &si);
 
-    // If the position has changed, scroll the window.
-    if (nPrevPos != si.nPos)
-    {
-        scrollContent(nBar, si.nPos);
-    }
+    scrollContent(nBar, si.nPos);
 }
 
 
