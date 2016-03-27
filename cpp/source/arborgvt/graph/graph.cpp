@@ -60,7 +60,7 @@ void graph::addEdge(_In_ STLADD string_type&& tail, _In_ STLADD string_type&& he
 void graph::clear() noexcept
 {
     m_meanOfEnergy = 0.0f;
-    sse_t value = {m_distribution.b(), m_distribution.a(), m_distribution.b(), m_distribution.a()};
+    sse_t value = {m_distribution.a(), m_distribution.a(), m_distribution.b(), m_distribution.b()};
     m_graphBound = _mm_load_ps(value.data);
     m_viewBound = getZeroVector();
     STLADD lock_guard_exclusive<WAPI srw_lock> verticesLock {m_verticesLock};
@@ -242,7 +242,7 @@ void graph::updateGraphBound()
             temp = _mm_shuffle_ps(temp, temp, 0b01001110);
         }
     }
-    m_graphBound = _mm_shuffle_ps(temp, temp, 0b01110010);
+    m_graphBound = temp;
 }
 
 
@@ -276,15 +276,15 @@ void graph::updateViewBound(_In_ const __m128 renderSurfaceSize)
         __m128 rightBottom;
         if (simd_cpu_capabilities::sse41())
         {
-            leftTop = _mm_dp_ps(delta, delta, 0b10101111);
-            rightBottom = _mm_dp_ps(delta, delta, 0b01011111);
+            leftTop = _mm_dp_ps(delta, delta, 0b00111111);
+            rightBottom = _mm_dp_ps(delta, delta, 0b11001111);
         }
         else
         {
-            leftTop = _mm_shuffle_ps(delta, delta, 0b11011101);
+            leftTop = _mm_shuffle_ps(delta, delta, 0b01000100);
             leftTop = _mm_mul_ps(leftTop, leftTop);
             leftTop = _mm_add_ps(leftTop, _mm_shuffle_ps(leftTop, leftTop, 0b10110001));
-            rightBottom = _mm_shuffle_ps(delta, delta, 0b10001000);
+            rightBottom = _mm_shuffle_ps(delta, delta, 0b11101110);
             rightBottom = _mm_mul_ps(rightBottom, rightBottom);
             rightBottom = _mm_add_ps(rightBottom, _mm_shuffle_ps(rightBottom, rightBottom, 0b10110001));
         }

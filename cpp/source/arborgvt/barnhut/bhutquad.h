@@ -169,7 +169,7 @@ private:
     typedef std::vector<std::unique_ptr<quad_element>, STLADD default_allocator<std::unique_ptr<quad_element>>>
         quads_cont_t;
 
-    // Quad bound. The vectors formatted as [top-y, bottom-y, left-x, right-x].
+    // Quad bound. The vectors formatted as [bottom-y, right-x, top-y, left-x].
     __m128 m_area;
     __m128 m_coordinates;
     __m128 m_mass;

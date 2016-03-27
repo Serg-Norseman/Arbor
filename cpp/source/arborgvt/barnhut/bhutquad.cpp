@@ -71,7 +71,7 @@ void branch::applyForce(
     }
     __m128 dotProduct = temp2;
     temp2 = _mm_sqrt_ps(temp2);
-    __m128 temp3 = _mm_hsub_ps(m_area, m_area);
+    __m128 temp3 = _mm_sub_ps(_mm_shuffle_ps(m_area, m_area, 0b01001110), m_area);
     temp3 = _mm_mul_ps(temp3, _mm_shuffle_ps(temp3, temp3, 0b10110001));
     temp3 = _mm_sqrt_ps(temp3);
     temp3 = _mm_mul_ps(temp3, _mm_rcp_ps(temp2));
@@ -139,15 +139,13 @@ quad_element::quad_index branch::getQuad(_In_ const particle* p) const noexcept
     __m128 coordinate = p->getCoordinates();
     if (0b0011 == (0b0011 & _mm_movemask_ps(_mm_cmpeq_ps(coordinate, coordinate))))
     {
-        __m128 temp = _mm_shuffle_ps(m_area, m_area, 0b11111101);
-        __m128 temp2 = _mm_sub_ps(coordinate, temp);
-        temp = _mm_sub_ps(m_area, temp);
+        __m128 temp = _mm_sub_ps(_mm_shuffle_ps(m_area, m_area, 0b01001110), m_area);
         sse_t value;
         value.data[0] = 0.5f;
         __m128 half = _mm_load_ps(value.data);
         half = _mm_shuffle_ps(half, half, 0);
         temp = _mm_mul_ps(temp, half);
-        temp = _mm_shuffle_ps(temp, temp, 0b10001000);
+        __m128 temp2 = _mm_sub_ps(coordinate, m_area);
         int compare = _mm_movemask_ps(_mm_cmplt_ps(temp2, temp));
         if (0b0001 & compare)
         {
@@ -236,33 +234,30 @@ void branch::increaseParameters(_In_ const particle* p) noexcept
 branch* particle::handleParticle(
     _In_ const particle* p, _In_ branch* b, _In_ quad_index quad, _In_ particles_cont_t* particles)
 {
-    __m128 temp = b->getArea();
-    __m128 temp2 = _mm_shuffle_ps(temp, temp, 0b11111101);
-    __m128 halfSize = _mm_sub_ps(temp, temp2);
+    __m128 origin = b->getArea();
+    __m128 halfSize = _mm_sub_ps(_mm_shuffle_ps(origin, origin, 0b01001110), origin);
     sse_t value;
     value.data[0] = 0.5f;
-    temp2 = _mm_load_ps(value.data);
-    temp2 = _mm_shuffle_ps(temp2, temp2, 0);
-    halfSize = _mm_mul_ps(halfSize, temp2);
-    __m128 origin = _mm_shuffle_ps(temp, temp, 0b10110001);
-    temp2 = _mm_add_ps(origin, halfSize);
+    __m128 temp = _mm_load_ps(value.data);
+    temp = _mm_shuffle_ps(temp, temp, 0);
+    halfSize = _mm_mul_ps(halfSize, temp);
+    temp = _mm_add_ps(origin, halfSize);
     if ((NorthEastQuad == quad) || (SouthEastQuad == quad))
     {
-        temp = _mm_shuffle_ps(temp2, origin, 0b01100100);
+        temp = _mm_shuffle_ps(temp, origin, 0b01100100);
         origin = _mm_shuffle_ps(temp, origin, 0b11101100);
     }
     if ((SouthWestQuad == quad) || (SouthEastQuad == quad))
     {
-        temp = _mm_shuffle_ps(temp2, origin, 0b10111000);
-        origin = _mm_shuffle_ps(origin, temp, 0b10010100);
+        temp = _mm_shuffle_ps(temp, origin, 0b00100100);
+        origin = _mm_shuffle_ps(temp, origin, 0b11100111);
     }
     temp = _mm_add_ps(origin, halfSize);
-    temp = _mm_shuffle_ps(temp, origin, 0b10001000);
-    temp = _mm_shuffle_ps(temp, temp, 0b11011000);
+    temp = _mm_shuffle_ps(origin, temp, 0b01000100);
     auto newBranch = std::make_unique<branch>(temp);
     temp = p->getMass();
     b->setMass(temp);
-    temp2 = p->getCoordinates();
+    __m128 temp2 = p->getCoordinates();
     temp = _mm_mul_ps(temp, temp2);
     b->setCoordinates(temp);
     if (0b0011 == (0b0011 & _mm_movemask_ps(_mm_cmpeq_ps(m_vertex->getCoordinates(), temp2))))
@@ -274,10 +269,8 @@ branch* particle::handleParticle(
         coefficient = _mm_shuffle_ps(coefficient, coefficient, 0b10001000);
         temp = ARBOR randomVector(coefficient);
         temp = _mm_add_ps(m_vertex->getCoordinates(), temp);
-        temp2 = _mm_shuffle_ps(origin, origin, 0b10001000);
-        temp = _mm_max_ps(temp, temp2);
+        temp = _mm_max_ps(temp, origin);
         temp2 = _mm_add_ps(origin, halfSize);
-        temp2 = _mm_shuffle_ps(temp2, temp2, 0b10001000);
         m_vertex->setCoordinates(_mm_min_ps(temp, temp2));
     }
     particles->push_back(std::make_unique<particle>(m_vertex));

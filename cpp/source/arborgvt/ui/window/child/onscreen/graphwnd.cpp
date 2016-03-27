@@ -438,16 +438,15 @@ __m128 graph_window::logicalToGraph(_In_ const __m128 value, _In_ const __m128 l
     sse_t marginMem = {m_margin, m_margin, 0.0f, 0.0f};
     __m128 margin = _mm_load_ps(marginMem.data);
     __m128 temp = _mm_sub_ps(logicalSize, margin);
-    __m128 viewSize = _mm_hsub_ps(viewBound, viewBound);
-    viewSize = _mm_div_ps(viewSize, temp);
+    __m128 viewSize = _mm_sub_ps(_mm_shuffle_ps(viewBound, viewBound, 0b01001110), viewBound);
+    viewSize = _mm_mul_ps(viewSize, _mm_rcp_ps(temp));
     marginMem.data[0] = 0.5f;
     marginMem.data[1] = 0.5f;
     temp = _mm_load_ps(marginMem.data);
     margin = _mm_mul_ps(margin, temp);
     temp = _mm_sub_ps(value, margin);
     temp = _mm_mul_ps(temp, viewSize);
-    viewSize = _mm_shuffle_ps(viewBound, value, 0b11101101);
-    return _mm_add_ps(temp, viewSize);
+    return _mm_add_ps(temp, viewBound);
 }
 
 
@@ -487,10 +486,9 @@ __m128 graph_window::graphToLogical(_In_ const __m128 value, _In_ const __m128 l
     __m128 margin = _mm_load_ps(marginMem.data);
     margin = _mm_shuffle_ps(margin, margin, 0);
     __m128 temp = _mm_sub_ps(logicalSize, margin);
-    __m128 viewSize = _mm_hsub_ps(viewBound, viewBound);
+    __m128 viewSize = _mm_sub_ps(_mm_shuffle_ps(viewBound, viewBound, 0b01001110), viewBound);
     viewSize = _mm_mul_ps(temp, _mm_rcp_ps(viewSize));
-    temp = _mm_shuffle_ps(viewBound, value, 0b11101101);
-    temp = _mm_sub_ps(value, temp);
+    temp = _mm_sub_ps(value, viewBound);
     temp = _mm_mul_ps(temp, viewSize);
     marginMem.data[0] = 0.5f;
     viewSize = _mm_load_ps(marginMem.data);
