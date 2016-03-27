@@ -925,7 +925,7 @@ _Success_(return) bool graph_window::getArrow(
     {
         temp = _mm_shuffle_ps(source, source, 0b01000100);
         temp = _mm_mul_ps(temp, temp);
-        temp = _mm_hadd_ps(temp, temp);
+        temp = _mm_add_ps(temp, _mm_shuffle_ps(temp, temp, 0b10110001));
     }
     temp = _mm_sqrt_ps(temp);
     value = {m_arrowLength, m_arrowHalfWidth, 0.0f, 0.0f};
