@@ -27,7 +27,7 @@ namespace ArborGVT
             this.Size = size;
             this.Q = new object[4] { null, null, null, null };
             this.Mass = 0.0;
-            this.Pt = ArborPoint.Null;
+            this.Pt = new ArborPoint(0.0, 0.0);
         }
     }
 
@@ -95,28 +95,14 @@ namespace ArborGVT
                         f.Q[qd] = h;
 
                         f.Mass += m;
-                        if (!f.Pt.isNull())
-                        {
-                            f.Pt = f.Pt.add(h.Pt.mul(m));
-                        }
-                        else
-                        {
-                            f.Pt = h.Pt.mul(m);
-                        }
+                        f.Pt = f.Pt.add(h.Pt.mul(m));
                     }
                     else
                     {
                         if (fp is Branch)
                         {
                             f.Mass += m;
-                            if (!f.Pt.isNull())
-                            {
-                                f.Pt = f.Pt.add(h.Pt.mul(m));
-                            }
-                            else
-                            {
-                                f.Pt = h.Pt.mul(m);
-                            }
+                            f.Pt = f.Pt.add(h.Pt.mul(m));
 
                             f = fp as Branch;
 
