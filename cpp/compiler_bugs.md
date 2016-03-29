@@ -242,3 +242,5 @@ This causes MOVAPS to fail.
 Intel C++ compiler generates correct code for both inherited constructors.
 
 See [MSFT Connect feedback](https://connect.microsoft.com/VisualStudio/feedback/details/2506362/non-default-inherited-constructor-and-data-member-alignment) for more information.
+
+*(this is a bug confirmed by MSFT; it is to be fixed in the future release of Visual C++ -- see the feedback link I specified above)*
