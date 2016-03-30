@@ -485,6 +485,8 @@ void graph::updateVelocityAndPosition(_In_ const float time)
     drift = _mm_mul_ps(drift, _mm_rcp_ps(size));
     /*
      * > Main updates loop.
+     *
+     * Initialize loop invariants.
      */
     __m128 repulsion;
     if (m_gravity)
@@ -493,6 +495,24 @@ void graph::updateVelocityAndPosition(_In_ const float time)
         repulsion = _mm_load_ps(value.data);
         repulsion = _mm_shuffle_ps(repulsion, repulsion, 0);
     }
+    /*
+     * Original C# code compares `velocity` vector length against the predefined constant (1'000). To avoid
+     * redundant square root op (SQRTPS) I use `velocity * velocity` dot product as is and compare it against
+     * 1'000'000 value.
+     *
+     * lim (x * x) = 1'000'000
+     * x -> 1'000
+     */
+#if defined(__ICL)
+    value.data[0] = 1000000.0f;
+#else
+    value.data[0] = 1'000'000.0f;
+#endif
+    __m128 velocityVectorLength = _mm_load_ps(value.data);
+    velocityVectorLength = _mm_shuffle_ps(velocityVectorLength, velocityVectorLength, 0);
+    value.data[0] = 1.0f - m_friction;
+    __m128 frictionCompVector = _mm_load_ps(value.data);
+    frictionCompVector = _mm_shuffle_ps(frictionCompVector, frictionCompVector, 0);
     value.data[0] = time;
     __m128 timeVector = _mm_load_ps(value.data);
     timeVector = _mm_shuffle_ps(timeVector, timeVector, 0);
@@ -512,10 +532,7 @@ void graph::updateVelocityAndPosition(_In_ const float time)
         {
             temp = _mm_mul_ps(it->second.getForce(), timeVector);
             __m128 velocity = _mm_add_ps(it->second.getVelocity(), temp);
-            value.data[0] = 1.0f - m_friction;
-            temp = _mm_load_ps(value.data);
-            temp = _mm_shuffle_ps(temp, temp, 0);
-            velocity = _mm_mul_ps(velocity, temp);
+            velocity = _mm_mul_ps(velocity, frictionCompVector);
             if (simd_cpu_capabilities::sse41())
             {
                 temp = _mm_dp_ps(velocity, velocity, 0b00111111);
@@ -526,22 +543,7 @@ void graph::updateVelocityAndPosition(_In_ const float time)
                 temp = _mm_mul_ps(temp, temp);
                 temp = _mm_add_ps(temp, _mm_shuffle_ps(temp, temp, 0b10110001));
             }
-            /*
-             * Original C# code compares `velocity` vector length against the predefined constant (1'000). To avoid
-             * redundant square root op (SQRTPS) I use `velocity * velocity` dot product as is and compare it against
-             * 1'000'000 value.
-             *
-             * lim (x * x) = 1'000'000
-             * x -> 1'000
-             */
-#if defined(__ICL)
-            value.data[0] = 1000000.0f;
-#else
-            value.data[0] = 1'000'000.0f;
-#endif
-            __m128 temp2 = _mm_load_ps(value.data);
-            temp2 = _mm_shuffle_ps(temp2, temp2, 0);
-            if (0b1111 & _mm_movemask_ps(_mm_cmpgt_ps(temp, temp2)))
+            if (0b1111 & _mm_movemask_ps(_mm_cmpgt_ps(temp, velocityVectorLength)))
             {
                 velocity = _mm_mul_ps(velocity, _mm_rcp_ps(temp));
             }

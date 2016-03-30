@@ -260,6 +260,7 @@ private:
     static constexpr float m_theta = 0.4f;
     static constexpr bool m_gravity = false;
     static constexpr bool m_autoStop = false;
+
     /*
      * `m_graphBound` is the area used by Barnes Hut algorithm. This is a coordinate space where all graph vertices
      * exist (coordinates of any vertex count in this space).
