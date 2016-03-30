@@ -118,6 +118,50 @@ HRESULT arbor_visual_impl::addEdge(_In_ std::wstring&& tail, _In_ std::wstring&&
 
 
 /**
+ * Adds a new vertex to the graph if the latter doesn't have a vertex with the same name.
+ *
+ * Parameters:
+ * >name
+ * New vertex name.
+ * >bkgndColor
+ * Vertex background color.
+ * >textColor
+ * Vertex text color.
+ * >mass
+ * Vertex mass.
+ * >fixed
+ * Vertex movement ability.
+ * >v
+ * Result vertex;
+ *
+ * Returns:
+ * Standard HRESULT code.
+ *
+ * Remarks:
+ * See Remarks section for the `arbor_visual_impl::addEdge` method.
+ */
+HRESULT arbor_visual_impl::addVertex(
+    _In_ std::wstring&& name,
+    _In_ const D2D1_COLOR_F& bkgndColor,
+    _In_ const D2D1_COLOR_F& textColor,
+    _In_ float mass,
+    _In_ bool fixed,
+    _Outptr_opt_result_maybenull_ ARBOR vertex** v)
+{
+    if (m_window)
+    {
+        *v = m_window->addVertex({name.cbegin(), name.cend()}, bkgndColor, textColor, mass, fixed);
+        return S_OK;
+    }
+    else
+    {
+        *v = nullptr;
+        return E_POINTER;
+    }
+}
+
+
+/**
  * Creates a new window. The method is executing on a dedicated thread.
  *
  * Parameters:

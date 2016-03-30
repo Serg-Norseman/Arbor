@@ -233,6 +233,12 @@ public:
     }
 
     void __vectorcall update(_In_ const __m128 renderSurfaceSize);
+    vertex* addVertex(
+        _In_ STLADD string_type&& name,
+        _In_ const D2D1_COLOR_F& bkgndColor,
+        _In_ const D2D1_COLOR_F& textColor,
+        _In_ float mass,
+        _In_ bool fixed);
 
 
 private:

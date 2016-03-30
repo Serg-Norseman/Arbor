@@ -104,6 +104,48 @@ void graph::update(_In_ const __m128 renderSurfaceSize)
  * Parameters:
  * >name
  * New vertex name.
+ * >bkgndColor
+ * Vertex background color.
+ * >textColor
+ * Vertex text color.
+ * >mass
+ * Vertex mass.
+ * >fixed
+ * Vertex movement ability.
+ *
+ * Returns:
+ * Pointer to the vertex instance.
+ *
+ * Remarks:
+ * This method obtains exclusive lock on the `m_verticesLock` mutex.
+ */
+vertex* graph::addVertex(
+    _In_ STLADD string_type&& name,
+    _In_ const D2D1_COLOR_F& bkgndColor,
+    _In_ const D2D1_COLOR_F& textColor,
+    _In_ float mass,
+    _In_ bool fixed)
+{
+    STLADD lock_guard_exclusive<WAPI srw_lock> verticesLock {m_verticesLock};
+    vertex* v = addVertex(std::move(name));
+    sse_t value = {bkgndColor.r, bkgndColor.g, bkgndColor.g, bkgndColor.a};
+    v->setColor(_mm_load_ps(value.data));
+    value = {textColor.r, textColor.g, textColor.g, textColor.a};
+    v->setTextColor(_mm_load_ps(value.data));
+    value.data[0] = mass;
+    __m128 temp = _mm_load_ps(value.data);
+    v->setMass(_mm_shuffle_ps(temp, temp, 0));
+    v->setFixed(fixed);
+    return v;
+}
+
+
+/**
+ * Adds a new vertex to the graph if the latter doesn't have a vertex with the same name.
+ *
+ * Parameters:
+ * >name
+ * New vertex name.
  *
  * Returns:
  * Pointer to the vertex instance.

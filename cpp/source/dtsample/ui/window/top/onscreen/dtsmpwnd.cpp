@@ -604,6 +604,10 @@ void desktop_sample_window::addDataToTheGraph()
     try
     {
         HRESULT hr = m_visual->addEdge(TEXT("vertex.1"s), TEXT("vertex.1.2"s), 1.0f);
+        D2D1_COLOR_F defaultBkgndColor = D2D1::ColorF {D2D1::ColorF::Gray, 1.0f};
+        D2D1_COLOR_F defaultTextColor = D2D1::ColorF {GetSysColor(COLOR_WINDOWTEXT), 1.0f};
+        ARBOR vertex* tail {};
+        hr = m_visual->addVertex(TEXT("Moscow"s), defaultBkgndColor, defaultTextColor, 1.0f, false, &tail);
         if (SUCCEEDED(hr))
         {
             hr = m_visual->addEdge(TEXT("vertex.1"s), TEXT("vertex.1.3"s), 1.0f);

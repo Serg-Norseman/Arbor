@@ -66,6 +66,16 @@ public:
         m_graph.addEdge(std::move(tail), std::move(head), length);
     }
 
+    ARBOR vertex* addVertex(
+        _In_ STLADD string_type&& name,
+        _In_ const D2D1_COLOR_F& bkgndColor,
+        _In_ const D2D1_COLOR_F& textColor,
+        _In_ float mass,
+        _In_ bool fixed)
+    {
+        return m_graph.addVertex(std::move(name), bkgndColor, textColor, mass, fixed);
+    }
+
     void clear() noexcept
     {
         m_graph.clear();
