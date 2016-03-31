@@ -41,9 +41,8 @@ void graph::addEdge(_In_ STLADD string_type&& tail, _In_ STLADD string_type&& he
     }
     if (noEdge)
     {
-        edge* p = new edge {tailVertex, headVertex, true, length, m_stiffness};
         STLADD lock_guard_exclusive<WAPI srw_lock> edgesLock {m_edgesLock};
-        m_edges.emplace_back(p);
+        m_edges.emplace_back(new edge {tailVertex, headVertex, length, m_stiffness, true});
     }
 }
 
@@ -114,29 +113,103 @@ void graph::update(_In_ const __m128 renderSurfaceSize)
  * Vertex movement ability.
  *
  * Returns:
- * Pointer to the vertex instance.
+ * Pointer to the new vertex instance.
  *
  * Remarks:
- * This method obtains exclusive lock on the `m_verticesLock` mutex.
+ * This method obtains exclusive lock on the `m_verticesLock` mutex only.
+ *
+ * To exploit `graph::addVertex(_In_ STLADD string_type&&)` method, this one calls that method. And that's why (because
+ * a vertex requires random coordinates) I didn't create new vertex class ctor.
  */
 vertex* graph::addVertex(
     _In_ STLADD string_type&& name,
     _In_ const D2D1_COLOR_F& bkgndColor,
     _In_ const D2D1_COLOR_F& textColor,
-    _In_ float mass,
-    _In_ bool fixed)
+    _In_ const float mass,
+    _In_ const bool fixed)
 {
     STLADD lock_guard_exclusive<WAPI srw_lock> verticesLock {m_verticesLock};
     vertex* v = addVertex(std::move(name));
-    sse_t value = {bkgndColor.r, bkgndColor.g, bkgndColor.g, bkgndColor.a};
+    sse_t value = {bkgndColor.r, bkgndColor.g, bkgndColor.b, bkgndColor.a};
     v->setColor(_mm_load_ps(value.data));
-    value = {textColor.r, textColor.g, textColor.g, textColor.a};
+    value = {textColor.r, textColor.g, textColor.b, textColor.a};
     v->setTextColor(_mm_load_ps(value.data));
     value.data[0] = mass;
     __m128 temp = _mm_load_ps(value.data);
     v->setMass(_mm_shuffle_ps(temp, temp, 0));
     v->setFixed(fixed);
     return v;
+}
+
+
+/**
+ * Adds a new edge to the graph. The edge connects two specified vertices.
+ *
+ * Parameters:
+ * >tail
+ * Tail vertex, where the new edge begins.
+ * >head
+ * Head vertex, where the new edge ends.
+ * >length
+ * Size of the new edge.
+ * >stiffness
+ * New edge stiffness.
+ * >directed
+ * Determines edge style: is it directed or not.
+ * >color
+ * Edge drawing color.
+ *
+ * Returns:
+ * Pointer to the new edge instance.
+ *
+ * Remarks:
+ * This method obtains exclusive lock on the `m_edgesLock` mutex only.
+ */
+edge* graph::addEdge(
+    _In_ vertex* tail,
+    _In_ vertex* head,
+    _In_ const float length,
+    _In_ const float stiffness,
+    _In_ const bool directed,
+    _In_ const D2D1_COLOR_F& color)
+{
+    STLADD lock_guard_exclusive<WAPI srw_lock> edgesLock {m_edgesLock};
+    m_edges.emplace_back(new edge {tail, head, length, stiffness, directed, color});
+    return m_edges.back().get();
+}
+
+
+/**
+ * Adds a new edge to the graph. The edge connects two specified vertices.
+ *
+ * Parameters:
+ * >tail
+ * Tail vertex, where the new edge begins.
+ * >head
+ * Head vertex, where the new edge ends.
+ * >length
+ * Size of the new edge.
+ * >directed
+ * Determines edge style: is it directed or not.
+ * >color
+ * Edge drawing color.
+ *
+ * Returns:
+ * Pointer to the new edge instance.
+ *
+ * Stiffness of the new edge is assigned by this graph's 'stifness' setting.
+ *
+ * Remarks:
+ * This method obtains exclusive lock on the `m_edgesLock` mutex only.
+ */
+edge* graph::addEdge(
+    _In_ vertex* tail,
+    _In_ vertex* head,
+    _In_ const float length,
+    _In_ const bool directed,
+    _In_ const D2D1_COLOR_F& color)
+{
+    return addEdge(tail, head, length, m_stiffness, directed, color);
 }
 
 
@@ -148,7 +221,7 @@ vertex* graph::addVertex(
  * New vertex name.
  *
  * Returns:
- * Pointer to the vertex instance.
+ * Pointer to the new vertex instance.
  *
  * Remarks:
  * The caller of this method MUST obtain exclusive lock on the `m_verticesLock` mutex. Because:
@@ -180,7 +253,7 @@ vertex* graph::addVertex(_In_ STLADD string_type&& name)
  * Coordinates of the new vertex.
  *
  * Returns:
- * Pointer to the vertex instance.
+ * Pointer to the new vertex instance.
  *
  * Remarks:
  * The caller of this method MUST obtain exclusive lock on the `m_verticesLock` mutex. Because:

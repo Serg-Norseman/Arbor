@@ -118,6 +118,97 @@ HRESULT arbor_visual_impl::addEdge(_In_ std::wstring&& tail, _In_ std::wstring&&
 
 
 /**
+ * Adds a new edge to graph. The new edge connects two specified vertices.
+ *
+ * Parameters:
+ * >tail
+ * Tail vertex, where the new edge begins.
+ * >head
+ * Head vertex, where the new edge ends.
+ * >length
+ * Size of the new edge.
+ * >stiffness
+ * New edge stiffness.
+ * >directed
+ * Determines edge style: is it directed or not.
+ * >color
+ * Edge drawing color.
+ * >e
+ * Result edge.
+ *
+ * Returns:
+ * Standard HRESULT code.
+ *
+ * Remarks:
+ * This implementation doesn't invalidate the underlying HWND.
+ */
+HRESULT arbor_visual_impl::addEdge(
+    _In_ ARBOR vertex* tail,
+    _In_ ARBOR vertex* head,
+    _In_ const float length,
+    _In_ const float stiffness,
+    _In_ const bool directed,
+    _In_ const D2D1_COLOR_F& color,
+    _Outptr_result_maybenull_ ARBOR edge** e)
+{
+    if (m_window)
+    {
+        *e = m_window->addEdge(tail, head, length, stiffness, directed, color);
+        return S_OK;
+    }
+    else
+    {
+        *e = nullptr;
+        return E_POINTER;
+    }
+}
+
+
+/**
+ * Adds a new edge to graph. The new edge connects two specified vertices.
+ *
+ * Parameters:
+ * >tail
+ * Tail vertex, where the new edge begins.
+ * >head
+ * Head vertex, where the new edge ends.
+ * >length
+ * Size of the new edge.
+ * >directed
+ * Determines edge style: is it directed or not.
+ * >color
+ * Edge drawing color.
+ * >e
+ * Result edge.
+ *
+ * Returns:
+ * Standard HRESULT code.
+ *
+ * Remarks:
+ * This implementation doesn't invalidate the underlying HWND.
+ */
+HRESULT arbor_visual_impl::addEdge(
+    _In_ ARBOR vertex* tail,
+    _In_ ARBOR vertex* head,
+    _In_ const float length,
+    _In_ const bool directed,
+    _In_ const D2D1_COLOR_F& color,
+    _Outptr_result_maybenull_ ARBOR edge** e)
+{
+    if (m_window)
+    {
+        *e = m_window->addEdge(tail, head, length, directed, color);
+        return S_OK;
+    }
+    else
+    {
+        *e = nullptr;
+        return E_POINTER;
+    }
+}
+
+
+/**
  * Adds a new vertex to the graph if the latter doesn't have a vertex with the same name.
  *
  * Parameters:
@@ -146,7 +237,7 @@ HRESULT arbor_visual_impl::addVertex(
     _In_ const D2D1_COLOR_F& textColor,
     _In_ float mass,
     _In_ bool fixed,
-    _Outptr_opt_result_maybenull_ ARBOR vertex** v)
+    _Outptr_result_maybenull_ ARBOR vertex** v)
 {
     if (m_window)
     {

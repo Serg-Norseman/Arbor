@@ -2,6 +2,7 @@
 #include "resource.h"
 #include "service\miscutil.h"
 #include "service\stladdon.h"
+#include "service\winapi\chkerror.h"
 #include "service\winapi\directx\dx.h"
 #include "ui\window\appmsg.h"
 #include "ui\window\top\onscreen\dtsmpwnd.h"
@@ -603,37 +604,153 @@ void desktop_sample_window::addDataToTheGraph()
     using namespace std::string_literals;
     try
     {
-        HRESULT hr = m_visual->addEdge(TEXT("vertex.1"s), TEXT("vertex.1.2"s), 1.0f);
         D2D1_COLOR_F defaultBkgndColor = D2D1::ColorF {D2D1::ColorF::Gray, 1.0f};
         D2D1_COLOR_F defaultTextColor = D2D1::ColorF {GetSysColor(COLOR_WINDOWTEXT), 1.0f};
         ARBOR vertex* tail {};
-        hr = m_visual->addVertex(TEXT("Moscow"s), defaultBkgndColor, defaultTextColor, 1.0f, false, &tail);
-        if (SUCCEEDED(hr))
+        ARBOR vertex* head {};
+        ARBOR edge* e {};
+        D2D1_COLOR_F bkgndColor = D2D1::ColorF {D2D1::ColorF::Red, 1.0f};
+        D2D1_COLOR_F textColor = D2D1::ColorF {D2D1::ColorF::White, 1.0f};
+        HRESULT hr = m_visual->addVertex(TEXT("'/' root"s), bkgndColor, textColor, 1.0f, false, &tail);
+        WAPI check_hr(hr);
+        bkgndColor = D2D1::ColorF {D2D1::ColorF::Green, 1.0f};
+        hr = m_visual->addVertex(TEXT("/dev0"s), bkgndColor, textColor, 1.0f, false, &head);
+        WAPI check_hr(hr);
+        ARBOR vertex* dev0 = head;
+        hr = m_visual->addEdge(tail, head, 1.0f, true, bkgndColor, &e);
+        WAPI check_hr(hr);
+        hr = m_visual->addVertex(TEXT("/dev1"s), bkgndColor, textColor, 1.0f, false, &head);
+        WAPI check_hr(hr);
+        hr = m_visual->addEdge(tail, head, 1.0f, true, bkgndColor, &e);
+        WAPI check_hr(hr);
+        hr = m_visual->addVertex(TEXT("/dev2"s), bkgndColor, textColor, 1.0f, false, &head);
+        WAPI check_hr(hr);
+        hr = m_visual->addEdge(tail, head, 1.0f, true, bkgndColor, &e);
+        WAPI check_hr(hr);
+        hr = m_visual->addVertex(TEXT("/dev3"s), bkgndColor, textColor, 1.0f, false, &head);
+        WAPI check_hr(hr);
+        hr = m_visual->addEdge(tail, head, 1.0f, true, bkgndColor, &e);
+        WAPI check_hr(hr);
+        bkgndColor = D2D1::ColorF {D2D1::ColorF::Blue, 1.0f};
+        textColor = D2D1::ColorF {D2D1::ColorF::Yellow, 1.0f};
+        hr = m_visual->addVertex(TEXT("Program Files"s), bkgndColor, textColor, 1.0f, false, &head);
+        WAPI check_hr(hr);
+        hr = m_visual->addEdge(dev0, head, 3.25f, true, defaultTextColor, &e);
+        WAPI check_hr(hr);
+        hr = m_visual->addVertex(TEXT("Program Files (x86)"s), bkgndColor, textColor, 1.0f, false, &head);
+        WAPI check_hr(hr);
+        tail = head;
+        hr = m_visual->addEdge(dev0, head, 3.25f, true, defaultTextColor, &e);
+        WAPI check_hr(hr);
+        bkgndColor = D2D1::ColorF {D2D1::ColorF::DarkSeaGreen, 0.75f};
+        textColor = D2D1::ColorF {D2D1::ColorF::Black, 1.0f};
+        hr = m_visual->addVertex(TEXT("Users"s), bkgndColor, textColor, 1.0f, false, &head);
+        WAPI check_hr(hr);
+        hr = m_visual->addEdge(dev0, head, 1.0f, true, defaultTextColor, &e);
+        WAPI check_hr(hr);
+        bkgndColor = D2D1::ColorF {D2D1::ColorF::Violet, 1.0f};
+        textColor = D2D1::ColorF {D2D1::ColorF::Blue, 1.0f};
+        hr = m_visual->addVertex(TEXT("Windows"s), bkgndColor, textColor, 1.0f, false, &head);
+        WAPI check_hr(hr);
+        hr = m_visual->addEdge(dev0, head, 1.0f, true, defaultTextColor, &e);
+        WAPI check_hr(hr);
+        hr = m_visual->addVertex(TEXT("Intel"s), defaultBkgndColor, defaultTextColor, 1.0f, false, &head);
+        WAPI check_hr(hr);
+        hr = m_visual->addEdge(tail, head, 1.5f, true, defaultTextColor, &e);
+        WAPI check_hr(hr);
+        hr = m_visual->addVertex(TEXT("IntelSWTools"s), defaultBkgndColor, defaultTextColor, 1.0f, false, &head);
+        WAPI check_hr(hr);
+        hr = m_visual->addEdge(tail, head, 1.5f, true, defaultTextColor, &e);
+        WAPI check_hr(hr);
+        hr = m_visual->addVertex(
+            TEXT("Microsoft\nVisual Studio 14.0"s), defaultBkgndColor, defaultTextColor, 1.0f, false, &head);
+        WAPI check_hr(hr);
+        hr = m_visual->addEdge(tail, head, 3.75f, true, defaultTextColor, &e);
+        WAPI check_hr(hr);
+        hr = m_visual->addVertex(TEXT("MSBuild"s), defaultBkgndColor, defaultTextColor, 1.0f, false, &head);
+        WAPI check_hr(hr);
+        hr = m_visual->addEdge(tail, head, 1.5f, true, defaultTextColor, &e);
+        WAPI check_hr(hr);
+        hr = m_visual->addVertex(TEXT("Windows Kits"s), defaultBkgndColor, defaultTextColor, 1.0f, false, &head);
+        WAPI check_hr(hr);
+        hr = m_visual->addEdge(tail, head, 1.5f, true, defaultTextColor, &e);
+        WAPI check_hr(hr);
+        hr = m_visual->addEdge(TEXT("/dev1"s), TEXT("boost_1_58_0"s), 2.5f);
+        WAPI check_hr(hr);
+        hr = m_visual->addEdge(TEXT("/dev1"s), TEXT("virtual.machines"s), 2.5f);
+        WAPI check_hr(hr);
+        hr = m_visual->addEdge(TEXT("/dev1"s), TEXT("vsp"s), 1.0f);
+        WAPI check_hr(hr);
+        hr = m_visual->addEdge(TEXT("IntelSWTools"s), TEXT("Advisor XE"s), 2.0f);
+        WAPI check_hr(hr);
+        hr = m_visual->addEdge(TEXT("IntelSWTools"s), TEXT("compilers_and_libraries"s), 2.0f);
+        WAPI check_hr(hr);
+        hr = m_visual->addEdge(TEXT("IntelSWTools"s), TEXT("debugger_2016"s), 2.0f);
+        WAPI check_hr(hr);
+        hr = m_visual->addEdge(TEXT("IntelSWTools"s), TEXT("parallel_studio_xe_2016.2.055"s), 2.0f);
+        WAPI check_hr(hr);
+        hr = m_visual->addEdge(TEXT("IntelSWTools"s), TEXT("VTune Amplifier XE 2016"s), 2.0f);
+        WAPI check_hr(hr);
+        hr = m_visual->addEdge(TEXT("MSBuild"s), TEXT("14.0"s), 1.0f);
+        WAPI check_hr(hr);
+        hr = m_visual->addEdge(TEXT("MSBuild"s), TEXT("Microsoft"s), 1.0f);
+        WAPI check_hr(hr);
+        hr = m_visual->addEdge(TEXT("MSBuild"s), TEXT("Microsoft.Cpp"s), 1.0f);
+        WAPI check_hr(hr);
+        hr = m_visual->addEdge(TEXT("Windows Kits"s), TEXT("10"s), 1.0f);
+        WAPI check_hr(hr);
+        hr = m_visual->addEdge(TEXT("Windows Kits"s), TEXT("8.1"s), 1.0f);
+        WAPI check_hr(hr);
+        hr = m_visual->addEdge(TEXT("Windows Kits"s), TEXT("NETFXSDK"s), 1.0f);
+        WAPI check_hr(hr);
+        hr = m_visual->addEdge(TEXT("10"s), TEXT("bin"s), 1.0f);
+        WAPI check_hr(hr);
+        hr = m_visual->addEdge(TEXT("10"s), TEXT("Catalogs"s), 1.0f);
+        WAPI check_hr(hr);
+        hr = m_visual->addEdge(TEXT("10"s), TEXT("Debuggers"s), 1.0f);
+        WAPI check_hr(hr);
+        hr = m_visual->addEdge(TEXT("10"s), TEXT("Include"s), 1.0f);
+        WAPI check_hr(hr);
+        hr = m_visual->addEdge(TEXT("10"s), TEXT("Lib"s), 1.0f);
+        WAPI check_hr(hr);
+        hr = m_visual->addEdge(TEXT("8.1"s), TEXT("8.1/bin"s), 1.0f);
+        WAPI check_hr(hr);
+        hr = m_visual->addEdge(TEXT("8.1"s), TEXT("8.1/Catalogs"s), 1.0f);
+        WAPI check_hr(hr);
+        hr = m_visual->addEdge(TEXT("8.1"s), TEXT("8.1/Debuggers"s), 1.0f);
+        WAPI check_hr(hr);
+        hr = m_visual->addEdge(TEXT("10"s), TEXT("8.1/Include"s), 1.0f);
+        WAPI check_hr(hr);
+        hr = m_visual->addEdge(TEXT("10"s), TEXT("8.1/Lib"s), 1.0f);
+        WAPI check_hr(hr);
+        hr = m_visual->addEdge(TEXT("Include"s), TEXT("10.0.10150.0"s), 1.0f);
+        WAPI check_hr(hr);
+        hr = m_visual->addEdge(TEXT("Include"s), TEXT("10.0.10240.0"s), 1.0f);
+        WAPI check_hr(hr);
+        hr = m_visual->addEdge(TEXT("Include"s), TEXT("10.0.10586.0"s), 1.0f);
+        WAPI check_hr(hr);
+        hr = m_visual->addEdge(TEXT("10.0.10586.0"s), TEXT("shared"s), 1.0f);
+        WAPI check_hr(hr);
+        hr = m_visual->addEdge(TEXT("10.0.10586.0"s), TEXT("ucrt"s), 1.0f);
+        WAPI check_hr(hr);
+        hr = m_visual->addEdge(TEXT("10.0.10586.0"s), TEXT("um"s), 1.0f);
+        WAPI check_hr(hr);
+        hr = m_visual->addEdge(TEXT("10.0.10586.0"s), TEXT("winrt"s), 1.0f);
+        WAPI check_hr(hr);
+        hr = m_visual->addEdge(TEXT("8.1/Debuggers"s), TEXT("x64"s), 1.0f);
+        WAPI check_hr(hr);
+        hr = m_visual->addEdge(TEXT("x64"s), TEXT("dbghelp.dll"s), 1.0f);
+        WAPI check_hr(hr);
+        hr = m_visual->addEdge(TEXT("x64"s), TEXT("srcsrv.dll"s), 1.0f);
+        WAPI check_hr(hr);
+        hr = m_visual->addEdge(TEXT("x64"s), TEXT("symsrv.dll"s), 1.0f);
+        WAPI check_hr(hr);
+
+        HWND visualHWND;
+        hr = m_visual->getHWND(&visualHWND);
+        if (m_visual && (S_OK == hr))
         {
-            hr = m_visual->addEdge(TEXT("vertex.1"s), TEXT("vertex.1.3"s), 1.0f);
-            if (SUCCEEDED(hr))
-            {
-                hr = m_visual->addEdge(TEXT("vertex.1.2"s), TEXT("vertex.1.2.4"s), 1.0f);
-                if (SUCCEEDED(hr))
-                {
-                    hr = m_visual->addEdge(
-                        TEXT("vertex.1.2"s), TEXT("big vertex.1.2.5 derived\nfrom vertex.1.2"s), 1.0f);
-                    if (SUCCEEDED(hr))
-                    {
-                        m_visual->addEdge(TEXT("vertex.1"s), TEXT("vertex.1.4"s), 1.0f);
-                        m_visual->addEdge(TEXT("vertex.1"s), TEXT("vertex.1.5"s), 1.0f);
-                        m_visual->addEdge(TEXT("vertex.1.4"s), TEXT("vertex.1.4.1"s), 1.0f);
-                        m_visual->addEdge(TEXT("vertex.1.4"s), TEXT("\x221E vertex.1.4.2 \x221E"s), 1.0f);
-                        m_visual->addEdge(TEXT("vertex.1.2"s), TEXT("vertex.1.2.5"s), 2.0f);
-                        HWND visualHWND;
-                        hr = m_visual->getHWND(&visualHWND);
-                        if (m_visual && (S_OK == hr))
-                        {
-                            ::InvalidateRect(visualHWND, nullptr, FALSE);
-                        }
-                    }
-                }
-            }
+            ::InvalidateRect(visualHWND, nullptr, FALSE);
         }
     }
     catch (std::bad_alloc& e)

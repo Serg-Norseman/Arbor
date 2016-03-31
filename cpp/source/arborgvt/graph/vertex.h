@@ -68,7 +68,7 @@ public:
         m_color = _mm_load_ps(value.data);
         // Set `m_textColor` to `COLOR_WINDOWTEXT`.
         D2D1_COLOR_F color = D2D1::ColorF {GetSysColor(COLOR_WINDOWTEXT), 1.0f};
-        value = {color.r, color.g, color.g, color.a};
+        value = {color.r, color.g, color.b, color.a};
         m_textColor = _mm_load_ps(value.data);
     }
 
