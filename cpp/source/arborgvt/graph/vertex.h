@@ -72,8 +72,6 @@ public:
     }
 
     /*
-     * Following DirectXMath recommendations I don't use `__vectorcall` calling convention for the ctor.
-     *
      * VC++ 2015 Update 1, assigning a `__m128` variable to another `__m128` variable: when the VC++ compiler makes
      * "debug" build (x86 or x64) the compiler generates the `MOVUPS` instruction (for my current Debug settings).
      * Although all the affected memory location are aligned on a 16-byte boundary. But when CL makes "release" build
