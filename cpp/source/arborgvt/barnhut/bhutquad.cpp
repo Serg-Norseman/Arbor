@@ -55,11 +55,7 @@ void branch::applyForce(
     _In_ const float dist,
     _In_ quad_elements_cont_t* elements) const
 {
-    sse_t value;
-    value.data[0] = m_mass;
-    __m128 temp = _mm_load_ps(value.data);
-    temp = _mm_shuffle_ps(temp, temp, 0);
-    temp = _mm_rcp_ps(temp);
+    __m128 temp = _mm_rcp_ps(m_mass);
     temp = _mm_mul_ps(m_coordinates, temp);
     temp = _mm_sub_ps(v->getCoordinates(), temp);
     __m128 temp2;
@@ -79,6 +75,7 @@ void branch::applyForce(
     temp3 = _mm_mul_ps(temp3, _mm_shuffle_ps(temp3, temp3, 0b10110001));
     temp3 = _mm_sqrt_ps(temp3);
     temp3 = _mm_mul_ps(temp3, _mm_rcp_ps(temp2));
+    sse_t value;
     value.data[0] = dist;
     __m128 temp4 = _mm_load_ps(value.data);
     temp4 = _mm_shuffle_ps(temp4, temp4, 0);
@@ -110,14 +107,10 @@ void branch::applyForce(
             temp2 = _mm_sqrt_ps(temp2);
         }
         temp = _mm_mul_ps(temp, _mm_rcp_ps(temp2));
-        // Addressing ticket #20: use `m_mass` instead of `temp2` below.
-        value.data[0] = m_mass;
+        value.data[0] = repulsion;
         temp2 = _mm_load_ps(value.data);
         temp2 = _mm_shuffle_ps(temp2, temp2, 0);
-        value.data[0] = repulsion;
-        temp4 = _mm_load_ps(value.data);
-        temp4 = _mm_shuffle_ps(temp4, temp4, 0);
-        temp2 = _mm_mul_ps(temp2, temp4);
+        temp2 = _mm_mul_ps(m_mass, temp2);
         temp = _mm_mul_ps(temp, temp2);
         temp = _mm_mul_ps(temp, _mm_rcp_ps(temp3));
         v->applyForce(temp);
@@ -214,11 +207,8 @@ _Check_return_ bool branch::getQuadContent(
  */
 void branch::increaseParameters(_In_ const particle* p) noexcept
 {
-    sse_t value;
-    value.data[0] = p->getMass();
-    m_mass += value.data[0];
-    __m128 temp = _mm_load_ps(value.data);
-    temp = _mm_shuffle_ps(temp, temp, 0);
+    __m128 temp = p->getMass();
+    m_mass = _mm_add_ps(m_mass, temp);
     temp = _mm_mul_ps(p->getCoordinates(), temp);
     m_coordinates = _mm_add_ps(m_coordinates, temp);
 }
@@ -270,12 +260,10 @@ branch* particle::handleParticle(
     temp = _mm_shuffle_ps(temp, origin, 0b10001000);
     temp = _mm_shuffle_ps(temp, temp, 0b11011000);
     auto newBranch = std::make_unique<branch>(temp);
-    value.data[0] = p->getMass();
-    b->setMass(value.data[0]);
-    temp = _mm_load_ps(value.data);
-    temp = _mm_shuffle_ps(temp, temp, 0);
+    temp = p->getMass();
+    b->setMass(temp);
     temp2 = p->getCoordinates();
-    temp = _mm_mul_ps(temp2, temp);
+    temp = _mm_mul_ps(temp, temp2);
     b->setCoordinates(temp);
     if (0b0011 == (0b0011 & _mm_movemask_ps(_mm_cmpeq_ps(m_vertex->getCoordinates(), temp2))))
     {
@@ -359,14 +347,10 @@ void particle::applyForce(
         temp2 = _mm_sqrt_ps(temp2);
     }
     temp = _mm_mul_ps(temp, _mm_rcp_ps(temp2));
-    // Addressing ticket #20: use `m_vertex->getMass()` instead of `temp2` below.
-    value.data[0] = m_vertex->getMass();
+    value.data[0] = repulsion;
     temp2 = _mm_load_ps(value.data);
     temp2 = _mm_shuffle_ps(temp2, temp2, 0);
-    value.data[0] = repulsion;
-    __m128 temp4 = _mm_load_ps(value.data);
-    temp4 = _mm_shuffle_ps(temp4, temp4, 0);
-    temp2 = _mm_mul_ps(temp2, temp4);
+    temp2 = _mm_mul_ps(m_vertex->getMass(), temp2);
     temp = _mm_mul_ps(temp, temp2);
     temp = _mm_mul_ps(temp, _mm_rcp_ps(temp3));
     v->applyForce(temp);
