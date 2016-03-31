@@ -41,9 +41,8 @@ void graph::addEdge(_In_ STLADD string_type&& tail, _In_ STLADD string_type&& he
     }
     if (noEdge)
     {
-        edge* p = new edge {tailVertex, headVertex, true, length, m_stiffness};
         STLADD lock_guard_exclusive<WAPI srw_lock> edgesLock {m_edgesLock};
-        m_edges.emplace_back(p);
+        m_edges.emplace_back(new edge {tailVertex, headVertex, length, m_stiffness, true});
     }
 }
 
@@ -104,9 +103,125 @@ void graph::update(_In_ const __m128 renderSurfaceSize)
  * Parameters:
  * >name
  * New vertex name.
+ * >bkgndColor
+ * Vertex background color.
+ * >textColor
+ * Vertex text color.
+ * >mass
+ * Vertex mass.
+ * >fixed
+ * Vertex movement ability.
  *
  * Returns:
- * Pointer to the vertex instance.
+ * Pointer to the new vertex instance.
+ *
+ * Remarks:
+ * This method obtains exclusive lock on the `m_verticesLock` mutex only.
+ *
+ * To exploit `graph::addVertex(_In_ STLADD string_type&&)` method, this one calls that method. And that's why (because
+ * a vertex requires random coordinates) I didn't create new vertex class ctor.
+ */
+vertex* graph::addVertex(
+    _In_ STLADD string_type&& name,
+    _In_ const D2D1_COLOR_F& bkgndColor,
+    _In_ const D2D1_COLOR_F& textColor,
+    _In_ const float mass,
+    _In_ const bool fixed)
+{
+    STLADD lock_guard_exclusive<WAPI srw_lock> verticesLock {m_verticesLock};
+    vertex* v = addVertex(std::move(name));
+    sse_t value = {bkgndColor.r, bkgndColor.g, bkgndColor.b, bkgndColor.a};
+    v->setColor(_mm_load_ps(value.data));
+    value = {textColor.r, textColor.g, textColor.b, textColor.a};
+    v->setTextColor(_mm_load_ps(value.data));
+    value.data[0] = mass;
+    __m128 temp = _mm_load_ps(value.data);
+    v->setMass(_mm_shuffle_ps(temp, temp, 0));
+    v->setFixed(fixed);
+    return v;
+}
+
+
+/**
+ * Adds a new edge to the graph. The edge connects two specified vertices.
+ *
+ * Parameters:
+ * >tail
+ * Tail vertex, where the new edge begins.
+ * >head
+ * Head vertex, where the new edge ends.
+ * >length
+ * Size of the new edge.
+ * >stiffness
+ * New edge stiffness.
+ * >directed
+ * Determines edge style: is it directed or not.
+ * >color
+ * Edge drawing color.
+ *
+ * Returns:
+ * Pointer to the new edge instance.
+ *
+ * Remarks:
+ * This method obtains exclusive lock on the `m_edgesLock` mutex only.
+ */
+edge* graph::addEdge(
+    _In_ vertex* tail,
+    _In_ vertex* head,
+    _In_ const float length,
+    _In_ const float stiffness,
+    _In_ const bool directed,
+    _In_ const D2D1_COLOR_F& color)
+{
+    STLADD lock_guard_exclusive<WAPI srw_lock> edgesLock {m_edgesLock};
+    m_edges.emplace_back(new edge {tail, head, length, stiffness, directed, color});
+    return m_edges.back().get();
+}
+
+
+/**
+ * Adds a new edge to the graph. The edge connects two specified vertices.
+ *
+ * Parameters:
+ * >tail
+ * Tail vertex, where the new edge begins.
+ * >head
+ * Head vertex, where the new edge ends.
+ * >length
+ * Size of the new edge.
+ * >directed
+ * Determines edge style: is it directed or not.
+ * >color
+ * Edge drawing color.
+ *
+ * Returns:
+ * Pointer to the new edge instance.
+ *
+ * Stiffness of the new edge is assigned by this graph's 'stifness' setting.
+ *
+ * Remarks:
+ * This method obtains exclusive lock on the `m_edgesLock` mutex only.
+ */
+edge* graph::addEdge(
+    _In_ vertex* tail,
+    _In_ vertex* head,
+    _In_ const float length,
+    _In_ const bool directed,
+    _In_ const D2D1_COLOR_F& color)
+{
+    return addEdge(tail, head, length, m_stiffness, directed, color);
+}
+
+
+/**
+ * Adds a new vertex to the graph if the latter doesn't have a vertex with the same name.
+ *
+ * Parameters:
+ * >name
+ * New vertex name.
+ *
+ * Returns:
+ * Pointer to the new vertex instance.
  *
  * Remarks:
  * The caller of this method MUST obtain exclusive lock on the `m_verticesLock` mutex. Because:
@@ -138,7 +253,7 @@ vertex* graph::addVertex(_In_ STLADD string_type&& name)
  * Coordinates of the new vertex.
  *
  * Returns:
- * Pointer to the vertex instance.
+ * Pointer to the new vertex instance.
  *
  * Remarks:
  * The caller of this method MUST obtain exclusive lock on the `m_verticesLock` mutex. Because:
@@ -485,6 +600,8 @@ void graph::updateVelocityAndPosition(_In_ const float time)
     drift = _mm_mul_ps(drift, _mm_rcp_ps(size));
     /*
      * > Main updates loop.
+     *
+     * Initialize loop invariants.
      */
     __m128 repulsion;
     if (m_gravity)
@@ -493,6 +610,24 @@ void graph::updateVelocityAndPosition(_In_ const float time)
         repulsion = _mm_load_ps(value.data);
         repulsion = _mm_shuffle_ps(repulsion, repulsion, 0);
     }
+    /*
+     * Original C# code compares `velocity` vector length against the predefined constant (1'000). To avoid
+     * redundant square root op (SQRTPS) I use `velocity * velocity` dot product as is and compare it against
+     * 1'000'000 value.
+     *
+     * lim (x * x) = 1'000'000
+     * x -> 1'000
+     */
+#if defined(__ICL)
+    value.data[0] = 1000000.0f;
+#else
+    value.data[0] = 1'000'000.0f;
+#endif
+    __m128 velocityVectorLength = _mm_load_ps(value.data);
+    velocityVectorLength = _mm_shuffle_ps(velocityVectorLength, velocityVectorLength, 0);
+    value.data[0] = 1.0f - m_friction;
+    __m128 frictionCompVector = _mm_load_ps(value.data);
+    frictionCompVector = _mm_shuffle_ps(frictionCompVector, frictionCompVector, 0);
     value.data[0] = time;
     __m128 timeVector = _mm_load_ps(value.data);
     timeVector = _mm_shuffle_ps(timeVector, timeVector, 0);
@@ -512,10 +647,7 @@ void graph::updateVelocityAndPosition(_In_ const float time)
         {
             temp = _mm_mul_ps(it->second.getForce(), timeVector);
             __m128 velocity = _mm_add_ps(it->second.getVelocity(), temp);
-            value.data[0] = 1.0f - m_friction;
-            temp = _mm_load_ps(value.data);
-            temp = _mm_shuffle_ps(temp, temp, 0);
-            velocity = _mm_mul_ps(velocity, temp);
+            velocity = _mm_mul_ps(velocity, frictionCompVector);
             if (simd_cpu_capabilities::sse41())
             {
                 temp = _mm_dp_ps(velocity, velocity, 0b00111111);
@@ -526,22 +658,7 @@ void graph::updateVelocityAndPosition(_In_ const float time)
                 temp = _mm_mul_ps(temp, temp);
                 temp = _mm_add_ps(temp, _mm_shuffle_ps(temp, temp, 0b10110001));
             }
-            /*
-             * Original C# code compares `velocity` vector length against the predefined constant (1'000). To avoid
-             * redundant square root op (SQRTPS) I use `velocity * velocity` dot product as is and compare it against
-             * 1'000'000 value.
-             *
-             * lim (x * x) = 1'000'000
-             * x -> 1'000
-             */
-#if defined(__ICL)
-            value.data[0] = 1000000.0f;
-#else
-            value.data[0] = 1'000'000.0f;
-#endif
-            __m128 temp2 = _mm_load_ps(value.data);
-            temp2 = _mm_shuffle_ps(temp2, temp2, 0);
-            if (0b1111 & _mm_movemask_ps(_mm_cmpgt_ps(temp, temp2)))
+            if (0b1111 & _mm_movemask_ps(_mm_cmpgt_ps(temp, velocityVectorLength)))
             {
                 velocity = _mm_mul_ps(velocity, _mm_rcp_ps(temp));
             }

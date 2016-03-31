@@ -61,9 +61,40 @@ public:
         _Inout_ LRESULT& lResult,
         _In_ DWORD msgMapID) override;
 
+    ARBOR edge* addEdge(
+        _In_ ARBOR vertex* tail,
+        _In_ ARBOR vertex* head,
+        _In_ const float length,
+        _In_ const float stiffness,
+        _In_ const bool directed,
+        _In_ const D2D1_COLOR_F& color)
+    {
+        return m_graph.addEdge(tail, head, length, stiffness, directed, color);
+    }
+
+    ARBOR edge* addEdge(
+        _In_ ARBOR vertex* tail,
+        _In_ ARBOR vertex* head,
+        _In_ const float length,
+        _In_ const bool directed,
+        _In_ const D2D1_COLOR_F& color)
+    {
+        return m_graph.addEdge(tail, head, length, directed, color);
+    }
+
     void addEdge(_In_ STLADD string_type&& tail, _In_ STLADD string_type&& head, _In_ float length)
     {
         m_graph.addEdge(std::move(tail), std::move(head), length);
+    }
+
+    ARBOR vertex* addVertex(
+        _In_ STLADD string_type&& name,
+        _In_ const D2D1_COLOR_F& bkgndColor,
+        _In_ const D2D1_COLOR_F& textColor,
+        _In_ float mass,
+        _In_ bool fixed)
+    {
+        return m_graph.addVertex(std::move(name), bkgndColor, textColor, mass, fixed);
     }
 
     void clear() noexcept
@@ -118,7 +149,7 @@ private:
 #endif
 
 #if defined(__ICL)
-    static constexpr D2D1_SIZE_F m_vertexNameSize = {100.0f, 50.0f};
+    static constexpr D2D1_SIZE_F m_vertexNameSize = {50.0f, 50.0f};
 #else
     // Definition is on the top of graphwnd.cpp file.
     static D2D1_SIZE_F m_vertexNameSize;

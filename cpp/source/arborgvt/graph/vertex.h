@@ -16,7 +16,8 @@ ARBOR_BEGIN
 class vertex
 {
 public:
-    vertex() = delete;
+    vertex() = default;
+
     vertex(_In_ const vertex&) = delete;
 
     vertex(_In_ vertex&& right) noexcept
@@ -67,7 +68,7 @@ public:
         m_color = _mm_load_ps(value.data);
         // Set `m_textColor` to `COLOR_WINDOWTEXT`.
         D2D1_COLOR_F color = D2D1::ColorF {GetSysColor(COLOR_WINDOWTEXT), 1.0f};
-        value = {color.r, color.g, color.g, color.a};
+        value = {color.r, color.g, color.b, color.a};
         m_textColor = _mm_load_ps(value.data);
     }
 
@@ -140,14 +141,29 @@ public:
         return m_color;
     }
 
+    void __vectorcall setColor(_In_ __m128 value) noexcept
+    {
+        m_color = value;
+    }
+
     __m128 __vectorcall getTextColor() const noexcept
     {
         return m_textColor;
     }
 
+    void __vectorcall setTextColor(_In_ __m128 value) noexcept
+    {
+        m_textColor = value;
+    }
+
     __m128 __vectorcall getMass() const noexcept
     {
         return m_mass;
+    }
+
+    void __vectorcall setMass(_In_ __m128 value) noexcept
+    {
+        m_mass = value;
     }
 
     __m128 __vectorcall getForce() const noexcept
@@ -188,6 +204,11 @@ public:
     bool getFixed() const noexcept
     {
         return m_fixed;
+    }
+
+    void setFixed(_In_ bool value) noexcept
+    {
+        m_fixed = value;
     }
 
     void __vectorcall applyForce(_In_ const __m128 value) noexcept

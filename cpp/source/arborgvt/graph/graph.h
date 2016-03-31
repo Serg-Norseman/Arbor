@@ -31,6 +31,9 @@ ARBOR_BEGIN
  *
  * Just because I'm "copying" from the C# source code base I'm adding to the `graph` class methods that do some physical
  * calculations. Logically it's a part of another class, but I'm making `graph` class just like Csharp's `ArborSystem`.
+ *
+ * Public versions of `addEdge` and `addVertex` methods ain't used by this class and are exposed as public interface
+ * only.
  */
 class graph_data_type
 {
@@ -233,6 +236,25 @@ public:
     }
 
     void __vectorcall update(_In_ const __m128 renderSurfaceSize);
+    vertex* addVertex(
+        _In_ STLADD string_type&& name,
+        _In_ const D2D1_COLOR_F& bkgndColor,
+        _In_ const D2D1_COLOR_F& textColor,
+        _In_ const float mass,
+        _In_ const bool fixed);
+    edge* addEdge(
+        _In_ vertex* tail,
+        _In_ vertex* head,
+        _In_ const float length,
+        _In_ const float stiffness,
+        _In_ const bool directed,
+        _In_ const D2D1_COLOR_F& color);
+    edge* addEdge(
+        _In_ vertex* tail,
+        _In_ vertex* head,
+        _In_ const float length,
+        _In_ const bool directed,
+        _In_ const D2D1_COLOR_F& color);
 
 
 private:
@@ -245,7 +267,7 @@ private:
     void applySprings();
     void __fastcall updateVelocityAndPosition(_In_ const float time);
 
-    static constexpr float m_stiffness = 250.0f;
+    static constexpr float m_stiffness = 750.0f;
 #if defined(__ICL)
     // Intel C++ 16.0 doesn't support single-quotation mark as a digit separator for floating point types,
     // it's a known bug with internal tracker DPD200379927.
@@ -260,6 +282,7 @@ private:
     static constexpr float m_theta = 0.4f;
     static constexpr bool m_gravity = false;
     static constexpr bool m_autoStop = false;
+
     /*
      * `m_graphBound` is the area used by Barnes Hut algorithm. This is a coordinate space where all graph vertices
      * exist (coordinates of any vertex count in this space).

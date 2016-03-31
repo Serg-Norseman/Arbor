@@ -19,34 +19,38 @@ public:
     edge() = delete;
     edge(_In_ const edge&) = delete;
 
-    edge(_In_ vertex* tail, _In_ vertex* head, _In_ const float length, _In_ const float stiffness) noexcept
+    edge(
+        _In_ vertex* tail,
+        _In_ vertex* head,
+        _In_ const float length,
+        _In_ const float stiffness,
+        _In_ const bool directed,
+        _In_ const D2D1_COLOR_F& color) noexcept
         :
         m_tail {tail},
         m_head {head},
         m_data {nullptr},
         m_length {length},
         m_stiffness {stiffness},
-        m_directed {false}
+        m_directed {directed}
     {
-        // Set `m_color` to `COLOR_WINDOWTEXT`.
-        D2D1_COLOR_F color = D2D1::ColorF {GetSysColor(COLOR_WINDOWTEXT), 1.0f};
-        sse_t value = {color.r, color.g, color.g, color.a};
+        sse_t value = {color.r, color.g, color.b, color.a};
         m_color = _mm_load_ps(value.data);
     }
 
     edge(_In_ vertex* tail,
         _In_ vertex* head,
-        _In_ const bool directed,
         _In_ const float length,
-        _In_ const float stiffness) noexcept
+        _In_ const float stiffness,
+        _In_ const bool directed) noexcept
         :
-        edge(tail, head, length, stiffness)
+        edge(tail, head, length, stiffness, directed, D2D1::ColorF {GetSysColor(COLOR_WINDOWTEXT), 1.0f})
     {
-        m_directed = directed;
     }
 
     edge& operator =(_In_ const edge&) = delete;
 
+#if defined(ARBORGVT_EXPORTS)
     static void* operator new(_In_ const size_t size)
     {
         STLADD aligned_sse_allocator<edge> allocator {};
@@ -58,6 +62,7 @@ public:
         STLADD aligned_sse_allocator<edge> allocator {};
         allocator.deallocate(p);
     }
+#endif
 
     void swap(_Inout_ edge& right) noexcept
     {
