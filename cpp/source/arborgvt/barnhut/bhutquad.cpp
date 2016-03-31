@@ -55,11 +55,7 @@ void branch::applyForce(
     _In_ const float dist,
     _In_ quad_elements_cont_t* elements) const
 {
-    sse_t value;
-    value.data[0] = m_mass;
-    __m128 temp = _mm_load_ps(value.data);
-    temp = _mm_shuffle_ps(temp, temp, 0);
-    temp = _mm_rcp_ps(temp);
+    __m128 temp = _mm_rcp_ps(m_mass);
     temp = _mm_mul_ps(m_coordinates, temp);
     temp = _mm_sub_ps(v->getCoordinates(), temp);
     __m128 temp2;
@@ -71,14 +67,15 @@ void branch::applyForce(
     {
         temp2 = _mm_shuffle_ps(temp, temp, 0b01000100);
         temp2 = _mm_mul_ps(temp2, temp2);
-        temp2 = _mm_hadd_ps(temp2, temp2);
+        temp2 = _mm_add_ps(temp2, _mm_shuffle_ps(temp2, temp2, 0b10110001));
     }
     __m128 dotProduct = temp2;
     temp2 = _mm_sqrt_ps(temp2);
-    __m128 temp3 = _mm_hsub_ps(m_area, m_area);
+    __m128 temp3 = _mm_sub_ps(_mm_shuffle_ps(m_area, m_area, 0b01001110), m_area);
     temp3 = _mm_mul_ps(temp3, _mm_shuffle_ps(temp3, temp3, 0b10110001));
     temp3 = _mm_sqrt_ps(temp3);
     temp3 = _mm_mul_ps(temp3, _mm_rcp_ps(temp2));
+    sse_t value;
     value.data[0] = dist;
     __m128 temp4 = _mm_load_ps(value.data);
     temp4 = _mm_shuffle_ps(temp4, temp4, 0);
@@ -105,19 +102,15 @@ void branch::applyForce(
             else
             {
                 temp2 = _mm_mul_ps(temp, temp);
-                temp2 = _mm_hadd_ps(temp2, temp2);
+                temp2 = _mm_add_ps(temp2, _mm_shuffle_ps(temp2, temp2, 0b10110001));
             }
             temp2 = _mm_sqrt_ps(temp2);
         }
         temp = _mm_mul_ps(temp, _mm_rcp_ps(temp2));
-        // Addressing ticket #20: use `m_mass` instead of `temp2` below.
-        value.data[0] = m_mass;
+        value.data[0] = repulsion;
         temp2 = _mm_load_ps(value.data);
         temp2 = _mm_shuffle_ps(temp2, temp2, 0);
-        value.data[0] = repulsion;
-        temp4 = _mm_load_ps(value.data);
-        temp4 = _mm_shuffle_ps(temp4, temp4, 0);
-        temp2 = _mm_mul_ps(temp2, temp4);
+        temp2 = _mm_mul_ps(m_mass, temp2);
         temp = _mm_mul_ps(temp, temp2);
         temp = _mm_mul_ps(temp, _mm_rcp_ps(temp3));
         v->applyForce(temp);
@@ -146,15 +139,13 @@ quad_element::quad_index branch::getQuad(_In_ const particle* p) const noexcept
     __m128 coordinate = p->getCoordinates();
     if (0b0011 == (0b0011 & _mm_movemask_ps(_mm_cmpeq_ps(coordinate, coordinate))))
     {
-        __m128 temp = _mm_shuffle_ps(m_area, m_area, 0b11111101);
-        __m128 temp2 = _mm_sub_ps(coordinate, temp);
-        temp = _mm_sub_ps(m_area, temp);
+        __m128 temp = _mm_sub_ps(_mm_shuffle_ps(m_area, m_area, 0b01001110), m_area);
         sse_t value;
         value.data[0] = 0.5f;
         __m128 half = _mm_load_ps(value.data);
         half = _mm_shuffle_ps(half, half, 0);
         temp = _mm_mul_ps(temp, half);
-        temp = _mm_shuffle_ps(temp, temp, 0b10001000);
+        __m128 temp2 = _mm_sub_ps(coordinate, m_area);
         int compare = _mm_movemask_ps(_mm_cmplt_ps(temp2, temp));
         if (0b0001 & compare)
         {
@@ -214,11 +205,8 @@ _Check_return_ bool branch::getQuadContent(
  */
 void branch::increaseParameters(_In_ const particle* p) noexcept
 {
-    sse_t value;
-    value.data[0] = p->getMass();
-    m_mass += value.data[0];
-    __m128 temp = _mm_load_ps(value.data);
-    temp = _mm_shuffle_ps(temp, temp, 0);
+    __m128 temp = p->getMass();
+    m_mass = _mm_add_ps(m_mass, temp);
     temp = _mm_mul_ps(p->getCoordinates(), temp);
     m_coordinates = _mm_add_ps(m_coordinates, temp);
 }
@@ -246,36 +234,31 @@ void branch::increaseParameters(_In_ const particle* p) noexcept
 branch* particle::handleParticle(
     _In_ const particle* p, _In_ branch* b, _In_ quad_index quad, _In_ particles_cont_t* particles)
 {
-    __m128 temp = b->getArea();
-    __m128 temp2 = _mm_shuffle_ps(temp, temp, 0b11111101);
-    __m128 halfSize = _mm_sub_ps(temp, temp2);
+    __m128 origin = b->getArea();
+    __m128 halfSize = _mm_sub_ps(_mm_shuffle_ps(origin, origin, 0b01001110), origin);
     sse_t value;
     value.data[0] = 0.5f;
-    temp2 = _mm_load_ps(value.data);
-    temp2 = _mm_shuffle_ps(temp2, temp2, 0);
-    halfSize = _mm_mul_ps(halfSize, temp2);
-    __m128 origin = _mm_shuffle_ps(temp, temp, 0b10110001);
-    temp2 = _mm_add_ps(origin, halfSize);
+    __m128 temp = _mm_load_ps(value.data);
+    temp = _mm_shuffle_ps(temp, temp, 0);
+    halfSize = _mm_mul_ps(halfSize, temp);
+    temp = _mm_add_ps(origin, halfSize);
     if ((NorthEastQuad == quad) || (SouthEastQuad == quad))
     {
-        temp = _mm_shuffle_ps(temp2, origin, 0b01100100);
+        temp = _mm_shuffle_ps(temp, origin, 0b01100100);
         origin = _mm_shuffle_ps(temp, origin, 0b11101100);
     }
     if ((SouthWestQuad == quad) || (SouthEastQuad == quad))
     {
-        temp = _mm_shuffle_ps(temp2, origin, 0b10111000);
-        origin = _mm_shuffle_ps(origin, temp, 0b10010100);
+        temp = _mm_shuffle_ps(temp, origin, 0b00100100);
+        origin = _mm_shuffle_ps(temp, origin, 0b11100111);
     }
     temp = _mm_add_ps(origin, halfSize);
-    temp = _mm_shuffle_ps(temp, origin, 0b10001000);
-    temp = _mm_shuffle_ps(temp, temp, 0b11011000);
+    temp = _mm_shuffle_ps(origin, temp, 0b01000100);
     auto newBranch = std::make_unique<branch>(temp);
-    value.data[0] = p->getMass();
-    b->setMass(value.data[0]);
-    temp = _mm_load_ps(value.data);
-    temp = _mm_shuffle_ps(temp, temp, 0);
-    temp2 = p->getCoordinates();
-    temp = _mm_mul_ps(temp2, temp);
+    temp = p->getMass();
+    b->setMass(temp);
+    __m128 temp2 = p->getCoordinates();
+    temp = _mm_mul_ps(temp, temp2);
     b->setCoordinates(temp);
     if (0b0011 == (0b0011 & _mm_movemask_ps(_mm_cmpeq_ps(m_vertex->getCoordinates(), temp2))))
     {
@@ -286,10 +269,8 @@ branch* particle::handleParticle(
         coefficient = _mm_shuffle_ps(coefficient, coefficient, 0b10001000);
         temp = ARBOR randomVector(coefficient);
         temp = _mm_add_ps(m_vertex->getCoordinates(), temp);
-        temp2 = _mm_shuffle_ps(origin, origin, 0b10001000);
-        temp = _mm_max_ps(temp, temp2);
+        temp = _mm_max_ps(temp, origin);
         temp2 = _mm_add_ps(origin, halfSize);
-        temp2 = _mm_shuffle_ps(temp2, temp2, 0b10001000);
         m_vertex->setCoordinates(_mm_min_ps(temp, temp2));
     }
     particles->push_back(std::make_unique<particle>(m_vertex));
@@ -335,7 +316,7 @@ void particle::applyForce(
     {
         temp2 = _mm_shuffle_ps(temp, temp, 0b01000100);
         temp2 = _mm_mul_ps(temp2, temp2);
-        temp2 = _mm_hadd_ps(temp2, temp2);
+        temp2 = _mm_add_ps(temp2, _mm_shuffle_ps(temp2, temp2, 0b10110001));
     }
     __m128 dotProduct = temp2;
     temp2 = _mm_sqrt_ps(temp2);
@@ -354,19 +335,15 @@ void particle::applyForce(
         else
         {
             temp2 = _mm_mul_ps(temp, temp);
-            temp2 = _mm_hadd_ps(temp2, temp2);
+            temp2 = _mm_add_ps(temp2, _mm_shuffle_ps(temp2, temp2, 0b10110001));
         }
         temp2 = _mm_sqrt_ps(temp2);
     }
     temp = _mm_mul_ps(temp, _mm_rcp_ps(temp2));
-    // Addressing ticket #20: use `m_vertex->getMass()` instead of `temp2` below.
-    value.data[0] = m_vertex->getMass();
+    value.data[0] = repulsion;
     temp2 = _mm_load_ps(value.data);
     temp2 = _mm_shuffle_ps(temp2, temp2, 0);
-    value.data[0] = repulsion;
-    __m128 temp4 = _mm_load_ps(value.data);
-    temp4 = _mm_shuffle_ps(temp4, temp4, 0);
-    temp2 = _mm_mul_ps(temp2, temp4);
+    temp2 = _mm_mul_ps(m_vertex->getMass(), temp2);
     temp = _mm_mul_ps(temp, temp2);
     temp = _mm_mul_ps(temp, _mm_rcp_ps(temp3));
     v->applyForce(temp);

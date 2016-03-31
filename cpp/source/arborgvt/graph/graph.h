@@ -148,7 +148,7 @@ public:
     {
         std::random_device rd {};
         m_engine.seed(rd());
-        sse_t value = {m_distribution.b(), m_distribution.a(), m_distribution.b(), m_distribution.a()};
+        sse_t value = {m_distribution.a(), m_distribution.a(), m_distribution.b(), m_distribution.b()};
         m_graphBound = _mm_load_ps(value.data);
         m_viewBound = getZeroVector();
     }
@@ -273,7 +273,7 @@ private:
      *
      * Names suffix `...Bound` came from the C# source code.
      *
-     * Both the vectors formatted as [top-y, bottom-y, left-x, right-x].
+     * Both the vectors formatted as [bottom-y, right-x, top-y, left-x].
      */
     __m128 m_graphBound;
     __m128 m_viewBound;

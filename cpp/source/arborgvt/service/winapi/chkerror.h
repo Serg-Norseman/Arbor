@@ -7,9 +7,9 @@ WAPI_BEGIN
 class check_failed
 {
 public:
-    explicit check_failed(_In_ const long nResult)
+    explicit check_failed(_In_ const long result)
         :
-        m_nError {nResult}
+        m_nError {result}
     {
     }
 
@@ -28,11 +28,11 @@ inline void check_bool(_In_ const T result)
     }
 }
 
-inline void check_hr(_In_ const HRESULT hResult)
+inline void check_hr(_In_ const HRESULT result)
 {
-    if (FAILED(hResult))
+    if (FAILED(result))
     {
-        throw check_failed {hResult};
+        throw check_failed {result};
     }
 }
 

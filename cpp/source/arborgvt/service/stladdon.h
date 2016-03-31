@@ -585,7 +585,7 @@ ARBOR_END
 
 STLADD_END
 
-inline STLADD string_type operator "" _s(STLADD string_type::const_pointer psz, size_t nSize)
+inline STLADD string_type operator "" _s(STLADD string_type::const_pointer psz, size_t size)
 {
-    return STLADD string_type {psz, nSize};
+    return STLADD string_type {psz, size};
 }

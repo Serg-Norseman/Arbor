@@ -23,25 +23,24 @@ std::vector<WORD> version_info::getApplicationExeVersionAsVector()
 {
     std::vector<WORD> result;
     STLADD t_char_unique_ptr_t imageFileName {new TCHAR[MAX_PATH]};
-    DWORD nBytesCopied = GetModuleFileName(nullptr, imageFileName.get(), MAX_PATH);
-    if (nBytesCopied && (MAX_PATH != nBytesCopied))
+    DWORD bytesCopied = GetModuleFileName(nullptr, imageFileName.get(), MAX_PATH);
+    if (bytesCopied && (MAX_PATH != bytesCopied))
     {
-        DWORD nVersionInfoSize = GetFileVersionInfoSize(imageFileName.get(), &nBytesCopied);
-        if (nVersionInfoSize)
+        DWORD versionInfoSize = GetFileVersionInfoSize(imageFileName.get(), &bytesCopied);
+        if (versionInfoSize)
         {
-            STLADD u_char_unique_ptr_t data {new unsigned char[nVersionInfoSize]};
-            void* pData = data.get();
-            VS_FIXEDFILEINFO* pFileInfo;
-            UINT nLength;
-            if (GetFileVersionInfo(imageFileName.get(), 0, nVersionInfoSize, pData) &&
-                VerQueryValue(pData, TEXT("\\"), reinterpret_cast<void**> (&pFileInfo), &nLength))
+            STLADD u_char_unique_ptr_t data {new unsigned char[versionInfoSize]};
+            VS_FIXEDFILEINFO* fileInfo;
+            UINT length;
+            if (GetFileVersionInfo(imageFileName.get(), 0, versionInfoSize, data.get()) &&
+                VerQueryValue(data.get(), TEXT("\\"), reinterpret_cast<void**> (&fileInfo), &length))
             {
                 result.reserve(4);
                 result.resize(4);
-                result[0] = HIWORD(pFileInfo->dwFileVersionMS);
-                result[1] = LOWORD(pFileInfo->dwFileVersionMS);
-                result[2] = HIWORD(pFileInfo->dwFileVersionLS);
-                result[3] = LOWORD(pFileInfo->dwFileVersionLS);
+                result[0] = HIWORD(fileInfo->dwFileVersionMS);
+                result[1] = LOWORD(fileInfo->dwFileVersionMS);
+                result[2] = HIWORD(fileInfo->dwFileVersionLS);
+                result[3] = LOWORD(fileInfo->dwFileVersionLS);
             }
         }
     }
@@ -62,16 +61,20 @@ std::vector<WORD> version_info::getApplicationExeVersionAsVector()
  */
 STLADD string_unique_ptr_t version_info::getApplicationExeVersion()
 {
-    STLADD string_unique_ptr_t szResult {};
+    STLADD string_unique_ptr_t result {};
+#if defined(__ICL)
     auto version(getApplicationExeVersionAsVector());
+#else
+    auto version {getApplicationExeVersionAsVector()};
+#endif
     if (version.size())
     {
         STLADD wostringstream stream {};
         std::copy(version.begin(), version.end(), std::ostream_iterator<WORD, wchar_t> {stream, TEXT(".")});
-        szResult = std::make_unique<STLADD string_type>(stream.str());
-        szResult->erase(szResult->end() - 1);
+        result = std::make_unique<STLADD string_type>(stream.str());
+        result->erase(result->end() - 1);
     }
-    return szResult;
+    return result;
 }
 
 
@@ -80,61 +83,61 @@ STLADD string_unique_ptr_t version_info::getApplicationExeVersion()
  * first version language the method found in version languages array.
  *
  * Parameters:
- * >pszName
+ * >name
  * Predefined name of an entry in the 'StringFileInfo' resource block ('CompanyName', 'LegalCopyright' and so on).
  *
  * Returns:
  * The entry value.
  */
-STLADD string_unique_ptr_t version_info::getApplicationExeVersionInfoStringTableEntry(_In_ LPCTSTR pszName)
+STLADD string_unique_ptr_t version_info::getApplicationExeVersionInfoStringTableEntry(_In_ LPCTSTR name)
 {
-    STLADD string_unique_ptr_t szResult;
+    STLADD string_unique_ptr_t result;
 
     STLADD t_char_unique_ptr_t pathFileName {new TCHAR[MAX_PATH]};
-    DWORD nCharsCopied = GetModuleFileName(nullptr, pathFileName.get(), MAX_PATH);
-    if (nCharsCopied && (MAX_PATH != nCharsCopied))
+    DWORD charsCopied = GetModuleFileName(nullptr, pathFileName.get(), MAX_PATH);
+    if (charsCopied && (MAX_PATH != charsCopied))
     {
         // Form link object name.
-        DWORD nVersionInfoSize = GetFileVersionInfoSize(pathFileName.get(), &nCharsCopied);
-        if (nVersionInfoSize)
+        DWORD versionInfoSize = GetFileVersionInfoSize(pathFileName.get(), &charsCopied);
+        if (versionInfoSize)
         {
-            STLADD u_char_unique_ptr_t data {new unsigned char[nVersionInfoSize]};
-            void* pData = data.get();
+            STLADD u_char_unique_ptr_t data {new unsigned char[versionInfoSize]};
             typedef struct
             {
-                WORD nLanguage;
-                WORD nCodePage;
+                WORD language;
+                WORD codePage;
             }
             lang_and_code_page_t;
 
-            lang_and_code_page_t* pTranslation;
-            UINT nLength;
-            if (GetFileVersionInfo(pathFileName.get(), 0, nVersionInfoSize, pData) &&
+            lang_and_code_page_t* translation;
+            UINT length;
+            if (GetFileVersionInfo(pathFileName.get(), 0, versionInfoSize, data.get()) &&
                 VerQueryValue(
-                    pData, TEXT("\\VarFileInfo\\Translation"), reinterpret_cast<void**> (&pTranslation), &nLength) &&
-                nLength)
+                data.get(), TEXT("\\VarFileInfo\\Translation"), reinterpret_cast<void**> (&translation), &length) &&
+                length)
             {
-                TCHAR szStringFileInfoFormat[] = TEXT("\\StringFileInfo\\%04x%04x\\%s");
-                size_t nEntryPathLength = _countof(szStringFileInfoFormat) + _tcscnlen(pszName, 32);
-                STLADD t_char_unique_ptr_t stringFileInfoEntry {new TCHAR[nEntryPathLength]};
-                _stprintf_s(stringFileInfoEntry.get(),
-                            nEntryPathLength,
-                            szStringFileInfoFormat,
-                            pTranslation[0].nLanguage,
-                            pTranslation[0].nCodePage,
-                            pszName);
+                TCHAR stringFileInfoFormat[] = TEXT("\\StringFileInfo\\%04x%04x\\%s");
+                size_t entryPathLength = _countof(stringFileInfoFormat) + _tcscnlen(name, 32);
+                STLADD t_char_unique_ptr_t stringFileInfoEntry {new TCHAR[entryPathLength]};
+                _stprintf_s(
+                    stringFileInfoEntry.get(),
+                    entryPathLength,
+                    stringFileInfoFormat,
+                    translation[0].language,
+                    translation[0].codePage,
+                    name);
 
-                LPTSTR pszFileDescription;
+                LPTSTR fileDescription;
                 if (VerQueryValue(
-                    pData, stringFileInfoEntry.get(), reinterpret_cast<void**> (&pszFileDescription), &nLength))
+                    data.get(), stringFileInfoEntry.get(), reinterpret_cast<void**> (&fileDescription), &length))
                 {
-                    szResult = std::make_unique<STLADD string_type>(pszFileDescription, nLength - 1);
+                    result = std::make_unique<STLADD string_type>(fileDescription, length - 1);
                 }
             }
         }
     }
 
-    return szResult;
+    return result;
 }
 
 
@@ -195,41 +198,41 @@ STLADD string_unique_ptr_t version_info::getApplicationProductName()
  * the event state to nonsignaled.
  *
  * Parameters:
- * >pszName
+ * >name
  * Optional name of the new event object.
  *
  * Returns:
  * Handle to the event object. When the return value ain't NULL handle caller must use the 'CloseHandle' to close the
  * handle.
  */
-_Check_return_ HANDLE windows_system::createEvent(_In_opt_z_ LPCWSTR pszName)
+_Check_return_ HANDLE windows_system::createEvent(_In_opt_z_ LPCWSTR name)
 {
     using create_event_ex_func_t = _Ret_maybenull_ HANDLE (WINAPI *)(
         _In_opt_ LPSECURITY_ATTRIBUTES, _In_opt_ LPCWSTR, _In_ DWORD, _In_ DWORD);
     using create_event_func_t = _Ret_maybenull_ HANDLE (WINAPI *)(
         _In_opt_ LPSECURITY_ATTRIBUTES, _In_ BOOL, _In_ BOOL, _In_opt_ LPCWSTR);
 
-    HANDLE hEvent = nullptr;
-    HMODULE hKernel32 = nullptr;
-    create_event_ex_func_t pCreateEventEx =
-        getFunction<create_event_ex_func_t>(TEXT("kernel32.dll"), "CreateEventExW", hKernel32);
-    if (nullptr != pCreateEventEx)
+    HANDLE event = nullptr;
+    HMODULE kernel32 = nullptr;
+    create_event_ex_func_t createEventEx =
+        getFunction<create_event_ex_func_t>(TEXT("kernel32.dll"), "CreateEventExW", kernel32);
+    if (nullptr != createEventEx)
     {
-        hEvent = (pCreateEventEx)(nullptr, pszName, CREATE_EVENT_MANUAL_RESET, SYNCHRONIZE | EVENT_MODIFY_STATE);
+        event = (createEventEx)(nullptr, name, CREATE_EVENT_MANUAL_RESET, SYNCHRONIZE | EVENT_MODIFY_STATE);
     }
     else
     {
-        create_event_func_t pCreateEvent = getFunction<create_event_func_t>(nullptr, "CreateEventW", hKernel32);
-        if (nullptr != pCreateEvent)
+        create_event_func_t createEvent = getFunction<create_event_func_t>(nullptr, "CreateEventW", kernel32);
+        if (nullptr != createEvent)
         {
-            hEvent = (pCreateEvent)(nullptr, TRUE, FALSE, pszName);
+            event = (createEvent)(nullptr, TRUE, FALSE, name);
         }
     }
-    if (nullptr != hKernel32)
+    if (nullptr != kernel32)
     {
-        FreeLibrary(hKernel32);
+        FreeLibrary(kernel32);
     }
-    return hEvent;
+    return event;
 }
 
 
@@ -238,27 +241,27 @@ _Check_return_ HANDLE windows_system::createEvent(_In_opt_z_ LPCWSTR pszName)
  * the taskbar.
  *
  * Parameters:
- * pszAppID
+ * appID
  * >Application User Model ID to assign to the current process.
  *
  * Returns:
  * N/A.
  */
-void windows_system::setProcessExplicitAppUserModelID(_In_ PCWSTR pszAppID)
+void windows_system::setProcessExplicitAppUserModelID(_In_ PCWSTR appID)
 {
     using set_current_process_explicit_app_user_model_id_func_t = HRESULT (STDAPICALLTYPE *)(_In_ PCWSTR);
 
-    HMODULE hShell32 = nullptr;
-    set_current_process_explicit_app_user_model_id_func_t pSetter =
+    HMODULE shell32 = nullptr;
+    set_current_process_explicit_app_user_model_id_func_t setter =
         getFunction<set_current_process_explicit_app_user_model_id_func_t>(
-        TEXT("shell32.dll"), "SetCurrentProcessExplicitAppUserModelID", hShell32);
-    if (nullptr != pSetter)
+        TEXT("shell32.dll"), "SetCurrentProcessExplicitAppUserModelID", shell32);
+    if (nullptr != setter)
     {
-        (pSetter)(pszAppID);
+        (setter)(appID);
     }
-    if (nullptr != hShell32)
+    if (nullptr != shell32)
     {
-        FreeLibrary(hShell32);
+        FreeLibrary(shell32);
     }
 }
 
@@ -268,30 +271,30 @@ void windows_system::setProcessExplicitAppUserModelID(_In_ PCWSTR pszAppID)
  * through.
  *
  * Parameters:
- * >hWnd
+ * >hwnd
  * Handle to the window whose User Interface Privilege Isolation (UIPI) message filter is to be modified.
- * >nMessage
+ * >message
  * The message that the message filter allows through.
  *
  * Returns:
  * N/A.
  */
-void windows_system::changeWindowMessageFilter(_In_ const HWND hWnd, _In_ const UINT nMessage)
+void windows_system::changeWindowMessageFilter(_In_ const HWND hwnd, _In_ const UINT message)
 {
     using change_window_message_filter_ex_func_t = BOOL (WINAPI *)(
         _In_ HWND, _In_ UINT, _In_ DWORD, _Inout_opt_ PCHANGEFILTERSTRUCT);
 
-    HMODULE hUser32 = nullptr;
-    change_window_message_filter_ex_func_t pChangeWindowMessageFilterEx =
+    HMODULE user32 = nullptr;
+    change_window_message_filter_ex_func_t changeWindowMessageFilterEx =
         getFunction<change_window_message_filter_ex_func_t> (
-        TEXT("user32.dll"), "ChangeWindowMessageFilterEx", hUser32);
-    if (nullptr != pChangeWindowMessageFilterEx)
+        TEXT("user32.dll"), "ChangeWindowMessageFilterEx", user32);
+    if (nullptr != changeWindowMessageFilterEx)
     {
-        (pChangeWindowMessageFilterEx)(hWnd, nMessage, MSGFLT_ALLOW, nullptr);
+        (changeWindowMessageFilterEx)(hwnd, message, MSGFLT_ALLOW, nullptr);
     }
-    if (nullptr != hUser32)
+    if (nullptr != user32)
     {
-        FreeLibrary(hUser32);
+        FreeLibrary(user32);
     }
 }
 #pragma endregion windows_system implementation

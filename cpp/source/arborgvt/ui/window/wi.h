@@ -58,86 +58,86 @@ protected:
 class directx_toolkit
 {
 protected:
-    HRESULT getDpiForMonitor(_In_ const HWND hWnd, _Out_ float* pfDPIX, _Out_ float* pfDPIY) const;
+    HRESULT getDpiForMonitor(_In_ const HWND hwnd, _Out_ float* dpiX, _Out_ float* dpiY) const;
 
     template <typename Q>
-    constexpr float physicalToLogical(_In_ const Q value, _In_ const float fDPI) const
+    constexpr float physicalToLogical(_In_ const Q value, _In_ const float dpi) const
     {
-        return value * 96.0f / fDPI;
+        return value * 96.0f / dpi;
     }
 
     template <typename Q>
-    constexpr float logicalToPhysical(_In_ const Q value, _In_ const float fDPI) const
+    constexpr float logicalToPhysical(_In_ const Q value, _In_ const float dpi) const
     {
-        return value * fDPI / 96.0f;
+        return value * dpi / 96.0f;
     }
 
     HRESULT createTextLayoutForBodyTitle(
-        _In_ IDWriteFactory* pDWriteFactory,
-        _In_ const HWND hWnd,
-        _In_reads_z_(nSize) LPCTSTR pszText,
-        _In_ const size_t nSize,
-        _In_ const D2D1_SIZE_F* pSize,
-        _COM_Outptr_result_maybenull_ IDWriteTextLayout** ppTextLayout) const;
+        _In_ IDWriteFactory* directWriteFactory,
+        _In_ const HWND hwnd,
+        _In_reads_z_(length) LPCTSTR text,
+        _In_ const size_t length,
+        _In_ const D2D1_SIZE_F* size,
+        _COM_Outptr_result_maybenull_ IDWriteTextLayout** resultTextLayout) const;
     HRESULT createTextLayoutForBodyText(
-        _In_ IDWriteFactory* pDWriteFactory,
-        _In_ const HWND hWnd,
-        _In_reads_z_(nSize) LPCTSTR pszText,
-        _In_ const size_t nSize,
-        _In_ const D2D1_SIZE_F* pSize,
-        _COM_Outptr_result_maybenull_ IDWriteTextLayout** ppTextLayout) const;
+        _In_ IDWriteFactory* directWriteFactory,
+        _In_ const HWND hwnd,
+        _In_reads_z_(length) LPCTSTR text,
+        _In_ const size_t length,
+        _In_ const D2D1_SIZE_F* size,
+        _COM_Outptr_result_maybenull_ IDWriteTextLayout** resultTextLayout) const;
 
     HRESULT createTextFormatForBodyTitle(
-        _In_ IDWriteFactory* pDWriteFactory,
-        _In_ const HWND hWnd,
-        _COM_Outptr_result_maybenull_ IDWriteTextFormat** ppTextFormat) const
+        _In_ IDWriteFactory* directWriteFactory,
+        _In_ const HWND hwnd,
+        _COM_Outptr_result_maybenull_ IDWriteTextFormat** resultTextFormat) const
     {
-        return createTextFormat(pDWriteFactory, hWnd, TEXT_BODYTITLE, ppTextFormat);
+        return createTextFormat(directWriteFactory, hwnd, TEXT_BODYTITLE, resultTextFormat);
     }
 
     HRESULT createTextFormatForBodyText(
-        _In_ IDWriteFactory* pDWriteFactory,
-        _In_ const HWND hWnd,
-        _COM_Outptr_result_maybenull_ IDWriteTextFormat** ppTextFormat) const
+        _In_ IDWriteFactory* directWriteFactory,
+        _In_ const HWND hwnd,
+        _COM_Outptr_result_maybenull_ IDWriteTextFormat** resultTextFormat) const
     {
-        return createTextFormat(pDWriteFactory, hWnd, TEXT_BODYTEXT, ppTextFormat);
+        return createTextFormat(directWriteFactory, hwnd, TEXT_BODYTEXT, resultTextFormat);
     }
 
     HRESULT loadBitmapFromResource(
-        _In_z_ LPCTSTR pszResourceName,
-        _In_z_ LPCTSTR pszResourceType,
-        _In_ IWICImagingFactory* pImagingFactory,
-        _COM_Outptr_result_maybenull_ IWICFormatConverter** ppBitmapSource) const;
+        _In_z_ LPCTSTR resourceName,
+        _In_z_ LPCTSTR resourceType,
+        _In_ IWICImagingFactory* imagingFactory,
+        _COM_Outptr_result_maybenull_ IWICFormatConverter** bitmapSource) const;
     HRESULT loadBitmapFromResource(
-        _In_z_ LPCTSTR pszResourceName,
-        _In_z_ LPCTSTR pszResourceType,
-        _In_ IWICImagingFactory* pImagingFactory,
-        _In_ ID2D1DeviceContext* pDC,
-        _COM_Outptr_result_maybenull_ ID2D1Bitmap1** ppBitmap) const;
+        _In_z_ LPCTSTR resourceName,
+        _In_z_ LPCTSTR resourceType,
+        _In_ IWICImagingFactory* imagingFactory,
+        _In_ ID2D1DeviceContext* dc,
+        _COM_Outptr_result_maybenull_ ID2D1Bitmap1** resultBitmap) const;
     HRESULT loadBitmapFromFile(
-        _In_z_ LPCTSTR pszURI,
-        _In_ IWICImagingFactory* pImagingFactory,
-        _In_ ID2D1DeviceContext* pDC,
-        _COM_Outptr_result_maybenull_ ID2D1Bitmap1** ppBitmap) const;
+        _In_z_ LPCTSTR uri,
+        _In_ IWICImagingFactory* imagingFactory,
+        _In_ ID2D1DeviceContext* dc,
+        _COM_Outptr_result_maybenull_ ID2D1Bitmap1** resultBitmap) const;
 
 
 private:
     HRESULT createTextLayout(
-        _In_ IDWriteFactory* pDWriteFactory,
-        _In_reads_z_(nSize) LPCTSTR pszText,
-        _In_ const size_t nSize,
-        _In_ IDWriteTextFormat* pTextFormat,
-        _In_ const D2D1_SIZE_F* pSize,
-        _COM_Outptr_result_maybenull_ IDWriteTextLayout** ppTextLayout) const;
+        _In_ IDWriteFactory* directWriteFactory,
+        _In_reads_z_(length) LPCTSTR text,
+        _In_ const size_t length,
+        _In_ IDWriteTextFormat* textFormat,
+        _In_ const D2D1_SIZE_F* size,
+        _COM_Outptr_result_maybenull_ IDWriteTextLayout** resultTextLayout) const;
     HRESULT createTextFormat(
-        _In_ IDWriteFactory* pDWriteFactory,
-        _In_ const LOGFONT* pLogFont,
-        _COM_Outptr_result_maybenull_ IDWriteTextFormat** ppTextFormat) const;
+        _In_ IDWriteFactory* directWriteFactory,
+        _In_ const LOGFONT* logFont,
+        _COM_Outptr_result_maybenull_ IDWriteTextFormat** resultTextFormat) const;
     HRESULT createTextFormat(
-        _In_ IDWriteFactory* pDWriteFactory,
-        _In_ const HWND hWnd,
-        _In_ const int nPartId,
-        _COM_Outptr_result_maybenull_ IDWriteTextFormat** ppTextFormat) const;
+        _In_ IDWriteFactory* directWriteFactory,
+        _In_ const HWND hwnd,
+        _In_ const int partId,
+        _COM_Outptr_result_maybenull_ IDWriteTextFormat** resultTextFormat) const;
 };
 #pragma endregion directx_toolkit declaration
 
@@ -174,9 +174,9 @@ protected:
         return hr;
     }
 
-    HRESULT createDirect2DDevice(_In_ ID2D1Factory1* pDirect2DFactory);
+    HRESULT createDirect2DDevice(_In_ ID2D1Factory1* direct2DFactory);
 
-    HRESULT createDevice(_In_ const HWND hWnd, _In_ ID2D1Factory1* pDirect2DFactory);
+    HRESULT createDevice(_In_ const HWND hwnd, _In_ ID2D1Factory1* direct2DFactory);
 
     void releaseDevice()
     {
@@ -193,15 +193,15 @@ protected:
         return static_cast<bool> (m_direct2DContext);
     }
 
-    void render(_In_ const HWND hWnd, _In_ ID2D1Factory1* pDirect2DFactory);
+    void render(_In_ const HWND hwnd, _In_ ID2D1Factory1* direct2DFactory);
     HRESULT createDeviceSwapChainBitmap();
 
-    void resizeSwapChainBitmap(_In_ const LONG nNewWidth, _In_ const LONG nNewHeight)
+    void resizeSwapChainBitmap(_In_ const LONG newWidth, _In_ const LONG newHeight)
     {
-        if (m_direct2DContext && nNewWidth && nNewHeight)
+        if (m_direct2DContext && newWidth && newHeight)
         {
             m_direct2DContext->SetTarget(nullptr);
-            if (FAILED(m_swapChain->ResizeBuffers(0, nNewWidth, nNewHeight, DXGI_FORMAT_UNKNOWN, 0)) ||
+            if (FAILED(m_swapChain->ResizeBuffers(0, newWidth, newHeight, DXGI_FORMAT_UNKNOWN, 0)) ||
                 FAILED(createDeviceSwapChainBitmap()))
             {
                 releaseDevice();
@@ -231,15 +231,15 @@ public:
         return nullptr;
     }
 
-    _Check_return_ virtual HWND create(_In_ const HWND hParent) = 0;
+    _Check_return_ virtual HWND create(_In_ const HWND parent) = 0;
 
     virtual BOOL ProcessWindowMessage(
-        _In_ HWND hWnd,
-        _In_ UINT nMessage,
-        _In_ WPARAM nWParam,
-        _In_ LPARAM nLParam,
-        _Inout_ LRESULT& nLResult,
-        _In_ DWORD nMsgMapID) override;
+        _In_ HWND hwnd,
+        _In_ UINT message,
+        _In_ WPARAM wParam,
+        _In_ LPARAM lParam,
+        _Inout_ LRESULT& lResult,
+        _In_ DWORD msgMapID) override;
 
     static const unsigned int m_cnWindowMargin = 11;
     static const unsigned int m_cnUnrelatedCtrlsSpace = 11;
@@ -255,9 +255,9 @@ protected:
     {
     }
 
-    virtual void sizeHandler(_In_ const LONG nNewWidth, _In_ const LONG nNewHeight)
+    virtual void sizeHandler(_In_ const LONG newWidth, _In_ const LONG newHeight)
     {
-        resizeSwapChainBitmap(nNewWidth, nNewHeight);
+        resizeSwapChainBitmap(newWidth, newHeight);
     }
 
     template <typename U, typename... Args>
@@ -285,29 +285,29 @@ protected:
     }
 
     HRESULT createTextLayoutForBodyTitle(
-        _In_reads_z_(nSize) LPCTSTR pszText,
-        _In_ const size_t nSize,
-        _In_ const D2D1_SIZE_F* pSize,
-        _COM_Outptr_result_maybenull_ IDWriteTextLayout** ppTextLayout) const
+        _In_reads_z_(length) LPCTSTR text,
+        _In_ const size_t length,
+        _In_ const D2D1_SIZE_F* size,
+        _COM_Outptr_result_maybenull_ IDWriteTextLayout** resultTextLayout) const
     {
         return directx_toolkit::createTextLayoutForBodyTitle(
-            m_directWriteFactory.get(), m_hWnd, pszText, nSize, pSize, ppTextLayout);
+            m_directWriteFactory.get(), m_hWnd, text, length, size, resultTextLayout);
     }
 
     HRESULT createTextLayoutForBodyText(
-        _In_reads_z_(nSize) LPCTSTR pszText,
-        _In_ const size_t nSize,
-        _In_ const D2D1_SIZE_F* pSize,
-        _COM_Outptr_result_maybenull_ IDWriteTextLayout** ppTextLayout) const
+        _In_reads_z_(length) LPCTSTR text,
+        _In_ const size_t length,
+        _In_ const D2D1_SIZE_F* size,
+        _COM_Outptr_result_maybenull_ IDWriteTextLayout** resultTextLayout) const
     {
         return directx_toolkit::createTextLayoutForBodyText(
-            m_directWriteFactory.get(), m_hWnd, pszText, nSize, pSize, ppTextLayout);
+            m_directWriteFactory.get(), m_hWnd, text, length, size, resultTextLayout);
     }
 
     HRESULT createTextFormatForBodyText(
-        _COM_Outptr_result_maybenull_ IDWriteTextFormat** ppTextFormat) const
+        _COM_Outptr_result_maybenull_ IDWriteTextFormat** resultTextFormat) const
     {
-        return directx_toolkit::createTextFormatForBodyText(m_directWriteFactory.get(), m_hWnd, ppTextFormat);
+        return directx_toolkit::createTextFormatForBodyText(m_directWriteFactory.get(), m_hWnd, resultTextFormat);
     }
 
     std::unique_ptr<WAPI animation> m_animation;

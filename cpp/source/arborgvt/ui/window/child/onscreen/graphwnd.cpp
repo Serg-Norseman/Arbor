@@ -1,23 +1,26 @@
 #include "service\sse.h"
 #include "ui\window\child\onscreen\graphwnd.h"
-#include <random>
 
 ATLADD_BEGIN
+
+#if !defined(__ICL)
+D2D1_SIZE_F graph_window::m_vertexNameSize = {100.0f, 50.0f};
+#endif
 
 /**
  * Creates this window.
  *
  * Parameters:
- * >hParent
+ * >parent
  * Handle to the parent window.
  *
  * Returns:
  * Handle to this window.
  */
-_Check_return_ HWND graph_window::create(_In_ const HWND hParent)
+_Check_return_ HWND graph_window::create(_In_ const HWND parent)
 {
     typedef ATL::CWinTraits<WS_CHILD | WS_CLIPSIBLINGS | WS_TABSTOP | WS_VISIBLE, WS_EX_NOPARENTNOTIFY> style_traits_t;
-    return create(hParent, style_traits_t::GetWndStyle(0), style_traits_t::GetWndExStyle(0));
+    return create(parent, style_traits_t::GetWndStyle(0), style_traits_t::GetWndExStyle(0));
 }
 
 
@@ -45,64 +48,64 @@ _Check_return_ HWND graph_window::create(_In_opt_ const HWND parent, _In_ DWORD 
  * Handler of ATL message map.
  *
  * Parameters:
- * >hWnd
+ * >hwnd
  * Handle of this window.
- * >nMessage
+ * >message
  * Message to process.
- * >nWParam
- * Additional message information. The contents of this parameter depend on the value of the nMessage parameter.
- * >nLParam
- * Additional message information. The contents of this parameter depend on the value of the nMessage parameter.
- * >nLResult
- * The result of the message processing and depends on the message sent (nMessage).
- * >nMsgMapID
+ * >wParam
+ * Additional message information. The contents of this parameter depend on the value of the message parameter.
+ * >lParam
+ * Additional message information. The contents of this parameter depend on the value of the message parameter.
+ * >lResult
+ * The result of the message processing and depends on the message sent (message).
+ * >msgMapID
  * The identifier of the message map that will process the message.
   *
  * Returns:
  * Non-zero value if the message was processed, or zero otherwise.
 */
 BOOL graph_window::ProcessWindowMessage(
-    _In_ HWND hWnd,
-    _In_ UINT nMessage,
-    _In_ WPARAM nWParam,
-    _In_ LPARAM nLParam,
-    _Inout_ LRESULT& nLResult,
-    _In_ DWORD nMsgMapID)
+    _In_ HWND hwnd,
+    _In_ UINT message,
+    _In_ WPARAM wParam,
+    _In_ LPARAM lParam,
+    _Inout_ LRESULT& lResult,
+    _In_ DWORD msgMapID)
 {
-    BOOL bHandled;
-    if (m_dpiChangedMessage == nMessage)
+    BOOL handled;
+    if (m_dpiChangedMessage == message)
     {
-        base_class_t::ProcessWindowMessage(hWnd, WM_DPICHANGED, nWParam, nLParam, nLResult, nMsgMapID);
-        bHandled = TRUE;
+        base_class_t::ProcessWindowMessage(hwnd, WM_DPICHANGED, wParam, lParam, lResult, msgMapID);
+        handled = TRUE;
     }
     else
     {
-        switch (nMessage)
+        switch (message)
         {
             case WM_HSCROLL:
             {
-                scrollHandler(SB_HORZ, LOWORD(nWParam), HIWORD(nWParam));
-                nLResult = 0;
-                bHandled = TRUE;
+                scrollHandler(SB_HORZ, LOWORD(wParam), HIWORD(wParam));
+                lResult = 0;
+                handled = TRUE;
             }
             break;
 
             case WM_VSCROLL:
             {
-                scrollHandler(SB_VERT, LOWORD(nWParam), HIWORD(nWParam));
-                nLResult = 0;
-                bHandled = TRUE;
+                scrollHandler(SB_VERT, LOWORD(wParam), HIWORD(wParam));
+                lResult = 0;
+                handled = TRUE;
             }
             break;
 
             default:
             {
-                bHandled = base_class_t::ProcessWindowMessage(hWnd, nMessage, nWParam, nLParam, nLResult, nMsgMapID);
+                handled = base_class_t::ProcessWindowMessage(hwnd, message, wParam, lParam, lResult, msgMapID);
             }
         }
     }
 
-    return bHandled;
+    return handled;
 }
 
 
@@ -117,8 +120,8 @@ BOOL graph_window::ProcessWindowMessage(
  */
 LRESULT graph_window::createHandler()
 {
-    LRESULT nResult = base_class_t::createHandler();
-    if (!nResult)
+    LRESULT result = base_class_t::createHandler();
+    if (!result)
     {
         D2D1_STROKE_STYLE_PROPERTIES1 prop = D2D1::StrokeStyleProperties1(
             D2D1_CAP_STYLE_FLAT,
@@ -134,7 +137,7 @@ LRESULT graph_window::createHandler()
         createTextFormatForBodyText(m_framesPerSecondTextFormat.getAddressOf());
 #endif
     }
-    return nResult;
+    return result;
 }
 
 
@@ -439,16 +442,15 @@ __m128 graph_window::logicalToGraph(_In_ const __m128 value, _In_ const __m128 l
     sse_t marginMem = {m_margin, m_margin, 0.0f, 0.0f};
     __m128 margin = _mm_load_ps(marginMem.data);
     __m128 temp = _mm_sub_ps(logicalSize, margin);
-    __m128 viewSize = _mm_hsub_ps(viewBound, viewBound);
-    viewSize = _mm_div_ps(viewSize, temp);
+    __m128 viewSize = _mm_sub_ps(_mm_shuffle_ps(viewBound, viewBound, 0b01001110), viewBound);
+    viewSize = _mm_mul_ps(viewSize, _mm_rcp_ps(temp));
     marginMem.data[0] = 0.5f;
     marginMem.data[1] = 0.5f;
     temp = _mm_load_ps(marginMem.data);
     margin = _mm_mul_ps(margin, temp);
     temp = _mm_sub_ps(value, margin);
     temp = _mm_mul_ps(temp, viewSize);
-    viewSize = _mm_shuffle_ps(viewBound, value, 0b11101101);
-    return _mm_add_ps(temp, viewSize);
+    return _mm_add_ps(temp, viewBound);
 }
 
 
@@ -488,10 +490,9 @@ __m128 graph_window::graphToLogical(_In_ const __m128 value, _In_ const __m128 l
     __m128 margin = _mm_load_ps(marginMem.data);
     margin = _mm_shuffle_ps(margin, margin, 0);
     __m128 temp = _mm_sub_ps(logicalSize, margin);
-    __m128 viewSize = _mm_hsub_ps(viewBound, viewBound);
+    __m128 viewSize = _mm_sub_ps(_mm_shuffle_ps(viewBound, viewBound, 0b01001110), viewBound);
     viewSize = _mm_mul_ps(temp, _mm_rcp_ps(viewSize));
-    temp = _mm_shuffle_ps(viewBound, value, 0b11101101);
-    temp = _mm_sub_ps(value, temp);
+    temp = _mm_sub_ps(value, viewBound);
     temp = _mm_mul_ps(temp, viewSize);
     marginMem.data[0] = 0.5f;
     viewSize = _mm_load_ps(marginMem.data);
@@ -505,23 +506,23 @@ __m128 graph_window::graphToLogical(_In_ const __m128 value, _In_ const __m128 l
  * WM_HSCROLL/WM_VSCROLL messages handler.
  *
  * Parameters:
- * >nBar
+ * >bar
  * Specifies the type of scroll bar (SB_HORZ or SB_VERT).
- * >nScrollingRequest
+ * >scrollingRequest
  * User's scrolling request.
- * >nPosition
- * The current position of the scroll box if the 'nScrollingRequest' is SB_THUMBPOSITION or SB_THUMBTRACK.
+ * >position
+ * The current position of the scroll box if the 'scrollingRequest' is SB_THUMBPOSITION or SB_THUMBTRACK.
  *
  * Returns:
  * N/A.
  */
-void graph_window::scrollHandler(_In_ int nBar, _In_ const WORD nScrollingRequest, _In_ const WORD nPosition)
+void graph_window::scrollHandler(_In_ int bar, _In_ const WORD scrollingRequest, _In_ const WORD position)
 {
     SCROLLINFO si;
     si.cbSize = sizeof(si);
     si.fMask = SIF_RANGE | SIF_PAGE | SIF_POS;
-    ::GetScrollInfo(::GetParent(m_hWnd), nBar, &si);
-    switch (nScrollingRequest)
+    ::GetScrollInfo(::GetParent(m_hWnd), bar, &si);
+    switch (scrollingRequest)
     {
         case SB_TOP:
         {
@@ -563,7 +564,7 @@ void graph_window::scrollHandler(_In_ int nBar, _In_ const WORD nScrollingReques
 
         case SB_THUMBTRACK:
         {
-            si.nPos = nPosition;
+            si.nPos = position;
         }
         break;
 
@@ -576,10 +577,10 @@ void graph_window::scrollHandler(_In_ int nBar, _In_ const WORD nScrollingReques
     // Set the position and then retrieve it. Due to adjustments by Windows it may not be the same as the value
     // set.
     si.fMask = SIF_POS;
-    ::SetScrollInfo(::GetParent(m_hWnd), nBar, &si, TRUE);
-    ::GetScrollInfo(::GetParent(m_hWnd), nBar, &si);
+    ::SetScrollInfo(::GetParent(m_hWnd), bar, &si, TRUE);
+    ::GetScrollInfo(::GetParent(m_hWnd), bar, &si);
 
-    scrollContent(nBar, si.nPos);
+    scrollContent(bar, si.nPos);
 }
 
 
@@ -587,32 +588,32 @@ void graph_window::scrollHandler(_In_ int nBar, _In_ const WORD nScrollingReques
  * Scrolls this window content.
  *
  * Parameters:
- * >nBar
+ * >bar
  * Specifies the type of scroll bar (SB_HORZ or SB_VERT).
- * >nPos
+ * >position
  * Scrolling position (physical value).
  *
  * Returns:
  * N/A.
  */
-void graph_window::scrollContent(_In_ int nBar, _In_ const int nPos)
+void graph_window::scrollContent(_In_ int bar, _In_ const int position)
 {
     if (m_direct2DContext)
     {
-        float fDPIX;
-        float fDPIY;
-        if (SUCCEEDED(getDpiForMonitor(m_hWnd, &fDPIX, &fDPIY)))
+        float dpiX;
+        float dpiY;
+        if (SUCCEEDED(getDpiForMonitor(m_hWnd, &dpiX, &dpiY)))
         {
             D2D1_MATRIX_3X2_F transform;
             m_direct2DContext->GetTransform(&transform);
             D2D1_SIZE_F offset {};
-            if (SB_HORZ == nBar)
+            if (SB_HORZ == bar)
             {
-                offset = D2D1::SizeF(physicalToLogical(-nPos, fDPIX), transform._32);
+                offset = D2D1::SizeF(physicalToLogical(-position, dpiX), transform._32);
             }
-            else if (SB_VERT == nBar)
+            else if (SB_VERT == bar)
             {
-                offset = D2D1::SizeF(transform._31, physicalToLogical(-nPos, fDPIY));
+                offset = D2D1::SizeF(transform._31, physicalToLogical(-position, dpiY));
             }
             m_direct2DContext->SetTransform(D2D1::Matrix3x2F::Translation(offset));
             Invalidate(FALSE);
@@ -638,31 +639,17 @@ void graph_window::scrollContent(_In_ int nBar, _In_ const int nPos)
 HRESULT graph_window::createTextLayout(
     _In_ const STLADD string_type* text, _COM_Outptr_result_maybenull_ IDWriteTextLayout** textLayout) const
 {
-    D2D1_SIZE_F size;
-    if (m_direct2DContext)
-    {
-        size = m_direct2DContext->GetSize();
-    }
-    else
-    {
-        RECT rect;
-        GetClientRect(&rect);
-        float fDPIX;
-        float fDPIY;
-        if (SUCCEEDED(getDpiForMonitor(m_hWnd, &fDPIX, &fDPIY)))
-        {
-            size.width = physicalToLogical(rect.right, fDPIX);
-            size.height = physicalToLogical(rect.bottom, fDPIY);
-        }
-        else
-        {
-            size.width = static_cast<float> (rect.right);
-            size.height = static_cast<float> (rect.bottom);
-        }
-    }
-    size.width *= m_vertexNameWidth;
+    /*
+     * When base initial size of text layout on size of `m_direct2DContext`, HWND and so on I can end up with a bug
+     * (ticket #24), when device context/HWND ain't resized but HWND got `WM_PAINT` and this method is called.
+     *
+     * To fix it I:
+     * (*) must guarantee that caller shows this HWND **only** after caller has resized this HWND,
+     * (*) must base initial size on something other than USER or D2D resources. I stuck with a predefined constant.
+     */
     ATLADD com_ptr<IDWriteTextLayout> layout {};
-    HRESULT hr = base_class_t::createTextLayoutForBodyTitle(text->c_str(), text->size(), &size, layout.getAddressOf());
+    HRESULT hr = base_class_t::createTextLayoutForBodyTitle(
+        text->c_str(), text->size(), &m_vertexNameSize, layout.getAddressOf());
     if (SUCCEEDED(hr))
     {
         hr = layout->SetWordWrapping(DWRITE_WORD_WRAPPING_NO_WRAP);
@@ -926,7 +913,7 @@ _Success_(return) bool graph_window::getArrow(
     {
         temp = _mm_shuffle_ps(source, source, 0b01000100);
         temp = _mm_mul_ps(temp, temp);
-        temp = _mm_hadd_ps(temp, temp);
+        temp = _mm_add_ps(temp, _mm_shuffle_ps(temp, temp, 0b10110001));
     }
     temp = _mm_sqrt_ps(temp);
     value = {m_arrowLength, m_arrowHalfWidth, 0.0f, 0.0f};

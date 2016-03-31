@@ -23,8 +23,8 @@ HANDLE private_heap::createHeap()
 {
     HANDLE heap;
     SYSTEM_INFO systemInfo;
-    BOOL bWOW64Process = FALSE;
-    if (IsWow64Process(GetCurrentProcess(), &bWOW64Process) && bWOW64Process)
+    BOOL wow64Process = FALSE;
+    if (IsWow64Process(GetCurrentProcess(), &wow64Process) && wow64Process)
     {
         GetNativeSystemInfo(&systemInfo);
     }
@@ -34,15 +34,15 @@ HANDLE private_heap::createHeap()
     }
 
     size_t heapInitialSize = HeapInitialSize;
-    size_t nMod = HeapInitialSize % systemInfo.dwPageSize;
-    if (nMod)
+    size_t mod = HeapInitialSize % systemInfo.dwPageSize;
+    if (mod)
     {
-        heapInitialSize = HeapInitialSize - nMod + systemInfo.dwPageSize;
+        heapInitialSize = HeapInitialSize - mod + systemInfo.dwPageSize;
     }
     // The heap must be protected from multiple access by different threads. Because it will be used by a thread, that
     // attached the DLL, and a GUI thread, the will be created by the DLL.
     heap = HeapCreate(0, heapInitialSize, 0);
-    if (heap && (bWOW64Process || (PROCESSOR_ARCHITECTURE_INTEL == systemInfo.wProcessorArchitecture)))
+    if (heap && (wow64Process || (PROCESSOR_ARCHITECTURE_INTEL == systemInfo.wProcessorArchitecture)))
     {
         HeapSetInformation(heap, HeapEnableTerminationOnCorruption, nullptr, 0);
     }

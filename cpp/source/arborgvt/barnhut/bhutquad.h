@@ -78,12 +78,13 @@ public:
 #if defined(__ICL)
         m_area(area),
         m_coordinates(ARBOR getZeroVector()),
+        m_mass(ARBOR getZeroVector()),
 #else
         m_area {area},
         m_coordinates {ARBOR getZeroVector()},
+        m_mass {ARBOR getZeroVector()},
 #endif
-        m_quads {4},
-        m_mass {0.0f}
+        m_quads {4}
     {
     }
 
@@ -119,8 +120,10 @@ public:
         m_coordinates = _mm_xor_ps(m_coordinates, right.m_coordinates);
         right.m_coordinates = _mm_xor_ps(m_coordinates, right.m_coordinates);
         m_coordinates = _mm_xor_ps(m_coordinates, right.m_coordinates);
+        m_mass = _mm_xor_ps(m_mass, right.m_mass);
+        right.m_mass = _mm_xor_ps(m_mass, right.m_mass);
+        m_mass = _mm_xor_ps(m_mass, right.m_mass);
         std::swap(m_quads, right.m_quads);
-        std::swap(m_mass, right.m_mass);
     }
 
     virtual branch* __fastcall handleParticle(
@@ -155,7 +158,7 @@ public:
         m_coordinates = value;
     }
 
-    void setMass(_In_ float value) noexcept
+    void __vectorcall setMass(_In_ __m128 value) noexcept
     {
         m_mass = value;
     }
@@ -166,11 +169,11 @@ private:
     typedef std::vector<std::unique_ptr<quad_element>, STLADD default_allocator<std::unique_ptr<quad_element>>>
         quads_cont_t;
 
-    // Quad bound. The vectors formatted as [top-y, bottom-y, left-x, right-x].
+    // Quad bound. The vectors formatted as [bottom-y, right-x, top-y, left-x].
     __m128 m_area;
     __m128 m_coordinates;
+    __m128 m_mass;
     quads_cont_t m_quads;
-    float m_mass;
 };
 
 
@@ -213,7 +216,7 @@ public:
         return m_vertex->getCoordinates();
     }
 
-    float getMass() const noexcept
+    __m128 getMass() const noexcept
     {
         return m_vertex->getMass();
     }

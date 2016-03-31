@@ -3,78 +3,79 @@
 #include "ui\window\top\twinimpl.h"
 
 ATLADD_BEGIN
+
 #pragma region top_window_impl
 /**
  * Handler of ATL message map.
  *
  * Parameters:
- * >hWnd
+ * >hwnd
  * Handle of this window.
- * >nMessage
+ * >message
  * Message to process.
- * >nWParam
- * Additional message information. The contents of this parameter depend on the value of the nMessage parameter.
- * >nLParam
- * Additional message information. The contents of this parameter depend on the value of the nMessage parameter.
- * >nLResult
- * The result of the message processing and depends on the message sent (nMessage).
- * >nMsgMapID
+ * >wParam
+ * Additional message information. The contents of this parameter depend on the value of the message parameter.
+ * >lParam
+ * Additional message information. The contents of this parameter depend on the value of the message parameter.
+ * >lResult
+ * The result of the message processing and depends on the message sent (message).
+ * >msgMapID
  * The identifier of the message map that will process the message.
  *
  * Returns:
  * Non-zero value if the message was processed, or zero otherwise.
  */
 BOOL top_window_impl::ProcessWindowMessage(
-    _In_ HWND hWnd,
-    _In_ UINT nMessage,
-    _In_ WPARAM nWParam,
-    _In_ LPARAM nLParam,
-    _Inout_ LRESULT& nLResult,
-    _In_ DWORD nMsgMapID)
+    _In_ HWND hwnd,
+    _In_ UINT message,
+    _In_ WPARAM wParam,
+    _In_ LPARAM lParam,
+    _Inout_ LRESULT& lResult,
+    _In_ DWORD msgMapID)
 {
-    BOOL bHandled;
-    switch (nMessage)
+    BOOL handled;
+    switch (message)
     {
         case WM_DISPLAYCHANGE:
         {
             Invalidate();
-            nLResult = 0;
-            bHandled = TRUE;
+            lResult = 0;
+            handled = TRUE;
         }
         break;
 
         case WM_DPICHANGED:
         {
             EnumChildWindows(
-                hWnd,
-                [] (_In_ const HWND hWnd, _In_ const LPARAM data) -> BOOL
+                hwnd,
+                [] (_In_ const HWND hwnd, _In_ const LPARAM data) -> BOOL
                 {
-                    DWORD nOwnerThreadId = ::GetWindowThreadProcessId(hWnd, nullptr);
-                    if (nOwnerThreadId == GetCurrentThreadId())
+                    DWORD ownerThreadId = ::GetWindowThreadProcessId(hwnd, nullptr);
+                    if (ownerThreadId == GetCurrentThreadId())
                     {
-                        ::SendMessage(hWnd, WM_DPICHANGED, data, 0);
+                        ::SendMessage(hwnd, WM_DPICHANGED, data, 0);
                     }
                     else
                     {
                         // `WM_DPICHANGED` for some reason can't intersect threads bounds. Neither sending nor posting
                         // the message helps. I have to use an user-defined message.
-                        ::SendNotifyMessage(hWnd, WM_NOTIFY_DPICHANGED, data, 0);
+                        ::SendNotifyMessage(hwnd, WM_NOTIFY_DPICHANGED, data, 0);
                     }
                     return TRUE;
                 },
-                nWParam);
-            SetWindowPos(nullptr, reinterpret_cast<RECT*> (nLParam), SWP_NOACTIVATE | SWP_NOZORDER);
-            bHandled = base_class_t::ProcessWindowMessage(hWnd, nMessage, nWParam, nLParam, nLResult, nMsgMapID);
+                wParam);
+            SetWindowPos(nullptr, reinterpret_cast<RECT*> (lParam), SWP_NOACTIVATE | SWP_NOZORDER);
+            handled = base_class_t::ProcessWindowMessage(hwnd, message, wParam, lParam, lResult, msgMapID);
         }
         break;
 
         default:
         {
-            bHandled = base_class_t::ProcessWindowMessage(hWnd, nMessage, nWParam, nLParam, nLResult, nMsgMapID);
+            handled = base_class_t::ProcessWindowMessage(hwnd, message, wParam, lParam, lResult, msgMapID);
         }
     }
 
-    return bHandled;
+    return handled;
 }
 
 
@@ -89,34 +90,34 @@ BOOL top_window_impl::ProcessWindowMessage(
  */
 LRESULT top_window_impl::createHandler()
 {
-    LRESULT nResult = base_class_t::createHandler();
-    if (!nResult)
+    LRESULT result = base_class_t::createHandler();
+    if (!result)
     {
-        HICON hIcon;
+        HICON icon;
         if (SUCCEEDED(LoadIconMetric(
-            ATL::_AtlBaseModule.GetResourceInstance(), MAKEINTRESOURCE(IDR_THE_APPLICATION), LIM_SMALL, &hIcon)))
+            ATL::_AtlBaseModule.GetResourceInstance(), MAKEINTRESOURCE(IDR_THE_APPLICATION), LIM_SMALL, &icon)))
         {
-            ::SendMessage(m_hWnd, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM> (hIcon));
-            m_smallIcon.reset(hIcon);
+            ::SendMessage(m_hWnd, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM> (icon));
+            m_smallIcon.reset(icon);
         }
         if (SUCCEEDED(LoadIconMetric(
-            ATL::_AtlBaseModule.GetResourceInstance(), MAKEINTRESOURCE(IDR_THE_APPLICATION), LIM_LARGE, &hIcon)))
+            ATL::_AtlBaseModule.GetResourceInstance(), MAKEINTRESOURCE(IDR_THE_APPLICATION), LIM_LARGE, &icon)))
         {
-            ::SendMessage(m_hWnd, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM> (hIcon));
-            m_defaultIcon.reset(hIcon);
+            ::SendMessage(m_hWnd, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM> (icon));
+            m_defaultIcon.reset(icon);
         }
         m_menu.reset(LoadMenu(ATL::_AtlBaseModule.GetResourceInstance(), MAKEINTRESOURCE(IDR_THE_APPLICATION)));
         if (m_menu)
         {
-            HMENU hMenu = GetMenu();
+            HMENU menu = GetMenu();
             SetMenu(m_menu.get());
-            if (nullptr != hMenu)
+            if (nullptr != menu)
             {
-                ::DestroyMenu(hMenu);
+                ::DestroyMenu(menu);
             }
         }
     }
-    return nResult;
+    return result;
 }
 
 
@@ -125,56 +126,56 @@ LRESULT top_window_impl::createHandler()
  * Repositions this window in concordance with the specified 'WINDOWPLACEMENT' structure..
  *
  * Parameters:
- * >pData
+ * >data
  * Window position information.
  *
  * Returns:
  * If the function succeeds, the return value is true. If the function fails, the return value is false.
  */
-bool top_window_impl::loadWindowPlacement(_In_ const WINDOWPLACEMENT* pData)
+bool top_window_impl::loadWindowPlacement(_In_ const WINDOWPLACEMENT* data)
 {
-    float fDPIX;
-    float fDPIY;
-    bool bResult = SUCCEEDED(getDpiForMonitor(m_hWnd, &fDPIX, &fDPIY));
-    if (bResult)
+    float dpiX;
+    float dpiY;
+    bool result = SUCCEEDED(getDpiForMonitor(m_hWnd, &dpiX, &dpiY));
+    if (result)
     {
         // Recalculate window coordinates taking into account multiple display setup.
-        HMONITOR hMonitor = MonitorFromRect(&(pData->rcNormalPosition), MONITOR_DEFAULTTONEAREST);
+        HMONITOR monitor = MonitorFromRect(&(data->rcNormalPosition), MONITOR_DEFAULTTONEAREST);
         MONITORINFO monitorInfo;
         monitorInfo.cbSize = sizeof(MONITORINFO);
-        GetMonitorInfo(hMonitor, &monitorInfo);
-        LONG nWidth = getRectWidth(pData->rcNormalPosition);
-        LONG nHeight = getRectHeight(pData->rcNormalPosition);
+        GetMonitorInfo(monitor, &monitorInfo);
+        LONG width = getRectWidth(data->rcNormalPosition);
+        LONG height = getRectHeight(data->rcNormalPosition);
         WINDOWPLACEMENT wp;
 #if defined(_WIN64)
-        size_t nNumberOfReps = sizeof(WINDOWPLACEMENT) >> 3;
+        size_t numberOfReps = sizeof(WINDOWPLACEMENT) >> 3;
         __movsq(reinterpret_cast<unsigned __int64*> (&wp),
-                reinterpret_cast<const unsigned __int64*> (pData),
-                nNumberOfReps);
-        size_t nOffset = nNumberOfReps << 3;
-        nNumberOfReps = sizeof(WINDOWPLACEMENT) & 7;
+                reinterpret_cast<const unsigned __int64*> (data),
+                numberOfReps);
+        size_t offset = numberOfReps << 3;
+        numberOfReps = sizeof(WINDOWPLACEMENT) & 7;
 #else
-        size_t nNumberOfReps = sizeof(WINDOWPLACEMENT) >> 2;
+        size_t numberOfReps = sizeof(WINDOWPLACEMENT) >> 2;
         __movsd(reinterpret_cast<unsigned long*> (&wp),
-                reinterpret_cast<const unsigned long*> (pData),
-                nNumberOfReps);
-        size_t nOffset = nNumberOfReps << 2;
-        nNumberOfReps = sizeof(WINDOWPLACEMENT) & 3;
+                reinterpret_cast<const unsigned long*> (data),
+                numberOfReps);
+        size_t offset = numberOfReps << 2;
+        numberOfReps = sizeof(WINDOWPLACEMENT) & 3;
 #endif
-        __movsb(reinterpret_cast<unsigned char*> (&wp) + nOffset,
-                (reinterpret_cast<const unsigned char*> (pData)) + nOffset,
-                nNumberOfReps);
+        __movsb(reinterpret_cast<unsigned char*> (&wp) + offset,
+                (reinterpret_cast<const unsigned char*> (data)) + offset,
+                numberOfReps);
         wp.rcNormalPosition.left =
-            max(monitorInfo.rcWork.left, min(monitorInfo.rcWork.right - nWidth, wp.rcNormalPosition.left));
+            max(monitorInfo.rcWork.left, min(monitorInfo.rcWork.right - width, wp.rcNormalPosition.left));
         wp.rcNormalPosition.top =
-            max(monitorInfo.rcWork.top, min(monitorInfo.rcWork.bottom - nHeight, wp.rcNormalPosition.top));
-        wp.rcNormalPosition.right = wp.rcNormalPosition.left + static_cast<LONG> (logicalToPhysical(nWidth, fDPIX));
-        wp.rcNormalPosition.bottom = wp.rcNormalPosition.top + static_cast<LONG> (logicalToPhysical(nHeight, fDPIY));
+            max(monitorInfo.rcWork.top, min(monitorInfo.rcWork.bottom - height, wp.rcNormalPosition.top));
+        wp.rcNormalPosition.right = wp.rcNormalPosition.left + static_cast<LONG> (logicalToPhysical(width, dpiX));
+        wp.rcNormalPosition.bottom = wp.rcNormalPosition.top + static_cast<LONG> (logicalToPhysical(height, dpiY));
         wp.length = sizeof(WINDOWPLACEMENT);
         wp.flags = 0;
         SetWindowPlacement(&wp);
     }
-    return bResult;
+    return result;
 }
 
 
@@ -182,27 +183,28 @@ bool top_window_impl::loadWindowPlacement(_In_ const WINDOWPLACEMENT* pData)
  * Stores this window position in the specified 'WINDOWPLACEMENT' structure.
  *
  * Parameters:
- * >pData
+ * >data
  * Pointer to 'WINDOWPLACEMENT' structure to get this window placement.
  *
  * Returns:
  * N/A.
  */
-void top_window_impl::storeWindowPlacement(_Out_ WINDOWPLACEMENT* pData) const
+void top_window_impl::storeWindowPlacement(_Out_ WINDOWPLACEMENT* data) const
 {
-    pData->length = sizeof(WINDOWPLACEMENT);
-    float fDPIX;
-    float fDPIY;
-    if (SUCCEEDED(getDpiForMonitor(m_hWnd, &fDPIX, &fDPIY)) && GetWindowPlacement(pData))
+    data->length = sizeof(WINDOWPLACEMENT);
+    float dpiX;
+    float dpiY;
+    if (SUCCEEDED(getDpiForMonitor(m_hWnd, &dpiX, &dpiY)) && GetWindowPlacement(data))
     {
-        pData->rcNormalPosition.right =
-            pData->rcNormalPosition.left +
-            static_cast<LONG> (physicalToLogical(getRectWidth(pData->rcNormalPosition), fDPIX));
-        pData->rcNormalPosition.bottom =
-            pData->rcNormalPosition.top +
-            static_cast<LONG> (physicalToLogical(getRectHeight(pData->rcNormalPosition), fDPIY));
+        data->rcNormalPosition.right =
+            data->rcNormalPosition.left +
+            static_cast<LONG> (physicalToLogical(getRectWidth(data->rcNormalPosition), dpiX));
+        data->rcNormalPosition.bottom =
+            data->rcNormalPosition.top +
+            static_cast<LONG> (physicalToLogical(getRectHeight(data->rcNormalPosition), dpiY));
     }
 }
 #pragma endregion store/load window position
 #pragma endregion top_window_impl implementation
+
 ATLADD_END

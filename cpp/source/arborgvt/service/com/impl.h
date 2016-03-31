@@ -26,12 +26,12 @@ public:
         }
     }
 
-    virtual HRESULT __stdcall QueryInterface(_In_ const IID& iid, _Deref_out_opt_ void** ppObject) noexcept override
+    virtual HRESULT __stdcall QueryInterface(_In_ const IID& iid, _Deref_out_opt_ void** object) noexcept override
     {
-        *ppObject = queryInterface<T...>(iid);
-        if (nullptr != *ppObject)
+        *object = queryInterface<T...>(iid);
+        if (nullptr != *object)
         {
-            (static_cast<::IUnknown*> (*ppObject))->AddRef();
+            (static_cast<::IUnknown*> (*object))->AddRef();
             return S_OK;
         }
         else

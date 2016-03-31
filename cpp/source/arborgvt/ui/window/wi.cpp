@@ -23,55 +23,55 @@ ATLADD com_ptr<IWICImagingFactory> wi_factories::m_imagingFactory;
  * Determines per-monitor DPI settings or system wide DPI settings (for systems before Windows 8.1).
  *
  * Parameters:
- * >hWnd
+ * >hwnd
  * The method retrieves per-monitor DPI settings for a monitor where the root (in the chain of parent windows) window of
- * 'hWnd' is located (for Windows 8.1 and above).
- * >pfDPIX
+ * 'hwnd' is located (for Windows 8.1 and above).
+ * >dpiX
  * Pointer to variable that receives number of logical pixels per horizontal inch.
- * >pfDPIY
+ * >dpiY
  * Pointer to variable that receives number of logical pixels per vertical inch.
  *
  * Returns:
  * Standard HRESULT.
  *
  * Remarks:
- * The method uses the 'GetAncestor' function to get the root window of the 'hWnd'. This helps in situations where the
+ * The method uses the 'GetAncestor' function to get the root window of the 'hwnd'. This helps in situations where the
  * root and a child windows locate on monitors with different DPI. But since in this situation the application changes
  * size of the root window, all child windows have to render with DPI of a monitor where the root window is located.
  */
-HRESULT directx_toolkit::getDpiForMonitor(_In_ const HWND hWnd, _Out_ float* pfDPIX, _Out_ float* pfDPIY) const
+HRESULT directx_toolkit::getDpiForMonitor(_In_ const HWND hwnd, _Out_ float* dpiX, _Out_ float* dpiY) const
 {
-    *pfDPIX = 96.0f;
-    *pfDPIY = 96.0f;
-    HRESULT hResult;
-    HMODULE hLib = nullptr;
-    get_dpi_for_monitor_func_t pGetDPIForMonitor =
-        getFunction<get_dpi_for_monitor_func_t>(TEXT("shcore.dll"), "GetDpiForMonitor", hLib);
-    if (pGetDPIForMonitor)
+    *dpiX = 96.0f;
+    *dpiY = 96.0f;
+    HRESULT hr;
+    HMODULE lib = nullptr;
+    get_dpi_for_monitor_func_t getDPIForMonitor =
+        getFunction<get_dpi_for_monitor_func_t>(TEXT("shcore.dll"), "GetDpiForMonitor", lib);
+    if (getDPIForMonitor)
     {
-        HMONITOR hMonitor = MonitorFromWindow(GetAncestor(hWnd, GA_ROOT), MONITOR_DEFAULTTONEAREST);
-        UINT nDPIX;
-        UINT nDPIY;
-        hResult = (pGetDPIForMonitor)(hMonitor, MDT_EFFECTIVE_DPI, &nDPIX, &nDPIY);
-        if (SUCCEEDED(hResult))
+        HMONITOR monitor = MonitorFromWindow(GetAncestor(hwnd, GA_ROOT), MONITOR_DEFAULTTONEAREST);
+        UINT integralDPIX;
+        UINT integralDPIY;
+        hr = (getDPIForMonitor)(monitor, MDT_EFFECTIVE_DPI, &integralDPIX, &integralDPIY);
+        if (SUCCEEDED(hr))
         {
-            *pfDPIX = static_cast<float> (nDPIX);
-            *pfDPIY = static_cast<float> (nDPIY);
+            *dpiX = static_cast<float> (integralDPIX);
+            *dpiY = static_cast<float> (integralDPIY);
         }
     }
     else
     {
-        HDC hDC = ::GetDC(nullptr);
-        *pfDPIX = static_cast<float> (GetDeviceCaps(hDC, LOGPIXELSX));
-        *pfDPIY = static_cast<float> (GetDeviceCaps(hDC, LOGPIXELSY));
-        ::ReleaseDC(nullptr, hDC);
-        hResult = S_OK;
+        HDC dc = ::GetDC(nullptr);
+        *dpiX = static_cast<float> (GetDeviceCaps(dc, LOGPIXELSX));
+        *dpiY = static_cast<float> (GetDeviceCaps(dc, LOGPIXELSY));
+        ::ReleaseDC(nullptr, dc);
+        hr = S_OK;
     }
-    if (hLib)
+    if (lib)
     {
-        FreeLibrary(hLib);
+        FreeLibrary(lib);
     }
-    return hResult;
+    return hr;
 }
 
 
@@ -79,40 +79,40 @@ HRESULT directx_toolkit::getDpiForMonitor(_In_ const HWND hWnd, _Out_ float* pfD
  * Creates DirectWrite's IDWriteTextLayout object that represents the specified text as title of a text.
  *
  * Parameters:
- * >pDWriteFactory
+ * >directWriteFactory
  * Pointer to instantiated 'IDWriteFactory' object used to create result 'IDWriteTextLayout'.
- * >hWnd
+ * >hwnd
  * The method uses Visual Styles API to get font for the result object. This is handle of the window for which visual
  * theme data is required.
- * >pszText
+ * >text
  * Source text.
- * >nSize
- * Size of the 'pszText'.
- * >pSize
+ * >length
+ * Size of the 'text'.
+ * >size
  * Layout box size.
- * >ppTextLayout
+ * >resultTextLayout
  * Pointer to pointer that receives the result object (if the method succeeded in terms of the HRESULT).
  *
  * Returns:
  * Standard HRESULT code.
  */
 HRESULT directx_toolkit::createTextLayoutForBodyTitle(
-    _In_ IDWriteFactory* pDWriteFactory,
-    _In_ const HWND hWnd,
-    _In_reads_z_(nSize) LPCTSTR pszText,
-    _In_ const size_t nSize,
-    _In_ const D2D1_SIZE_F* pSize,
-    _COM_Outptr_result_maybenull_ IDWriteTextLayout** ppTextLayout) const
+    _In_ IDWriteFactory* directWriteFactory,
+    _In_ const HWND hwnd,
+    _In_reads_z_(length) LPCTSTR text,
+    _In_ const size_t length,
+    _In_ const D2D1_SIZE_F* size,
+    _COM_Outptr_result_maybenull_ IDWriteTextLayout** resultTextLayout) const
 {
     ATLADD com_ptr<IDWriteTextFormat> textFormat {};
-    HRESULT hr = createTextFormatForBodyTitle(pDWriteFactory, hWnd, textFormat.getAddressOf());
+    HRESULT hr = createTextFormatForBodyTitle(directWriteFactory, hwnd, textFormat.getAddressOf());
     if (SUCCEEDED(hr))
     {
-        hr = createTextLayout(pDWriteFactory, pszText, nSize, textFormat.get(), pSize, ppTextLayout);
+        hr = createTextLayout(directWriteFactory, text, length, textFormat.get(), size, resultTextLayout);
     }
     else
     {
-        *ppTextLayout = nullptr;
+        *resultTextLayout = nullptr;
     }
     return hr;
 }
@@ -122,40 +122,40 @@ HRESULT directx_toolkit::createTextLayoutForBodyTitle(
  * Creates DirectWrite's IDWriteTextLayout object that represents the specified text as body of a text.
  *
  * Parameters:
- * >pDWriteFactory
+ * >directWriteFactory
  * Pointer to instantiated 'IDWriteFactory' object used to create result 'IDWriteTextLayout'.
- * >hWnd
+ * >hwnd
  * The method uses Visual Styles API to get font for the result object. This is handle of the window for which visual
  * theme data is required.
- * >pszText
+ * >text
  * Source text.
- * >nSize
- * Size of the 'pszText'.
- * >pSize
+ * >length
+ * Size of the 'text'.
+ * >size
  * Layout box size.
- * >ppTextLayout
+ * >resultTextLayout
  * Pointer to pointer that receives the result object (if the method succeeded in terms of the HRESULT).
  *
  * Returns:
  * Standard HRESULT code.
  */
 HRESULT directx_toolkit::createTextLayoutForBodyText(
-    _In_ IDWriteFactory* pDWriteFactory,
-    _In_ const HWND hWnd,
-    _In_reads_z_(nSize) LPCTSTR pszText,
-    _In_ const size_t nSize,
-    _In_ const D2D1_SIZE_F* pSize,
-    _COM_Outptr_result_maybenull_ IDWriteTextLayout** ppTextLayout) const
+    _In_ IDWriteFactory* directWriteFactory,
+    _In_ const HWND hwnd,
+    _In_reads_z_(length) LPCTSTR text,
+    _In_ const size_t length,
+    _In_ const D2D1_SIZE_F* size,
+    _COM_Outptr_result_maybenull_ IDWriteTextLayout** resultTextLayout) const
 {
     ATLADD com_ptr<IDWriteTextFormat> textFormat {};
-    HRESULT hr = createTextFormatForBodyText(pDWriteFactory, hWnd, textFormat.getAddressOf());
+    HRESULT hr = createTextFormatForBodyText(directWriteFactory, hwnd, textFormat.getAddressOf());
     if (SUCCEEDED(hr))
     {
-        hr = createTextLayout(pDWriteFactory, pszText, nSize, textFormat.get(), pSize, ppTextLayout);
+        hr = createTextLayout(directWriteFactory, text, length, textFormat.get(), size, resultTextLayout);
     }
     else
     {
-        *ppTextLayout = nullptr;
+        *resultTextLayout = nullptr;
     }
     return hr;
 }
@@ -165,48 +165,48 @@ HRESULT directx_toolkit::createTextLayoutForBodyText(
  * Loads image from the specified resource and creates Direct2D bitmap object for that image.
  *
  * Parameters:
- * >pszResourceName
+ * >resourceName
  * Image resource name.
- * >pszResourceType
+ * >resourceType
  * Image resource type.
- * >pImagingFactory
+ * >imagingFactory
  * Pointer to an instance of IWICImagingFactory object.
- * >ppBitmapSource
+ * >bitmapSource
  * Receives loaded bitmap.
  *
  * Returns:
  * Standard HRESULT code.
  */
 HRESULT directx_toolkit::loadBitmapFromResource(
-    _In_z_ LPCTSTR pszResourceName,
-    _In_z_ LPCTSTR pszResourceType,
-    _In_ IWICImagingFactory* pImagingFactory,
-    _COM_Outptr_result_maybenull_ IWICFormatConverter** ppBitmapSource) const
+    _In_z_ LPCTSTR resourceName,
+    _In_z_ LPCTSTR resourceType,
+    _In_ IWICImagingFactory* imagingFactory,
+    _COM_Outptr_result_maybenull_ IWICFormatConverter** bitmapSource) const
 {
     ATLADD com_ptr<IWICFormatConverter> converter {};
     HRESULT hr = E_FAIL;
-    HRSRC hResource = FindResource(ATL::_AtlBaseModule.GetResourceInstance(), pszResourceName, pszResourceType);
-    if (nullptr != hResource)
+    HRSRC resource = FindResource(ATL::_AtlBaseModule.GetResourceInstance(), resourceName, resourceType);
+    if (nullptr != resource)
     {
-        HGLOBAL hData = LoadResource(ATL::_AtlBaseModule.GetResourceInstance(), hResource);
-        if (nullptr != hData)
+        HGLOBAL data = LoadResource(ATL::_AtlBaseModule.GetResourceInstance(), resource);
+        if (nullptr != data)
         {
-            void* pData = LockResource(hData);
-            DWORD nSize = SizeofResource(ATL::_AtlBaseModule.GetResourceInstance(), hResource);
-            if (pData && nSize)
+            void* resourceData = LockResource(data);
+            DWORD length = SizeofResource(ATL::_AtlBaseModule.GetResourceInstance(), resource);
+            if (resourceData && length)
             {
                 // Create a WIC stream to map onto the memory.
                 ATLADD com_ptr<IWICStream> stream {};
-                hr = pImagingFactory->CreateStream(stream.getAddressOf());
+                hr = imagingFactory->CreateStream(stream.getAddressOf());
                 if (SUCCEEDED(hr))
                 {
-                    hr = stream->InitializeFromMemory(reinterpret_cast<BYTE*> (pData), nSize);
+                    hr = stream->InitializeFromMemory(reinterpret_cast<BYTE*> (resourceData), length);
                     if (SUCCEEDED(hr))
                     {
                         // Prepare decoder for the stream, the first image frame and conveter (to change image color
                         // format).
                         ATLADD com_ptr<IWICBitmapDecoder> decoder {};
-                        hr = pImagingFactory->CreateDecoderFromStream(
+                        hr = imagingFactory->CreateDecoderFromStream(
                             stream.get(), nullptr, WICDecodeMetadataCacheOnLoad, decoder.getAddressOf());
                         if (SUCCEEDED(hr))
                         {
@@ -214,7 +214,7 @@ HRESULT directx_toolkit::loadBitmapFromResource(
                             hr = decoder->GetFrame(0, frame.getAddressOf());
                             if (SUCCEEDED(hr))
                             {
-                                hr = pImagingFactory->CreateFormatConverter(converter.getAddressOf());
+                                hr = imagingFactory->CreateFormatConverter(converter.getAddressOf());
                                 if (SUCCEEDED(hr))
                                 {
                                     hr = converter->Initialize(
@@ -240,7 +240,7 @@ HRESULT directx_toolkit::loadBitmapFromResource(
     {
         hr = HRESULT_FROM_WIN32(GetLastError());
     }
-    *ppBitmapSource = SUCCEEDED(hr) ? converter.detach() : nullptr;
+    *bitmapSource = SUCCEEDED(hr) ? converter.detach() : nullptr;
     return hr;
 }
 
@@ -249,15 +249,15 @@ HRESULT directx_toolkit::loadBitmapFromResource(
  * Loads image from the specified resource and creates Direct2D bitmap object for that image.
  *
  * Parameters:
- * >pszResourceName
+ * >resourceName
  * Image resource name.
- * >pszResourceType
+ * >resourceType
  * Image resource type.
- * >pImagingFactory
+ * >imagingFactory
  * Pointer to an instance of IWICImagingFactory object.
- * >pDC
+ * >dc
  * Direct2D context.
- * >ppBitmap
+ * >resultBitmap
  * Receives loaded bitmap.
  *
  * Returns:
@@ -265,23 +265,23 @@ HRESULT directx_toolkit::loadBitmapFromResource(
  *
  * Remarks:
  * Since 'ID2D1DeviceContext::CreateBitmapFromWicBitmap' can't be called simultaneously from multiple threads, caller
- * should synchronize access to the 'pDC'.
+ * should synchronize access to the `dc`.
  */
 HRESULT directx_toolkit::loadBitmapFromResource(
-    _In_z_ LPCTSTR pszResourceName,
-    _In_z_ LPCTSTR pszResourceType,
-    _In_ IWICImagingFactory* pImagingFactory,
-    _In_ ID2D1DeviceContext* pDC,
-    _COM_Outptr_result_maybenull_ ID2D1Bitmap1** ppBitmap) const
+    _In_z_ LPCTSTR resourceName,
+    _In_z_ LPCTSTR resourceType,
+    _In_ IWICImagingFactory* imagingFactory,
+    _In_ ID2D1DeviceContext* dc,
+    _COM_Outptr_result_maybenull_ ID2D1Bitmap1** resultBitmap) const
 {
     ATLADD com_ptr<ID2D1Bitmap1> bitmap {};
     ATLADD com_ptr<IWICFormatConverter> converter {};
-    HRESULT hr = loadBitmapFromResource(pszResourceName, pszResourceType, pImagingFactory, converter.getAddressOf());
+    HRESULT hr = loadBitmapFromResource(resourceName, resourceType, imagingFactory, converter.getAddressOf());
     if (SUCCEEDED(hr))
     {
-        hr = pDC->CreateBitmapFromWicBitmap(converter.get(), bitmap.getAddressOf());
+        hr = dc->CreateBitmapFromWicBitmap(converter.get(), bitmap.getAddressOf());
     }
-    *ppBitmap = SUCCEEDED(hr) ? bitmap.detach() : nullptr;
+    *resultBitmap = SUCCEEDED(hr) ? bitmap.detach() : nullptr;
     return hr;
 }
 
@@ -290,13 +290,13 @@ HRESULT directx_toolkit::loadBitmapFromResource(
  * Loads image from the specified URI (local file system only) and creates Direct2D bitmap object for that image.
  *
  * Parameters:
- * >pszURI
+ * >uri
  * Image URI.
- * >pImagingFactory
+ * >imagingFactory
  * Pointer to an instance of IWICImagingFactory object.
- * >pDC
+ * >dc
  * Direct2D context.
- * >ppBitmap
+ * >resultBitmap
  * Receives loaded bitmap.
  *
  * Returns:
@@ -304,22 +304,22 @@ HRESULT directx_toolkit::loadBitmapFromResource(
  *
  * Remarks:
  * Since 'ID2D1DeviceContext::CreateBitmapFromWicBitmap' can't be called simultaneously from multiple threads, caller
- * should synchronize access to the 'pDC'.
+ * should synchronize access to the 'dc'.
  *
- * Until the result bitmap ain't released the source 'pszURI' file is locked. WIC's method (
+ * Until the result bitmap ain't released the source 'uri' file is locked. WIC's method (
  * 'IWICImagingFactory::CreateDecoderFromFilename') calls the 'CreateFile' with only FILE_SHARE_READ shared mode.
  */
 HRESULT directx_toolkit::loadBitmapFromFile(
-    _In_z_ LPCTSTR pszURI,
-    _In_ IWICImagingFactory* pImagingFactory,
-    _In_ ID2D1DeviceContext* pDC,
-    _COM_Outptr_result_maybenull_ ID2D1Bitmap1** ppBitmap) const
+    _In_z_ LPCTSTR uri,
+    _In_ IWICImagingFactory* imagingFactory,
+    _In_ ID2D1DeviceContext* dc,
+    _COM_Outptr_result_maybenull_ ID2D1Bitmap1** resultBitmap) const
 {
     ATLADD com_ptr<ID2D1Bitmap1> bitmap {};
     // Prepare decoder for the file, the first image frame and conveter (to change image color format).
     ATLADD com_ptr<IWICBitmapDecoder> decoder {};
-    HRESULT hr = pImagingFactory->CreateDecoderFromFilename(
-        pszURI, nullptr, GENERIC_READ, WICDecodeMetadataCacheOnLoad, decoder.getAddressOf());
+    HRESULT hr = imagingFactory->CreateDecoderFromFilename(
+        uri, nullptr, GENERIC_READ, WICDecodeMetadataCacheOnLoad, decoder.getAddressOf());
     if (SUCCEEDED(hr))
     {
         ATLADD com_ptr<IWICBitmapFrameDecode> frame {};
@@ -327,7 +327,7 @@ HRESULT directx_toolkit::loadBitmapFromFile(
         if (SUCCEEDED(hr))
         {
             ATLADD com_ptr<IWICFormatConverter> converter {};
-            hr = pImagingFactory->CreateFormatConverter(converter.getAddressOf());
+            hr = imagingFactory->CreateFormatConverter(converter.getAddressOf());
             if (SUCCEEDED(hr))
             {
                 hr = converter->Initialize(
@@ -339,12 +339,12 @@ HRESULT directx_toolkit::loadBitmapFromFile(
                     WICBitmapPaletteTypeMedianCut);
                 if (SUCCEEDED(hr))
                 {
-                    hr = pDC->CreateBitmapFromWicBitmap(converter.get(), bitmap.getAddressOf());
+                    hr = dc->CreateBitmapFromWicBitmap(converter.get(), bitmap.getAddressOf());
                 }
             }
         }
     }
-    *ppBitmap = SUCCEEDED(hr) ? bitmap.detach() : nullptr;
+    *resultBitmap = SUCCEEDED(hr) ? bitmap.detach() : nullptr;
     return hr;
 }
 
@@ -353,45 +353,45 @@ HRESULT directx_toolkit::loadBitmapFromFile(
  * Creates DirectWrite's IDWriteTextLayout object that represents the specified text.
  *
  * Parameters:
- * >pDWriteFactory
+ * >directWriteFactory
  * Pointer to instantiated 'IDWriteFactory' object used to create result 'IDWriteTextLayout'.
- * >pszText
+ * >text
  * Source text.
- * >nSize
- * Size of the 'pszText'.
- * >pTextFormat
+ * >length
+ * Size of the 'text'.
+ * >textFormat
  * Text format for the resulting text layout.
- * >pSize
+ * >size
  * Layout box size.
- * >ppTextLayout
+ * >resultTextLayout
  * Pointer to pointer that receives the result object (if the method succeeded in terms of the HRESULT).
  *
  * Returns:
  * Standard HRESULT.
  */
 HRESULT directx_toolkit::createTextLayout(
-    _In_ IDWriteFactory* pDWriteFactory,
-    _In_reads_z_(nSize) LPCTSTR pszText,
-    _In_ const size_t nSize,
-    _In_ IDWriteTextFormat* pTextFormat,
-    _In_ const D2D1_SIZE_F* pSize,
-    _COM_Outptr_result_maybenull_ IDWriteTextLayout** ppTextLayout) const
+    _In_ IDWriteFactory* directWriteFactory,
+    _In_reads_z_(length) LPCTSTR text,
+    _In_ const size_t length,
+    _In_ IDWriteTextFormat* textFormat,
+    _In_ const D2D1_SIZE_F* size,
+    _COM_Outptr_result_maybenull_ IDWriteTextLayout** resultTextLayout) const
 {
     ATLADD com_ptr<IDWriteTextLayout> textLayout {};
     HRESULT hr = E_POINTER;
-    if (pszText)
+    if (text)
     {
-        hr = pDWriteFactory->CreateTextLayout(
-            pszText,
-            static_cast<UINT32> (nSize),
-            pTextFormat,
-            pSize->width,
-            pSize->height,
+        hr = directWriteFactory->CreateTextLayout(
+            text,
+            static_cast<UINT32> (length),
+            textFormat,
+            size->width,
+            size->height,
             textLayout.getAddressOf());
         if (SUCCEEDED(hr))
         {
             ATLADD com_ptr<IDWriteTypography> typography {};
-            hr = pDWriteFactory->CreateTypography(typography.getAddressOf());
+            hr = directWriteFactory->CreateTypography(typography.getAddressOf());
             if (SUCCEEDED(hr))
             {
                 DWRITE_FONT_FEATURE fontFeature;
@@ -399,11 +399,11 @@ HRESULT directx_toolkit::createTextLayout(
                 fontFeature.parameter = 1;
                 typography->AddFontFeature(fontFeature);
                 hr = textLayout->SetTypography(
-                    typography.get(), DWRITE_TEXT_RANGE {0, static_cast<UINT32> (nSize)});
+                    typography.get(), DWRITE_TEXT_RANGE {0, static_cast<UINT32> (length)});
             }
         }
     }
-    *ppTextLayout = SUCCEEDED(hr) ? textLayout.detach() : nullptr;
+    *resultTextLayout = SUCCEEDED(hr) ? textLayout.detach() : nullptr;
     return hr;
 }
 
@@ -412,38 +412,38 @@ HRESULT directx_toolkit::createTextLayout(
  * Creates DirectWrite's IDWriteTextFormat object.
  *
  * Parameters:
- * >pDWriteFactory
+ * >directWriteFactory
  * Pointer to instantiated 'IDWriteFactory' object used to create result 'IDWriteTextFormat'.
- * >pLogFont
+ * >logFont
  * Pointer to initialized LOGFONT structure for creating text format.
- * >ppTextLayout
+ * >resultTextLayout
  * Pointer to pointer that receives the result object (if the method succeeded in terms of the HRESULT).
  *
  * Returns:
  * Standard HRESULT.
  */
 HRESULT directx_toolkit::createTextFormat(
-    _In_ IDWriteFactory* pDWriteFactory,
-    _In_ const LOGFONT* pLogFont,
-    _COM_Outptr_result_maybenull_ IDWriteTextFormat** ppTextFormat) const
+    _In_ IDWriteFactory* directWriteFactory,
+    _In_ const LOGFONT* logFont,
+    _COM_Outptr_result_maybenull_ IDWriteTextFormat** resultTextFormat) const
 {
     ATLADD com_ptr<IDWriteTextFormat> textFormat {};
     HRESULT hr = E_POINTER;
-    if (pDWriteFactory)
+    if (directWriteFactory)
     {
-        string_util::const_ptr_t pStringUtil = string_util::getInstance();
-        STLADD string_unique_ptr_t szLocale = pStringUtil->getCurrentUserLocale();
-        hr = pDWriteFactory->CreateTextFormat(
-            pLogFont->lfFaceName,
+        string_util::const_ptr_t stringUtil = string_util::getInstance();
+        STLADD string_unique_ptr_t locale = stringUtil->getCurrentUserLocale();
+        hr = directWriteFactory->CreateTextFormat(
+            logFont->lfFaceName,
             nullptr,
             DWRITE_FONT_WEIGHT_NORMAL,
             DWRITE_FONT_STYLE_NORMAL,
             DWRITE_FONT_STRETCH_NORMAL,
-            abs(pLogFont->lfHeight) * 72.0f / 96.0f,
-            szLocale ? szLocale->c_str() : L"",
+            abs(logFont->lfHeight) * 72.0f / 96.0f,
+            locale ? locale->c_str() : L"",
             textFormat.getAddressOf());
     }
-    *ppTextFormat = SUCCEEDED(hr) ? textFormat.detach() : nullptr;
+    *resultTextFormat = SUCCEEDED(hr) ? textFormat.detach() : nullptr;
     return hr;
 }
 
@@ -452,26 +452,28 @@ HRESULT directx_toolkit::createTextFormat(
 * Creates DirectWrite's IDWriteTextFormat object that may be used to draw text as title of a text.
 *
 * Parameters:
-* >pDWriteFactory
+* >directWriteFactory
 * Pointer to instantiated 'IDWriteFactory' object used to create result 'IDWriteTextFormat'.
-* >hWnd
+* >hwnd
 * The method uses Visual Styles API to get font for the result object. This is handle of the window for which visual
 * theme data is required.
-* >ppTextFormat
+* >partId
+* Theme part identifier.
+* >resultTextFormat
 * Pointer to pointer that receives the result object (if the method succeeded in terms of the HRESULT).
 *
 * Returns:
 * Standard HRESULT code.
 */
 HRESULT directx_toolkit::createTextFormat(
-    _In_ IDWriteFactory* pDWriteFactory,
-    _In_ const HWND hWnd,
-    _In_ const int nPartId,
-    _COM_Outptr_result_maybenull_ IDWriteTextFormat** ppTextFormat) const
+    _In_ IDWriteFactory* directWriteFactory,
+    _In_ const HWND hwnd,
+    _In_ const int partId,
+    _COM_Outptr_result_maybenull_ IDWriteTextFormat** resultTextFormat) const
 {
     LOGFONT font {};
-    WAPI theme_t theme {OpenThemeData(hWnd, VSCLASS_TEXTSTYLE)};
-    HRESULT hr = theme ? GetThemeFont(theme.get(), nullptr, nPartId, 0, TMT_FONT, &font) : E_FAIL;
+    WAPI theme_t theme {OpenThemeData(hwnd, VSCLASS_TEXTSTYLE)};
+    HRESULT hr = theme ? GetThemeFont(theme.get(), nullptr, partId, 0, TMT_FONT, &font) : E_FAIL;
     if (FAILED(hr))
     {
         NONCLIENTMETRICS nonClientMetrics;
@@ -488,11 +490,11 @@ HRESULT directx_toolkit::createTextFormat(
     }
     if (SUCCEEDED(hr))
     {
-        hr = createTextFormat(pDWriteFactory, &font, ppTextFormat);
+        hr = createTextFormat(directWriteFactory, &font, resultTextFormat);
     }
     else
     {
-        *ppTextFormat = nullptr;
+        *resultTextFormat = nullptr;
     }
     return hr;
 }
@@ -506,7 +508,7 @@ ATLADD com_ptr<ID2D1Device> directx_render::m_direct2DDevice;
  * Creates Direct2D device (the 'm_direct2DDevice') linked to Direct3D device (the 'm_direct3DDevice').
  *
  * Parameters:
- * >pDirect2DFactory
+ * >direct2DFactory
  * Pointer to initialized Direct2D resources factory.
  *
  * Returns:
@@ -515,7 +517,7 @@ ATLADD com_ptr<ID2D1Device> directx_render::m_direct2DDevice;
  * Remarks:
  * As its counterpart 'directx_render::createDirect3DDevice', this method stores result in the static data member.
  */
-HRESULT directx_render::createDirect2DDevice(_In_ ID2D1Factory1* pDirect2DFactory)
+HRESULT directx_render::createDirect2DDevice(_In_ ID2D1Factory1* direct2DFactory)
 {
     HRESULT hr = S_OK;
     if (!m_direct2DDevice)
@@ -527,7 +529,7 @@ HRESULT directx_render::createDirect2DDevice(_In_ ID2D1Factory1* pDirect2DFactor
             hr = m_direct3DDevice->QueryInterface(dxgiDevice.getAddressOf());
             if (SUCCEEDED(hr))
             {
-                hr = pDirect2DFactory->CreateDevice(dxgiDevice.get(), m_direct2DDevice.getAddressOf());
+                hr = direct2DFactory->CreateDevice(dxgiDevice.get(), m_direct2DDevice.getAddressOf());
             }
         }
     }
@@ -539,16 +541,16 @@ HRESULT directx_render::createDirect2DDevice(_In_ ID2D1Factory1* pDirect2DFactor
  * Creates Direct3D and Direct2D devices and resources to use when render the specified window.
  *
  * Parameters:
- * hWnd
+ * hwnd
  * Handle to the target window.
- * >pDirect2DFactory
+ * >direct2DFactory
  * Pointer to initialized Direct2D resources factory. Used to create Direct2D device with
  * 'directx_render::createDirect2DDevice' method.
  *
  * Returns:
  * Standard HRESULT.
  */
-HRESULT directx_render::createDevice(_In_ const HWND hWnd, _In_ ID2D1Factory1* pDirect2DFactory)
+HRESULT directx_render::createDevice(_In_ const HWND hwnd, _In_ ID2D1Factory1* direct2DFactory)
 {
     HRESULT hr = createDirect3DDevice();
     if (SUCCEEDED(hr))
@@ -579,26 +581,26 @@ HRESULT directx_render::createDevice(_In_ const HWND hWnd, _In_ ID2D1Factory1* p
                     swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
                     swapChainDesc.Flags = 0;
                     hr = dxgiFactory->CreateSwapChainForHwnd(
-                        m_direct3DDevice.get(), hWnd, &swapChainDesc, nullptr, nullptr, m_swapChain.getAddressOf());
+                        m_direct3DDevice.get(), hwnd, &swapChainDesc, nullptr, nullptr, m_swapChain.getAddressOf());
                     if (SUCCEEDED(hr))
                     {
                         hr = dxgiDevice->SetMaximumFrameLatency(1);
                         if (SUCCEEDED(hr))
                         {
-                            hr = createDirect2DDevice(pDirect2DFactory);
+                            hr = createDirect2DDevice(direct2DFactory);
                             if (SUCCEEDED(hr))
                             {
                                 hr = m_direct2DDevice->CreateDeviceContext(
                                     D2D1_DEVICE_CONTEXT_OPTIONS_NONE, m_direct2DContext.getAddressOf());
                                 if (SUCCEEDED(hr))
                                 {
-                                    float fDPIX;
-                                    float fDPIY;
-                                    if (FAILED(getDpiForMonitor(hWnd, &fDPIX, &fDPIY)))
+                                    float dpiX;
+                                    float dpiY;
+                                    if (FAILED(getDpiForMonitor(hwnd, &dpiX, &dpiY)))
                                     {
-                                        pDirect2DFactory->GetDesktopDpi(&fDPIX, &fDPIY);
+                                        direct2DFactory->GetDesktopDpi(&dpiX, &dpiY);
                                     }
-                                    m_direct2DContext->SetDpi(fDPIX, fDPIY);
+                                    m_direct2DContext->SetDpi(dpiX, dpiY);
                                     createDeviceResources();
                                 }
                             }
@@ -616,9 +618,9 @@ HRESULT directx_render::createDevice(_In_ const HWND hWnd, _In_ ID2D1Factory1* p
  * Renders the specified window.
  *
  * Parameters:
- * >hWnd
+ * >hwnd
  * Handle to the target window.
- * >pDirect2DFactory
+ * >direct2DFactory
  * Pointer to initialized Direct2D resources factory. Used to create (when necessary) Direct2D device with
  * 'directx_render::createDirect2DDevice' method.
  *
@@ -629,12 +631,12 @@ HRESULT directx_render::createDevice(_In_ const HWND hWnd, _In_ ID2D1Factory1* p
  * The method never tries to initialize DirectX objects for rendering when a window doesn't own by Direct2D device
  * context ('m_bD2DContextOwner' is false). Such windows use a parent window's D2D context.
  */
-void directx_render::render(_In_ const HWND hWnd, _In_ ID2D1Factory1* pDirect2DFactory)
+void directx_render::render(_In_ const HWND hwnd, _In_ ID2D1Factory1* direct2DFactory)
 {
     HRESULT hr = S_OK;
     if (!isDirect2DContextCreated())
     {
-        hr = createDevice(hWnd, pDirect2DFactory);
+        hr = createDevice(hwnd, direct2DFactory);
         if (SUCCEEDED(hr))
         {
             hr = createDeviceSwapChainBitmap();
@@ -646,7 +648,7 @@ void directx_render::render(_In_ const HWND hWnd, _In_ ID2D1Factory1* pDirect2DF
         draw();
         m_direct2DContext->EndDraw();
         {
-//            DXU direct2d_factory_lock lock {pDirect2DFactory};
+//            DXU direct2d_factory_lock lock {direct2DFactory};
             DXGI_PRESENT_PARAMETERS presentParameters = {};
             // Turn VSync on.
             hr = m_swapChain->Present1(1, 0, &presentParameters);
@@ -700,8 +702,7 @@ template class window_impl<graph_window>;
  * Gets information about "window class". Called by ATL's CWindowImplBaseT<T, U> class (by its Create method).
  *
  * Parameters:
- * pWndProc
- * Window procedure.
+ * None.
  *
  * Returns:
  * A static instance of CWndClassInfo class.
@@ -736,17 +737,17 @@ ATL::CWndClassInfo& window_impl<T>::GetWndClassInfo()
  * Handler of ATL message map.
  *
  * Parameters:
- * >hWnd
+ * >hwnd
  * Handle of this window.
- * >nMessage
+ * >message
  * Message to process.
- * >nWParam
- * Additional message information. The contents of this parameter depend on the value of the nMessage parameter.
- * >nLParam
- * Additional message information. The contents of this parameter depend on the value of the nMessage parameter.
- * >nLResult
- * The result of the message processing and depends on the message sent (nMessage).
- * >nMsgMapID
+ * >wParam
+ * Additional message information. The contents of this parameter depend on the value of the message parameter.
+ * >lParam
+ * Additional message information. The contents of this parameter depend on the value of the message parameter.
+ * >lResult
+ * The result of the message processing and depends on the message sent (message).
+ * >msgMapID
  * The identifier of the message map that will process the message.
  *
  * Returns:
@@ -754,69 +755,69 @@ ATL::CWndClassInfo& window_impl<T>::GetWndClassInfo()
  */
 template <typename T>
 BOOL window_impl<T>::ProcessWindowMessage(
-    _In_ HWND hWnd,
-    _In_ UINT nMessage,
-    _In_ WPARAM nWParam,
-    _In_ LPARAM nLParam,
-    _Inout_ LRESULT& nLResult,
-    _In_ DWORD nMsgMapID)
+    _In_ HWND hwnd,
+    _In_ UINT message,
+    _In_ WPARAM wParam,
+    _In_ LPARAM lParam,
+    _Inout_ LRESULT& lResult,
+    _In_ DWORD msgMapID)
 {
-    UNREFERENCED_PARAMETER(nMsgMapID);
+    UNREFERENCED_PARAMETER(msgMapID);
 
-    BOOL bHandled;
-    switch (nMessage)
+    BOOL handled;
+    switch (message)
     {
         case WM_CREATE:
         {
-            nLResult = createHandler();
-            bHandled = FALSE;
+            lResult = createHandler();
+            handled = FALSE;
         }
         break;
 
         case WM_DESTROY:
         {
             destroyHandler();
-            nLResult = 0;
-            bHandled = FALSE;
+            lResult = 0;
+            handled = FALSE;
         }
         break;
 
         case WM_WINDOWPOSCHANGED:
         {
-            auto pWindowPos = reinterpret_cast<WINDOWPOS*> (nLParam);
+            auto windowPos = reinterpret_cast<WINDOWPOS*> (lParam);
             if (WS_CHILD & GetWindowLongPtr(GWL_STYLE))
             {
                 // Child windows in this application don't have non-client area; use window size.
-                if (!((SWP_NOSIZE | SWP_HIDEWINDOW) & pWindowPos->flags))
+                if (!((SWP_NOSIZE | SWP_HIDEWINDOW) & windowPos->flags))
                 {
-                    sizeHandler(pWindowPos->cx, pWindowPos->cy);
+                    sizeHandler(windowPos->cx, windowPos->cy);
                 }
             }
-            else if ((!(SWP_NOSIZE & pWindowPos->flags)) || (SWP_SHOWWINDOW & pWindowPos->flags))
+            else if ((!(SWP_NOSIZE & windowPos->flags)) || (SWP_SHOWWINDOW & windowPos->flags))
             {
                 RECT rect;
                 GetClientRect(&rect);
                 sizeHandler(rect.right, rect.bottom);
             }
-            nLResult = 0;
-            bHandled = TRUE;
+            lResult = 0;
+            handled = TRUE;
         }
         break;
 
         case WM_PAINT:
         {
-            if (::GetUpdateRect(hWnd, nullptr, FALSE))
+            if (::GetUpdateRect(hwnd, nullptr, FALSE))
             {
                 PAINTSTRUCT ps;
-                HDC hDC = ::BeginPaint(hWnd, &ps);
-                if (hDC)
+                HDC dc = ::BeginPaint(hwnd, &ps);
+                if (dc)
                 {
-                    render(hWnd, m_direct2DFactory.get());
+                    render(hwnd, m_direct2DFactory.get());
                 }
-                ::EndPaint(hWnd, &ps);
+                ::EndPaint(hwnd, &ps);
             }
-            nLResult = 0;
-            bHandled = TRUE;
+            lResult = 0;
+            handled = TRUE;
         }
         break;
 
@@ -824,20 +825,20 @@ BOOL window_impl<T>::ProcessWindowMessage(
         {
             if (m_direct2DContext)
             {
-                m_direct2DContext->SetDpi(LOWORD(nWParam), HIWORD(nWParam));
+                m_direct2DContext->SetDpi(LOWORD(wParam), HIWORD(wParam));
             }
-            nLResult = 0;
-            bHandled = TRUE;
+            lResult = 0;
+            handled = TRUE;
         }
         break;
 
         default:
         {
-            bHandled = FALSE;
+            handled = FALSE;
         }
     }
 
-    return bHandled;
+    return handled;
 }
 #pragma endregion window_impl template
 

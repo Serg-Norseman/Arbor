@@ -13,6 +13,7 @@
 #include <wincodec.h>
 
 ATLADD_BEGIN
+
 /**
  * ATLADD desktop_sample_window
  * Main top window of the application.
@@ -22,11 +23,11 @@ class desktop_sample_window final: public top_window_impl
 public:
     typedef std::vector<HANDLE> handles_type;
 
-    explicit desktop_sample_window(_In_ const UINT nTaskbarButtonCreatedMessage)
+    explicit desktop_sample_window(_In_ const UINT taskbarButtonCreatedMessage)
         :
         m_taskbarList3 {},
-        m_hAppStartingCursor {nullptr},
-        m_nTaskbarButtonCreatedMessage {nTaskbarButtonCreatedMessage},
+        m_appStartingCursor {nullptr},
+        m_taskbarButtonCreatedMessage {taskbarButtonCreatedMessage},
         m_visual {},
         m_visualCreated {},
         m_visualSize {},
@@ -35,39 +36,39 @@ public:
         WAPI check_hr(m_imagingFactory.coCreateInstance(CLSID_WICImagingFactory, nullptr, CLSCTX_INPROC_SERVER));
     }
 
-    _Check_return_ virtual HWND create(_In_ const HWND hParent) override;
+    _Check_return_ virtual HWND create(_In_ const HWND parent) override;
 
-    _Check_return_ bool preTranslateMessage(_In_ MSG* pMsg)
+    _Check_return_ bool preTranslateMessage(_In_ MSG* msg)
     {
-        UNREFERENCED_PARAMETER(pMsg);
+        UNREFERENCED_PARAMETER(msg);
         return FALSE;
-//        return IsWindow() && IsDialogMessage(pMsg);
+//        return IsWindow() && IsDialogMessage(msg);
     }
 
     virtual BOOL ProcessWindowMessage(
-        _In_ HWND hWnd,
-        _In_ UINT nMessage,
-        _In_ WPARAM nWParam,
-        _In_ LPARAM nLParam,
-        _Inout_ LRESULT& nLResult,
-        _In_ DWORD nMsgMapID) override;
+        _In_ HWND hwnd,
+        _In_ UINT message,
+        _In_ WPARAM wParam,
+        _In_ LPARAM lParam,
+        _Inout_ LRESULT& lResult,
+        _In_ DWORD msgMapID) override;
 
     const handles_type* getThreadsToWaitFor() const
     {
         return &m_threads;
     }
 
-    void updateWindowText(_In_opt_ const STLADD string_type* pszText);
-    void handleThreadTermination(_In_ const HANDLE hObject);
+    void updateWindowText(_In_opt_ const STLADD string_type* addText);
+    void handleThreadTermination(_In_ const HANDLE object);
 
 
 protected:
     virtual LRESULT createHandler() override;
     virtual void destroyHandler() override;
 
-    virtual void sizeHandler(_In_ const LONG nNewWidth, _In_ const LONG nNewHeight) override
+    virtual void sizeHandler(_In_ const LONG newWidth, _In_ const LONG newHeight) override
     {
-        base_class_t::sizeHandler(nNewWidth, nNewHeight);
+        base_class_t::sizeHandler(newWidth, newHeight);
         resizeVisual();
     }
 
@@ -81,7 +82,7 @@ protected:
 private:
     typedef top_window_impl base_class_t;
 
-    static constexpr decltype(D2D1_SIZE_U::width) m_cZoomFactor = 32;
+    static constexpr decltype(D2D1_SIZE_U::width) m_zoomFactor = 32;
 
     virtual bool loadWindowPlacement() override
     {
@@ -92,7 +93,7 @@ private:
     {
     }
 
-    _Check_return_ bool commandHandler(_In_ const UINT nId);
+    _Check_return_ bool commandHandler(_In_ const UINT id);
 
     BOOL isAppStartingCursorMustBeSet() const
     {
@@ -105,11 +106,12 @@ private:
     void addDataToTheGraph();
 
     ATLADD com_ptr<ITaskbarList3> m_taskbarList3;
-    HCURSOR m_hAppStartingCursor;
-    const UINT m_nTaskbarButtonCreatedMessage;
+    HCURSOR m_appStartingCursor;
+    const UINT m_taskbarButtonCreatedMessage;
     ATLADD com_ptr<IArborVisual> m_visual;
     WAPI handle_t m_visualCreated;
     D2D1_SIZE_U m_visualSize;
     handles_type m_threads;
 };
+
 ATLADD_END

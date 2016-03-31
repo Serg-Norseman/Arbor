@@ -8,15 +8,15 @@
 #pragma comment(lib, "comctl32.Lib")
 
 int APIENTRY wWinMain(
-    _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR pszCmdLine, _In_ int nShowCmd)
+    _In_ HINSTANCE instance, _In_opt_ HINSTANCE prevInstance, _In_ LPWSTR cmdLine, _In_ int showCmd)
 {
-    UNREFERENCED_PARAMETER(hPrevInstance);
-    UNREFERENCED_PARAMETER(pszCmdLine);
-    UNREFERENCED_PARAMETER(nShowCmd);
+    UNREFERENCED_PARAMETER(prevInstance);
+    UNREFERENCED_PARAMETER(cmdLine);
+    UNREFERENCED_PARAMETER(showCmd);
 
-    ATL::_AtlBaseModule.SetResourceInstance(hInstance);
-    string_util::pointer_t pStringUtil = string_util::getInstance();
-    pStringUtil->setModuleHandleWithResource(hInstance);
+    ATL::_AtlBaseModule.SetResourceInstance(instance);
+    string_util::pointer_t stringUtil = string_util::getInstance();
+    stringUtil->setModuleHandleWithResource(instance);
 
     MSG msg;
     msg.wParam = 0;
@@ -27,33 +27,33 @@ int APIENTRY wWinMain(
         // May be 'InitCommonControlsEx' is required here to use visual styles with scroll bars.
 
         SetCurrentProcessExplicitAppUserModelID(L"Serg-Norseman.Arbor.dtsample");
-        UINT nTaskbarButtonCreatedMessage = RegisterWindowMessage(TEXT("TaskbarButtonCreated"));
-        auto window = std::make_unique<ATLADD desktop_sample_window>(nTaskbarButtonCreatedMessage);
+        UINT taskbarButtonCreatedMessage = RegisterWindowMessage(TEXT("TaskbarButtonCreated"));
+        auto window = std::make_unique<ATLADD desktop_sample_window>(taskbarButtonCreatedMessage);
         if (window)
         {
-            HWND hWnd = window->create(::GetDesktopWindow());
-            if (nullptr != hWnd)
+            HWND hwnd = window->create(::GetDesktopWindow());
+            if (nullptr != hwnd)
             {
-                MISCUTIL windows_system::changeWindowMessageFilter(hWnd, nTaskbarButtonCreatedMessage);
+                MISCUTIL windows_system::changeWindowMessageFilter(hwnd, taskbarButtonCreatedMessage);
                 window->ShowWindow(SW_SHOW);
 
-                HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDR_THE_APPLICATION));
+                HACCEL accelTable = LoadAccelerators(instance, MAKEINTRESOURCE(IDR_THE_APPLICATION));
 
                 while (true)
                 {
-                    const ATLADD desktop_sample_window::handles_type* pThreads = window->getThreadsToWaitFor();
-                    const ATLADD desktop_sample_window::handles_type::size_type nSize = pThreads->size();
+                    const ATLADD desktop_sample_window::handles_type* threads = window->getThreadsToWaitFor();
+                    const ATLADD desktop_sample_window::handles_type::size_type size = threads->size();
                     /*
                      * 'MsgWaitForMultipleObjectsEx' must use QS_ALLINPUT, not QS_ALLEVENTS. The first one has
                      * QS_SENDMESSAGE mask -- it allows to receive messages from another threads or applications.
                      */
-                    DWORD nWait = MsgWaitForMultipleObjectsEx(
-                        static_cast<DWORD> (nSize),
-                        std::data(*pThreads),
+                    DWORD wait = MsgWaitForMultipleObjectsEx(
+                        static_cast<DWORD> (size),
+                        std::data(*threads),
                         INFINITE,
                         QS_ALLINPUT,
                         MWMO_INPUTAVAILABLE);
-                    if (WAIT_OBJECT_0 + nSize == nWait)
+                    if (WAIT_OBJECT_0 + size == wait)
                     {
                         if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
                         {
@@ -61,7 +61,7 @@ int APIENTRY wWinMain(
                             {
                                 break;
                             }
-                            if (!(TranslateAccelerator(hWnd, hAccelTable, &msg) ||
+                            if (!(TranslateAccelerator(hwnd, accelTable, &msg) ||
                                 window->preTranslateMessage(&msg)))
                             {
                                 ::TranslateMessage(&msg);
@@ -71,7 +71,7 @@ int APIENTRY wWinMain(
                     }
                     else
                     {
-                        window->handleThreadTermination(pThreads->at(nWait - WAIT_OBJECT_0));
+                        window->handleThreadTermination(threads->at(wait - WAIT_OBJECT_0));
                     }
                 }
 

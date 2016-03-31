@@ -11,41 +11,42 @@
 #pragma comment(lib, "arborgvt.lib")
 
 ATLADD_BEGIN
+
 #pragma region desktop_sample_window
 /**
  * Creates this window.
  *
  * Parameters:
- * >hParent
+ * >parent
  * Handle to the parent window.
  *
  * Returns:
  * Handle to this window.
  */
-_Check_return_ HWND desktop_sample_window::create(_In_ const HWND hParent)
+_Check_return_ HWND desktop_sample_window::create(_In_ const HWND parent)
 {
     typedef ATL::CWinTraits<WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN | WS_HSCROLL | WS_VSCROLL, WS_EX_CONTROLPARENT>
         style_traits_t;
 
-    HWND hWnd = nullptr;
-    float fDPIX;
-    float fDPIY;
-    if (SUCCEEDED(getDpiForMonitor(hParent, &fDPIX, &fDPIY)))
+    HWND hwnd = nullptr;
+    float dpiX;
+    float dpiY;
+    if (SUCCEEDED(getDpiForMonitor(parent, &dpiX, &dpiY)))
     {
         RECT rect;
         rect.left = 0;
-        rect.right = static_cast<LONG> (logicalToPhysical(640.0f, fDPIX));
+        rect.right = static_cast<LONG> (logicalToPhysical(640.0f, dpiX));
         rect.top = 0;
-        rect.bottom = static_cast<LONG> (logicalToPhysical(480.0f, fDPIY));
-        hWnd = Create(
-            hParent,
+        rect.bottom = static_cast<LONG> (logicalToPhysical(480.0f, dpiY));
+        hwnd = Create(
+            parent,
             ATL::_U_RECT {rect},
             nullptr,
             style_traits_t::GetWndStyle(0),
             style_traits_t::GetWndExStyle(0),
             0U,
             nullptr);
-        if (hWnd)
+        if (hwnd)
         {
             if (!loadWindowPlacement())
             {
@@ -54,7 +55,7 @@ _Check_return_ HWND desktop_sample_window::create(_In_ const HWND hParent)
             m_visualSize = D2D1::SizeU(rect.right >> 1, rect.bottom >> 1);
         }
     }
-    return hWnd;
+    return hwnd;
 }
 
 
@@ -63,32 +64,32 @@ _Check_return_ HWND desktop_sample_window::create(_In_ const HWND hParent)
  * Handler of ATL message map (almost the WindowProc).
  *
  * Parameters:
- * >hWnd
+ * >hwnd
  * Handle of this window.
- * >nMessage
+ * >message
  * Message to process.
- * >nWParam
- * Additional message information. The contents of this parameter depend on the value of the nMessage parameter.
- * >nLParam
- * Additional message information. The contents of this parameter depend on the value of the nMessage parameter.
- * >nLResult
- * The result of the message processing and depends on the message sent (nMessage).
- * >nMsgMapID
+ * >wParam
+ * Additional message information. The contents of this parameter depend on the value of the message parameter.
+ * >lParam
+ * Additional message information. The contents of this parameter depend on the value of the message parameter.
+ * >lResult
+ * The result of the message processing and depends on the message sent (message).
+ * >msgMapID
  * The identifier of the message map that will process the message.
  *
  * Returns:
  * Non-zero value if the message was processed, or zero otherwise.
  */
 BOOL desktop_sample_window::ProcessWindowMessage(
-    _In_ HWND hWnd,
-    _In_ UINT nMessage,
-    _In_ WPARAM nWParam,
-    _In_ LPARAM nLParam,
-    _Inout_ LRESULT& nLResult,
-    _In_ DWORD nMsgMapID)
+    _In_ HWND hwnd,
+    _In_ UINT message,
+    _In_ WPARAM wParam,
+    _In_ LPARAM lParam,
+    _Inout_ LRESULT& lResult,
+    _In_ DWORD msgMapID)
 {
-    BOOL bHandled;
-    if (m_nTaskbarButtonCreatedMessage == nMessage)
+    BOOL handled;
+    if (m_taskbarButtonCreatedMessage == message)
     {
         if (!m_taskbarList3)
         {
@@ -109,58 +110,56 @@ BOOL desktop_sample_window::ProcessWindowMessage(
                 }
             }
         }
-        bHandled = TRUE;
+        handled = TRUE;
     }
     else
     {
-        switch (nMessage)
+        switch (message)
         {
             case WM_COMMAND:
             {
-                switch (HIWORD(nWParam))
+                switch (HIWORD(wParam))
                 {
                     case 0:
                     case 1:
                     {
                         // Pass both menu items and accelerators (1) to the 'commandHandler' method.
-                        bHandled = commandHandler(LOWORD(nWParam));
-                        if (bHandled)
+                        handled = commandHandler(LOWORD(wParam));
+                        if (handled)
                         {
-                            nLResult = 0;
+                            lResult = 0;
                         }
                     }
                     break;
 
                     default:
                     {
-                        bHandled = FALSE;
+                        handled = FALSE;
                     }
                     break;
                 }
 
-                if (!bHandled)
+                if (!handled)
                 {
-                    bHandled =
-                        base_class_t::ProcessWindowMessage(hWnd, nMessage, nWParam, nLParam, nLResult, nMsgMapID);
+                    handled = base_class_t::ProcessWindowMessage(hwnd, message, wParam, lParam, lResult, msgMapID);
                 }
             }
             break;
 
             case WM_SETCURSOR:
             {
-                if (m_hAppStartingCursor && (HTCLIENT == LOWORD(nLParam)))
+                if (m_appStartingCursor && (HTCLIENT == LOWORD(lParam)))
                 {
-                    bHandled = isAppStartingCursorMustBeSet();
-                    if (bHandled)
+                    handled = isAppStartingCursorMustBeSet();
+                    if (handled)
                     {
-                        SetCursor(m_hAppStartingCursor);
-                        nLResult = TRUE;
+                        SetCursor(m_appStartingCursor);
+                        lResult = TRUE;
                     }
                 }
                 else
                 {
-                    bHandled =
-                        base_class_t::ProcessWindowMessage(hWnd, nMessage, nWParam, nLParam, nLResult, nMsgMapID);
+                    handled = base_class_t::ProcessWindowMessage(hwnd, message, wParam, lParam, lResult, msgMapID);
                 }
             }
             break;
@@ -171,85 +170,84 @@ BOOL desktop_sample_window::ProcessWindowMessage(
                 HWND visualHWND;
                 if (m_visual && (S_OK == m_visual->getHWND(&visualHWND)))
                 {
-                    ::SendNotifyMessage(visualHWND, nMessage, nWParam, nLParam);
+                    ::SendNotifyMessage(visualHWND, message, wParam, lParam);
                 }
-                nLResult = 0;
-                bHandled = TRUE;
+                lResult = 0;
+                handled = TRUE;
             }
             break;
 
             case WM_KEYDOWN:
             {
-                switch (nWParam)
+                switch (wParam)
                 {
                     case VK_UP:
                     {
                         SendMessage(WM_VSCROLL, MAKELONG(SB_LINEUP, 0), 0);
-                        nLResult = 0;
-                        bHandled = TRUE;
+                        lResult = 0;
+                        handled = TRUE;
                     }
                     break;
 
                     case VK_DOWN:
                     {
                         SendMessage(WM_VSCROLL, MAKELONG(SB_LINEDOWN, 0), 0);
-                        nLResult = 0;
-                        bHandled = TRUE;
+                        lResult = 0;
+                        handled = TRUE;
                     }
                     break;
 
                     case VK_LEFT:
                     {
                         SendMessage(WM_HSCROLL, MAKELONG(SB_LINELEFT, 0), 0);
-                        nLResult = 0;
-                        bHandled = TRUE;
+                        lResult = 0;
+                        handled = TRUE;
                     }
                     break;
 
                     case VK_RIGHT:
                     {
                         SendMessage(WM_HSCROLL, MAKELONG(SB_LINERIGHT, 0), 0);
-                        nLResult = 0;
-                        bHandled = TRUE;
+                        lResult = 0;
+                        handled = TRUE;
                     }
                     break;
 
                     case VK_PRIOR:
                     {
                         SendMessage(WM_VSCROLL, MAKELONG(SB_PAGEUP, 0), 0);
-                        nLResult = 0;
-                        bHandled = TRUE;
+                        lResult = 0;
+                        handled = TRUE;
                     }
                     break;
 
                     case VK_NEXT:
                     {
                         SendMessage(WM_VSCROLL, MAKELONG(SB_PAGEDOWN, 0), 0);
-                        nLResult = 0;
-                        bHandled = TRUE;
+                        lResult = 0;
+                        handled = TRUE;
                     }
                     break;
 
                     case VK_HOME:
                     {
                         SendMessage(WM_VSCROLL, MAKELONG(SB_TOP, 0), 0);
-                        nLResult = 0;
-                        bHandled = TRUE;
+                        lResult = 0;
+                        handled = TRUE;
                     }
                     break;
 
                     case VK_END:
                     {
                         SendMessage(WM_VSCROLL, MAKELONG(SB_BOTTOM, 0), 0);
-                        nLResult = 0;
-                        bHandled = TRUE;
+                        lResult = 0;
+                        handled = TRUE;
                     }
                     break;
 
                     default:
                     {
-                        bHandled =
-                            base_class_t::ProcessWindowMessage(hWnd, nMessage, nWParam, nLParam, nLResult, nMsgMapID);
+                        handled = base_class_t::ProcessWindowMessage(hwnd, message, wParam, lParam, lResult, msgMapID);
                     }
                 }
             }
@@ -257,27 +255,26 @@ BOOL desktop_sample_window::ProcessWindowMessage(
 
             case WM_GETDLGCODE:
             {
-                if ((VK_UP == nWParam) || (VK_DOWN == nWParam))
+                if ((VK_UP == wParam) || (VK_DOWN == wParam))
                 {
-                    nLResult = DLGC_WANTARROWS;
-                    bHandled = TRUE;
+                    lResult = DLGC_WANTARROWS;
+                    handled = TRUE;
                 }
                 else
                 {
-                    bHandled =
-                        base_class_t::ProcessWindowMessage(hWnd, nMessage, nWParam, nLParam, nLResult, nMsgMapID);
+                    handled = base_class_t::ProcessWindowMessage(hwnd, message, wParam, lParam, lResult, msgMapID);
                 }
             }
             break;
 
             default:
             {
-                bHandled = base_class_t::ProcessWindowMessage(hWnd, nMessage, nWParam, nLParam, nLResult, nMsgMapID);
+                handled = base_class_t::ProcessWindowMessage(hwnd, message, wParam, lParam, lResult, msgMapID);
             }
         }
     }
 
-    return bHandled;
+    return handled;
 }
 #pragma endregion methods that route all messages
 
@@ -297,11 +294,11 @@ LRESULT desktop_sample_window::createHandler()
     // This window and the graph window (`m_visual`'s HWND) are owned by different threads; nobody needs a deadlock,
     // therefore 'WS_EX_NOPARENTNOTIFY' is required.
 
-    LRESULT nResult = base_class_t::createHandler();
-    if (!nResult)
+    LRESULT result = base_class_t::createHandler();
+    if (!result)
     {
         updateWindowText(nullptr);
-        m_hAppStartingCursor = static_cast<HCURSOR> (
+        m_appStartingCursor = static_cast<HCURSOR> (
             LoadImage(nullptr, MAKEINTRESOURCE(OCR_APPSTARTING), IMAGE_CURSOR, 0, 0, LR_SHARED));
         // Create graph rendering window asynchronously.
         HRESULT hr = createArborVisual(m_visual.getAddressOf());
@@ -317,7 +314,7 @@ LRESULT desktop_sample_window::createHandler()
                 WM_NOTIFY_DPICHANGED);
         }
     }
-    return nResult;
+    return result;
 }
 
 
@@ -335,11 +332,11 @@ void desktop_sample_window::destroyHandler()
     /*
      * Stop all threads owned by this window.
      */
-    size_t nSize = m_threads.size();
-    if (nSize)
+    size_t size = m_threads.size();
+    if (size)
     {
         // Wait for the threads/events.
-        WaitForMultipleObjectsEx(static_cast<DWORD> (nSize), m_threads.data(), TRUE, INFINITE, FALSE);
+        WaitForMultipleObjectsEx(static_cast<DWORD> (size), m_threads.data(), TRUE, INFINITE, FALSE);
         m_threads.clear();
     }
     base_class_t::destroyHandler();
@@ -355,16 +352,16 @@ void desktop_sample_window::destroyHandler()
  * WM_COMMAND message handler.
  *
  * Parameters:
- * >nId
+ * >id
  * Command/control identifiers.
  *
  * Returns:
  * true value if the method has handled this notification; false otherwise.
  */
-_Check_return_ bool desktop_sample_window::commandHandler(_In_ const UINT nId)
+_Check_return_ bool desktop_sample_window::commandHandler(_In_ const UINT id)
 {
-    bool bResult = true;
-    switch (nId)
+    bool result = true;
+    switch (id)
     {
         case ID_APP_EXIT:
         {
@@ -374,19 +371,19 @@ _Check_return_ bool desktop_sample_window::commandHandler(_In_ const UINT nId)
 
         case ID_APP_ABOUT:
         {
-            STLADD string_unique_ptr_t szDescription = MISCUTIL version_info::getApplicationExeDescription();
-            if (szDescription)
+            STLADD string_unique_ptr_t description = MISCUTIL version_info::getApplicationExeDescription();
+            if (description)
             {
-                STLADD string_unique_ptr_t szProductName = MISCUTIL version_info::getApplicationProductName();
-                if (szProductName)
+                STLADD string_unique_ptr_t productName = MISCUTIL version_info::getApplicationProductName();
+                if (productName)
                 {
                     STLADD wostringstream stream;
-                    stream << *szProductName << TEXT(": ") << *szDescription;
-                    STLADD string_unique_ptr_t szVersion = MISCUTIL version_info::getApplicationExeVersion();
-                    if (szVersion)
+                    stream << *productName << TEXT(": ") << *description;
+                    STLADD string_unique_ptr_t version = MISCUTIL version_info::getApplicationExeVersion();
+                    if (version)
                     {
-                        stream << std::endl << *szVersion;
-                        ::MessageBox(m_hWnd, stream.str().c_str(), szDescription->c_str(), MB_OK | MB_ICONINFORMATION);
+                        stream << TEXT('\n') << *version;
+                        ::MessageBox(m_hWnd, stream.str().c_str(), description->c_str(), MB_OK | MB_ICONINFORMATION);
                     }
                 }
             }
@@ -407,12 +404,12 @@ _Check_return_ bool desktop_sample_window::commandHandler(_In_ const UINT nId)
 
         case ID_ZOOMIN:
         {
-            float fDPIX;
-            float fDPIY;
-            if (SUCCEEDED(getDpiForMonitor(m_hWnd, &fDPIX, &fDPIY)))
+            float dpiX;
+            float dpiY;
+            if (SUCCEEDED(getDpiForMonitor(m_hWnd, &dpiX, &dpiY)))
             {
-                m_visualSize.width += static_cast<UINT> (logicalToPhysical(m_cZoomFactor, fDPIX));
-                m_visualSize.height += static_cast<UINT> (logicalToPhysical(m_cZoomFactor, fDPIY));
+                m_visualSize.width += static_cast<UINT> (logicalToPhysical(m_zoomFactor, dpiX));
+                m_visualSize.height += static_cast<UINT> (logicalToPhysical(m_zoomFactor, dpiY));
                 resizeVisual();
             }
         }
@@ -420,16 +417,16 @@ _Check_return_ bool desktop_sample_window::commandHandler(_In_ const UINT nId)
 
         case ID_ZOOMOUT:
         {
-            float fDPIX;
-            float fDPIY;
-            if (SUCCEEDED(getDpiForMonitor(m_hWnd, &fDPIX, &fDPIY)))
+            float dpiX;
+            float dpiY;
+            if (SUCCEEDED(getDpiForMonitor(m_hWnd, &dpiX, &dpiY)))
             {
                 m_visualSize.width = max(
                     static_cast<UINT> (GetSystemMetrics(SM_CXMIN)),
-                    m_visualSize.width - static_cast<UINT> (logicalToPhysical(m_cZoomFactor, fDPIX)));
+                    m_visualSize.width - static_cast<UINT> (logicalToPhysical(m_zoomFactor, dpiX)));
                 m_visualSize.height = max(
                     static_cast<UINT> (GetSystemMetrics(SM_CYMIN)),
-                    m_visualSize.height - static_cast<UINT> (logicalToPhysical(m_cZoomFactor, fDPIY)));
+                    m_visualSize.height - static_cast<UINT> (logicalToPhysical(m_zoomFactor, dpiY)));
                 resizeVisual();
             }
         }
@@ -437,10 +434,10 @@ _Check_return_ bool desktop_sample_window::commandHandler(_In_ const UINT nId)
 
         default:
         {
-            bResult = false;
+            result = false;
         }
     }
-    return bResult;
+    return result;
 }
 
 
@@ -448,32 +445,32 @@ _Check_return_ bool desktop_sample_window::commandHandler(_In_ const UINT nId)
  * Changes window text.
  *
  * Parameters:
- * >pszText
+ * >addText
  * Variable part of the window text.
  *
  * Returns:
  * N/A.
  */
-void desktop_sample_window::updateWindowText(_In_opt_ const STLADD string_type* pszText)
+void desktop_sample_window::updateWindowText(_In_opt_ const STLADD string_type* addText)
 {
-    STLADD string_unique_ptr_t szText = MISCUTIL version_info::getApplicationExeDescription();
-    if (!szText)
+    STLADD string_unique_ptr_t text = MISCUTIL version_info::getApplicationExeDescription();
+    if (!text)
     {
-        szText = std::make_unique<STLADD string_type>(TEXT("Arbor GVT desktop sample"));
+        text = std::make_unique<STLADD string_type>(TEXT("Arbor GVT desktop sample"));
     }
-    size_t nSize = szText->size() + (pszText ? pszText->size() + 3 : 0) + 1;
-    STLADD t_char_unique_ptr_t szWindowText {new TCHAR[nSize]};
-    if (szWindowText)
+    size_t size = text->size() + (addText ? addText->size() + 3 : 0) + 1;
+    STLADD t_char_unique_ptr_t windowText {new TCHAR[size]};
+    if (windowText)
     {
-        if (pszText)
+        if (addText)
         {
-            _stprintf_s(szWindowText.get(), nSize, TEXT("%s - %s"), pszText->c_str(), szText->c_str());
+            _stprintf_s(windowText.get(), size, TEXT("%s - %s"), addText->c_str(), text->c_str());
         }
         else
         {
-            _stprintf_s(szWindowText.get(), nSize, TEXT("%s"), szText->c_str());
+            _stprintf_s(windowText.get(), size, TEXT("%s"), text->c_str());
         }
-        SetWindowText(szWindowText.get());
+        SetWindowText(windowText.get());
     }
 }
 
@@ -482,24 +479,24 @@ void desktop_sample_window::updateWindowText(_In_opt_ const STLADD string_type* 
  * Handles exit of the specified thread.
  *
  * Parameters:
- * >hObject
+ * >object
  * Handle to an object owned by this window and which state has become signaled now.
  *
  * Returns:
  * N/A.
  */
-void desktop_sample_window::handleThreadTermination(_In_ const HANDLE hObject)
+void desktop_sample_window::handleThreadTermination(_In_ const HANDLE object)
 {
     /*
      * This method is called ONLY by the 'wWinMain' function who calls the method only after the
-     * 'MsgWaitForMultipleObjectsEx' was caused to return by some of the threads become signaled. This is the 'hObject'.
+     * 'MsgWaitForMultipleObjectsEx' was caused to return by some of the threads become signaled. This is the 'object'.
      * So there's necessity to check thread object state. It IS signaled.
      *
      * At first remove the handle from the controlled threads container.
      */
-    auto objIt = std::find(m_threads.begin(), m_threads.end(), hObject);
+    auto objIt = std::find(m_threads.begin(), m_threads.end(), object);
     m_threads.erase(objIt);
-    if (m_visualCreated.get() == hObject)
+    if (m_visualCreated.get() == object)
     {
         // The graph visual got an HWND. We can enable some graph-window-aware controls here, for example.
         addDataToTheGraph();
@@ -528,14 +525,14 @@ void desktop_sample_window::resizeVisual()
     HWND visualHWND;
     if (m_visual && (S_OK == m_visual->getHWND(&visualHWND)))
     {
-        float fDPIX;
-        float fDPIY;
-        if (SUCCEEDED(getDpiForMonitor(m_hWnd, &fDPIX, &fDPIY)))
+        float dpiX;
+        float dpiY;
+        if (SUCCEEDED(getDpiForMonitor(m_hWnd, &dpiX, &dpiY)))
         {
             RECT rect;
             GetClientRect(&rect);
             D2D1_SIZE_F size = D2D1::SizeF(
-                logicalToPhysical(m_visualSize.width, fDPIX), logicalToPhysical(m_visualSize.height, fDPIY));
+                logicalToPhysical(m_visualSize.width, dpiX), logicalToPhysical(m_visualSize.height, dpiY));
             D2D1_POINT_2L origin = D2D1::Point2L(
                 max(0, (rect.right - (static_cast<int> (size.width))) >> 1),
                 max(0, (rect.bottom - (static_cast<int> (size.height))) >> 1));
@@ -642,4 +639,5 @@ void desktop_sample_window::addDataToTheGraph()
     }
 }
 #pragma endregion desktop_sample_window implementation
+
 ATLADD_END
