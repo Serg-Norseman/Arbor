@@ -3,19 +3,16 @@
   <ImportGroup Label="PropertySheets" />
   <ItemDefinitionGroup>
     <ClCompile>
-      <StringPooling>true</StringPooling>
-      <ControlFlowGuard>Guard</ControlFlowGuard>
+      <MinimalRebuild />
+      <StringPooling />
+      <ControlFlowGuard />
     </ClCompile>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'Debug' == $(Configuration)">
-    <ClCompile>
-      <MinimalRebuild>false</MinimalRebuild>
-      <SmallerTypeCheck>true</SmallerTypeCheck>
+    <ClCompile Condition="$(DebugConfiguration)">
+      <SmallerTypeCheck />
+      <BasicRuntimeChecks />
     </ClCompile>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'Release' == $(Configuration)">
-    <ClCompile>
-      <FunctionLevelLinking>true</FunctionLevelLinking>
+    <ClCompile Condition="!$(DebugConfiguration)">
+      <FunctionLevelLinking />
     </ClCompile>
   </ItemDefinitionGroup>
 </Project>

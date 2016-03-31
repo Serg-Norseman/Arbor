@@ -39,7 +39,9 @@ public:
 
     _Check_return_ bool preTranslateMessage(_In_ MSG* pMsg)
     {
-        return IsWindow() && IsDialogMessage(pMsg);
+        UNREFERENCED_PARAMETER(pMsg);
+        return FALSE;
+//        return IsWindow() && IsDialogMessage(pMsg);
     }
 
     virtual BOOL ProcessWindowMessage(
@@ -62,7 +64,7 @@ public:
 protected:
     virtual LRESULT createHandler() override;
     virtual void destroyHandler() override;
-    
+
     virtual void sizeHandler(_In_ const LONG nNewWidth, _In_ const LONG nNewHeight) override
     {
         base_class_t::sizeHandler(nNewWidth, nNewHeight);
@@ -91,7 +93,7 @@ private:
     }
 
     _Check_return_ bool commandHandler(_In_ const UINT nId);
-    
+
     BOOL isAppStartingCursorMustBeSet() const
     {
         return (

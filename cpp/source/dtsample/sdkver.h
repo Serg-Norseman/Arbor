@@ -9,7 +9,7 @@
 #define _WIN32_WINNT _WIN32_WINNT_WINTHRESHOLD
 #endif
 
-#ifndef _WIN32_WINDOWS 
+#ifndef _WIN32_WINDOWS
 #define _WIN32_WINDOWS 0x0A00
 #endif
 

@@ -33,7 +33,7 @@ protected:
 
 
 private:
-    typedef window_impl base_class_t;
+    typedef window_impl<top_window_impl> base_class_t;
 
     virtual bool loadWindowPlacement() = 0;
     virtual void storeWindowPlacement() const = 0;

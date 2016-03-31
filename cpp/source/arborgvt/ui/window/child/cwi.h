@@ -48,7 +48,7 @@ protected:
 
 
 private:
-    typedef window_impl base_class_t;
+    typedef window_impl<T> base_class_t;
 
     bool m_bCreateOnDedicatedThread;
 };

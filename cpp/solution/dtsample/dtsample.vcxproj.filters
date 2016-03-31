@@ -123,12 +123,6 @@
     <ClInclude Include="..\..\source\dtsample\service\stladdon.h">
       <Filter>header files\service</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\source\dtsample\service\memmgti.h">
-      <Filter>header files\service</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\source\dtsample\service\memorymg.h">
-      <Filter>header files\service</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\source\dtsample\service\winapi\srwlock.h">
       <Filter>header files\service\winapi</Filter>
     </ClInclude>
@@ -179,10 +173,13 @@
     <ClCompile Include="..\..\source\dtsample\service\strgutil.cpp">
       <Filter>source files\service</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\source\dtsample\service\memorymg.cpp">
+    <ClCompile Include="..\..\source\dtsample\service\miscutil.cpp">
       <Filter>source files\service</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\source\dtsample\service\miscutil.cpp">
+    <ClCompile Include="..\..\source\dtsample\service\newdel.cpp">
+      <Filter>source files\service</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\dtsample\service\stladdon.cpp">
       <Filter>source files\service</Filter>
     </ClCompile>
   </ItemGroup>

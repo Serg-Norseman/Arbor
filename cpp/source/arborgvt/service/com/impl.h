@@ -42,9 +42,9 @@ public:
 
 
 protected:
-    implements() /*nothrow*/ = default;
-    
-    virtual ~implements() //nothrow
+    implements() = default;
+
+    virtual ~implements()
     {
     }
 
