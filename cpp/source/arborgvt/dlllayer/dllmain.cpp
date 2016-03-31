@@ -1,12 +1,12 @@
 #include "sdkver.h"
 #include <Windows.h>
 
-BOOL APIENTRY DllMain(_In_ HMODULE hModule, _In_ DWORD nReasonForCall, _In_ LPVOID pReserved)
+BOOL APIENTRY DllMain(_In_ HMODULE module, _In_ DWORD reasonForCall, _In_ LPVOID reserved)
 {
-    UNREFERENCED_PARAMETER(hModule);
-    UNREFERENCED_PARAMETER(pReserved);
+    UNREFERENCED_PARAMETER(module);
+    UNREFERENCED_PARAMETER(reserved);
 
-    switch (nReasonForCall)
+    switch (reasonForCall)
     {
         case DLL_PROCESS_ATTACH:
         case DLL_PROCESS_DETACH:

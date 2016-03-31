@@ -12,31 +12,30 @@
 DXU_BEGIN
 
 inline HRESULT createD3Device(
-    _In_ D3D_DRIVER_TYPE driverType, _In_ UINT nFlags, _Outptr_result_maybenull_ ID3D11Device** ppDevice)
+    _In_ D3D_DRIVER_TYPE driverType, _In_ UINT flags, _Outptr_result_maybenull_ ID3D11Device** device)
 {
 #if defined(_DEBUG)
-    nFlags |= D3D11_CREATE_DEVICE_DEBUG;
+    flags |= D3D11_CREATE_DEVICE_DEBUG;
 #endif
     return D3D11CreateDevice(
-        nullptr, driverType, nullptr, nFlags, nullptr, 0, D3D11_SDK_VERSION, ppDevice, nullptr, nullptr);
+        nullptr, driverType, nullptr, flags, nullptr, 0, D3D11_SDK_VERSION, device, nullptr, nullptr);
 }
 
 template <typename T>
 inline HRESULT createD2DFactory(
-    _In_ D2D1_FACTORY_TYPE type, _In_ D2D1_FACTORY_OPTIONS& options, _Outptr_result_maybenull_ T** ppFactory)
+    _In_ D2D1_FACTORY_TYPE type, _In_ D2D1_FACTORY_OPTIONS& options, _Outptr_result_maybenull_ T** factory)
 {
 #if defined(_DEBUG)
     options.debugLevel = D2D1_DEBUG_LEVEL_INFORMATION;
 #else
     options.debugLevel = D2D1_DEBUG_LEVEL_NONE;
 #endif
-    return D2D1CreateFactory(type, options, ppFactory);
+    return D2D1CreateFactory(type, options, factory);
 }
 
-inline HRESULT createDWriteFactory(_Outptr_result_maybenull_ IDWriteFactory1** ppFactory)
+inline HRESULT createDWriteFactory(_Outptr_result_maybenull_ IDWriteFactory1** factory)
 {
-    return
-        DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(*ppFactory), reinterpret_cast<IUnknown**> (ppFactory));
+    return DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(*factory), reinterpret_cast<IUnknown**> (factory));
 }
 
 
@@ -44,9 +43,9 @@ inline HRESULT createDWriteFactory(_Outptr_result_maybenull_ IDWriteFactory1** p
 class direct2d_factory_lock
 {
 public:
-    explicit direct2d_factory_lock(_In_ ID2D1Factory1* pFactory)
+    explicit direct2d_factory_lock(_In_ ID2D1Factory1* factory)
     {
-        WAPI check_hr(pFactory->QueryInterface(m_lock.getAddressOf()));
+        WAPI check_hr(factory->QueryInterface(m_lock.getAddressOf()));
         m_lock->Enter();
     }
 

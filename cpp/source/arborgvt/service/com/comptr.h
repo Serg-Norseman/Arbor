@@ -106,9 +106,9 @@ public:
 
     void swap(_In_ com_ptr& right)
     {
-        T* pTemp = m_p;
+        T* temp = m_p;
         m_p = right.m_p;
-        right.m_p = pTemp;
+        right.m_p = temp;
     }
 
     void reset() noexcept
@@ -123,9 +123,9 @@ public:
 
     T* detach() noexcept
     {
-        T* pTemp = m_p;
+        T* temp = m_p;
         m_p = nullptr;
-        return pTemp;
+        return temp;
     }
 
     void copyTo(T** p) const noexcept
@@ -153,10 +153,10 @@ public:
         return SUCCEEDED(m_p->QueryInterface(temp.getAddressOf())) ? temp : nullptr;
     }
 
-    HRESULT coCreateInstance(_In_ const IID& iid, _Inout_opt_ IUnknown* pOuter, _In_ DWORD nClsContext) noexcept
+    HRESULT coCreateInstance(_In_ const IID& iid, _Inout_opt_ IUnknown* outer, _In_ DWORD clsContext) noexcept
     {
         assert(nullptr == m_p);
-        return ::CoCreateInstance(iid, pOuter, nClsContext, __uuidof(T), reinterpret_cast<void**> (&m_p));
+        return ::CoCreateInstance(iid, outer, clsContext, __uuidof(T), reinterpret_cast<void**> (&m_p));
     }
 
 
@@ -171,11 +171,11 @@ private:
 
     void internalRelease() noexcept
     {
-        T* pTemp = m_p;
-        if (pTemp)
+        T* temp = m_p;
+        if (temp)
         {
             m_p = nullptr;
-            pTemp->Release();
+            temp->Release();
         }
     }
 
