@@ -54,7 +54,7 @@ namespace ArborGVT
             base.SetStyle(ControlStyles.OptimizedDoubleBuffer, true);
 
             // repulsion - отталкивание, stiffness - тугоподвижность, friction - сила трения
-            this.fSys = new ArborSystem(10000, 250/*1000*/, 0.1, this);
+            this.fSys = new ArborSystem(10000, 500/*1000*/, 0.1, this);
             this.fSys.setScreenSize(this.Width, this.Height);
             this.fSys.AutoStop = false;
 
@@ -254,10 +254,12 @@ namespace ArborGVT
 
         public void doSample()
         {
-            fSys.addEdge("1", "4", 2);
-            fSys.addEdge("1", "12");
+            fSys.addNode("1")/*.Mass = 50*/;
+
+            fSys.addEdge("1", "4"/*, 10*/);
+            fSys.addEdge("1", "12"/*, 10*/);
             fSys.addEdge("4", "21");
-            fSys.addEdge("4", "23");
+            fSys.addEdge("4", "23"/*, 20*/);
             fSys.addEdge("7", "34");
             fSys.addEdge("7", "13");
             fSys.addEdge("7", "44");
@@ -266,7 +268,7 @@ namespace ArborGVT
             fSys.addEdge("23", "50");
             fSys.addEdge("23", "53");
             fSys.addEdge("24", "6");
-            fSys.addEdge("24", "42");
+            fSys.addEdge("24", "42"/*, 20*/);
             fSys.addEdge("25", "94");
             fSys.addEdge("25", "66");
             fSys.addEdge("32", "47");

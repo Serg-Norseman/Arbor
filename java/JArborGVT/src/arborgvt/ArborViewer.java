@@ -63,7 +63,7 @@ public class ArborViewer extends JPanel implements IArborRenderer
         this.setBorder(BorderFactory.createLoweredBevelBorder());
         this.setDoubleBuffered(true);
 
-        this.fSys = new ArborSystem(10000, 250/*1000*/, 0.1, this);
+        this.fSys = new ArborSystem(10000, 500/*1000*/, 0.1, this);
         this.fSys.setScreenSize(this.getWidth(), this.getHeight());
         this.fSys.setAutoStop(false);
 

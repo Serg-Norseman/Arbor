@@ -209,7 +209,7 @@ namespace ArborGVT
             return (ArborNode)fNames[sign];
         }
 
-        public ArborEdge addEdge(string srcSign, string tgtSign, int len = 1)
+        public ArborEdge addEdge(string srcSign, string tgtSign, double len = 1.0)
         {
             ArborNode src = this.getNode(srcSign);
             src = (src != null) ? src : this.addNode(srcSign);
@@ -336,15 +336,15 @@ namespace ArborGVT
                 ArborPoint vLT = fGraphBounds.LeftTop.sub(fViewBounds.LeftTop).mul(Mag);
                 ArborPoint vRB = fGraphBounds.RightBottom.sub(fViewBounds.RightBottom).mul(Mag);
 
-                ArborPoint nbLT = fViewBounds.LeftTop.add(vLT);
-                ArborPoint nbRB = fViewBounds.RightBottom.add(vRB);
-
                 double aX = vLT.magnitude() * this.fScreenWidth;
                 double aY = vRB.magnitude() * this.fScreenHeight;
 
                 if (aX > 1 || aY > 1)
                 {
-                    fViewBounds = new PSBounds(nbLT, nbRB);
+                	ArborPoint nbLT = fViewBounds.LeftTop.add(vLT);
+                	ArborPoint nbRB = fViewBounds.RightBottom.add(vRB);
+
+                	fViewBounds = new PSBounds(nbLT, nbRB);
                 }
             }
             catch (Exception ex)
@@ -484,9 +484,9 @@ namespace ArborGVT
             ArborPoint rr = new ArborPoint(0, 0);
             foreach (ArborNode node in fNodes)
             {
-                rr = rr.add(node.Pt);
+                rr = rr.sub(node.Pt);
             }
-            ArborPoint drift = rr.div(-size);
+            ArborPoint drift = rr.div(size);
 
             // main updates loop
             foreach (ArborNode node in fNodes)
@@ -505,27 +505,26 @@ namespace ArborGVT
                 if (node.Fixed)
                 {
                     node.V = new ArborPoint(0, 0);
-                    node.F = new ArborPoint(0, 0);
                 }
                 else
                 {
                     node.V = node.V.add(node.F.mul(dt));
                     node.V = node.V.mul(1 - ParamFriction);
 
-                    node.F.X = node.F.Y = 0;
-                    double r = node.V.magnitude();
-                    if (r > 1000)
+                    double r = node.V.magnitudeSquare();
+                    if (r > 1000000)
                     {
-                        node.V = node.V.div(r * r);
+                        node.V = node.V.div(r);
                     }
                 }
+
+                node.F.X = node.F.Y = 0;
 
                 // update positions
                 node.Pt = node.Pt.add(node.V.mul(dt));
 
                 // update energy
-                double x = node.V.magnitude();
-                double z = x * x;
+                double z = node.V.magnitudeSquare();
                 eSum += z;
                 eMax = Math.Max(z, eMax);
             }

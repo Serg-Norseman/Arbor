@@ -66,6 +66,11 @@ public class ArborPoint
         return Math.sqrt(this.X * this.X + this.Y * this.Y);
     }
 
+    public double magnitudeSquare()
+    {
+        return this.X * this.X + this.Y * this.Y;
+    }
+
     public ArborPoint normalize()
     {
         return this.div(this.magnitude());
