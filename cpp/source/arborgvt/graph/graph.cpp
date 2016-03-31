@@ -121,7 +121,9 @@ void graph::update(_In_ const __m128 renderSurfaceSize)
 vertex* graph::addVertex(_In_ STLADD string_type&& name)
 {
     // Here we can end up with issuing two unnecessary calls to "get a randomly distributed value".
-    sse_t value = {m_distribution(m_engine), m_distribution(m_engine), 0.0f, 0.0f};
+    std::random_device rd {};
+    std::mt19937 engine {rd()};
+    sse_t value = {m_distribution(engine), m_distribution(engine), 0.0f, 0.0f};
     return addVertex(std::move(name), _mm_load_ps(value.data));
 }
 

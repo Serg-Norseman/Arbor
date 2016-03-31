@@ -114,12 +114,12 @@ protected:
 
         reference operator *() const noexcept
         {
-            return graph_data_type::getReference<reference>(m_value, is_pair_type<is_pair_iterator_type<U>::value> {});
+            return getReference<reference>(m_value, is_pair_type<is_pair_iterator_type<U>::value> {});
         }
 
         pointer operator ->() const noexcept
         {
-            return graph_data_type::getPointer<pointer>(m_value, is_pair_type<is_pair_iterator_type<U>::value> {});
+            return getPointer<pointer>(m_value, is_pair_type<is_pair_iterator_type<U>::value> {});
         }
 
 
@@ -140,17 +140,26 @@ public:
         :
         m_vertices {},
         m_edges {},
-        m_engine {},
         m_distribution {-2.0f, 2.0f},
         m_verticesLock {},
         m_edgesLock {},
         m_meanOfEnergy {0.0f}
     {
-        std::random_device rd {};
-        m_engine.seed(rd());
         sse_t value = {m_distribution.a(), m_distribution.a(), m_distribution.b(), m_distribution.b()};
         m_graphBound = _mm_load_ps(value.data);
         m_viewBound = getZeroVector();
+    }
+
+    static void* operator new(_In_ const size_t size)
+    {
+        STLADD aligned_sse_allocator<graph> allocator {};
+        return allocator.allocate(size, 0);
+    }
+
+    static void operator delete(_In_ void* p)
+    {
+        STLADD aligned_sse_allocator<graph> allocator {};
+        allocator.deallocate(p);
     }
 
     WAPI srw_lock& getVerticesLock() noexcept
@@ -251,7 +260,6 @@ private:
     static constexpr float m_theta = 0.4f;
     static constexpr bool m_gravity = false;
     static constexpr bool m_autoStop = false;
-
     /*
      * `m_graphBound` is the area used by Barnes Hut algorithm. This is a coordinate space where all graph vertices
      * exist (coordinates of any vertex count in this space).
@@ -279,7 +287,6 @@ private:
     __m128 m_viewBound;
     vertices_cont_t m_vertices;
     edges_cont_t m_edges;
-    std::mt19937 m_engine;
     std::uniform_real_distribution<float> m_distribution;
     WAPI srw_lock m_verticesLock;
     WAPI srw_lock m_edgesLock;
