@@ -5,8 +5,6 @@ const size_t HeapInitialSize = 4096;
 
 STLADD_BEGIN
 
-ARBOR_INLINE_BEGIN
-
 WAPI heap_t private_heap::m_heap;
 
 /**
@@ -51,7 +49,5 @@ HANDLE private_heap::createHeap()
     return heap;
 }
 #pragma endregion private_heap implementation
-
-ARBOR_END
 
 STLADD_END

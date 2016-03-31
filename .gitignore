@@ -19,5 +19,5 @@
 /gource-arbor.cmd
 
 **/*.*db
-/cpp/solution/arborgvt/arborgvt.vcxproj.user
+/cpp/solution/**/*.vcxproj.user
 /cpp/build/

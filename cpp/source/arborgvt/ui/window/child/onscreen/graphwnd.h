@@ -4,6 +4,9 @@
 #include "service\stladdon.h"
 #include "ui\nowindow\graph\draw.h"
 #include "ui\window\child\cwi.h"
+#if defined(_DEBUG) || defined(SHOW_FPS)
+#include <chrono>
+#endif
 
 ATLADD_BEGIN
 
@@ -25,19 +28,27 @@ public:
         m_edges {},
         m_areaStrokeStyle {},
         m_dpiChangedMessage {dpiChangedMessage}
+#if defined(_DEBUG) || defined(SHOW_FPS)
+        ,
+        m_frameTimes {0},
+        m_frameIt {m_frameTimes.begin()},
+        m_frameTotal {0},
+        m_framesPerSecondTextFormat {},
+        m_framesPerSecondBrush {}
+#endif
     {
     }
 
     static void* operator new(_In_ const size_t size)
     {
         STLADD aligned_sse_allocator<graph_window> allocator {};
-        return allocator.allocate(size / sizeof(graph_window));
+        return allocator.allocate(size, 0);
     }
 
-    static void operator delete(_In_ void* p, _In_ const size_t size)
+    static void operator delete(_In_ void* p)
     {
         STLADD aligned_sse_allocator<graph_window> allocator {};
-        allocator.deallocate(static_cast<graph_window*> (p), size);
+        allocator.deallocate(p);
     }
 
     _Check_return_ virtual HWND create(_In_ const HWND hParent) override;
@@ -72,9 +83,11 @@ protected:
 
 
 private:
-    typedef child_window_impl base_class_t;
-    typedef std::vector<std::unique_ptr<vertex_draw>> vertices_draw_cont_t;
-    typedef std::vector<std::unique_ptr<edge_draw>> edges_draw_cont_t;
+    typedef child_window_impl<graph_window> base_class_t;
+    typedef std::vector<std::unique_ptr<vertex_draw>, STLADD default_allocator<std::unique_ptr<vertex_draw>>>
+        vertices_draw_cont_t;
+    typedef std::vector<std::unique_ptr<edge_draw>, STLADD default_allocator<std::unique_ptr<edge_draw>>>
+        edges_draw_cont_t;
 
     static __m128 __vectorcall logicalToGraph(
         _In_ const __m128 value, _In_ const __m128 logicalSize, _In_ const __m128 viewBound);
@@ -99,19 +112,37 @@ private:
         _In_ const D2D1_POINT_2F& headPoint,
         _Out_ D2D1_POINT_2F* left,
         _Out_ D2D1_POINT_2F* right) const noexcept;
+#if defined(_DEBUG) || defined(SHOW_FPS)
+    std::chrono::high_resolution_clock::duration getAverageFrameTime(
+        _In_ std::chrono::high_resolution_clock::duration&& frameTime);
+#endif
 
     // `m_vertexNameWidth` limits text of a vertex to a part of this window width. Strictly speaking not a good
     // solution.
     static constexpr float m_vertexNameWidth = 0.3f;
     static constexpr float m_arrowLength = 7.75f;
     static constexpr float m_arrowHalfWidth = 1.5f;
-    static constexpr float m_margin = 120.0f;
+    // Value of the `m_margin` depends on size of a vertex area.
+    static constexpr float m_margin = 100.0f;
 
     ARBOR graph m_graph;
     vertices_draw_cont_t m_vertices;
     edges_draw_cont_t m_edges;
     ATLADD com_ptr<ID2D1StrokeStyle1> m_areaStrokeStyle;
     UINT m_dpiChangedMessage;
+
+#if defined(_DEBUG) || defined(SHOW_FPS)
+    static constexpr size_t m_framesMaxNumber = 100;
+    // `m_frameIt` must be declared after `m_frameTimes`! See member initialization list in the ctor.
+    typedef std::vector<
+        std::chrono::high_resolution_clock::duration::rep,
+        STLADD default_allocator<std::chrono::high_resolution_clock::duration::rep>> frames_cont_t;
+    frames_cont_t m_frameTimes;
+    frames_cont_t::iterator m_frameIt;
+    std::chrono::high_resolution_clock::duration::rep m_frameTotal;
+    ATLADD com_ptr<IDWriteTextFormat> m_framesPerSecondTextFormat;
+    ATLADD com_ptr<ID2D1SolidColorBrush> m_framesPerSecondBrush;
+#endif
 };
 
 ATLADD_END

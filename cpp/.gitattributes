@@ -1,0 +1,2 @@
+#s*/**/*.* -text eol=crlf whitespace=cr-at-eol
+*.* -text eol=crlf whitespace=cr-at-eol

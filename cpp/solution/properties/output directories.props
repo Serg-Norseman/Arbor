@@ -5,9 +5,4 @@
     <OutDir>..\..\build\$(Configuration) $(PlatformModName)\</OutDir>
     <IntDir>$(OutDir)obj\$(ProjectName)\</IntDir>
   </PropertyGroup>
-  <ItemDefinitionGroup>
-    <ClCompile>
-      <SuppressStartupBanner>true</SuppressStartupBanner>
-    </ClCompile>
-  </ItemDefinitionGroup>
 </Project>

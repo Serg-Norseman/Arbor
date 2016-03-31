@@ -2,22 +2,11 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup>
-    <GenerateManifest>true</GenerateManifest>
+    <GenerateManifest />
   </PropertyGroup>
-  <ItemDefinitionGroup Condition="'64' == $(PlatformArchitecture)">
-    <Link>
-      <AdditionalManifestDependencies>%(AdditionalManifestDependencies)</AdditionalManifestDependencies>
-    </Link>
+  <ItemDefinitionGroup>
     <Manifest>
-      <AdditionalManifestFiles>$(SolutionDir)\..\source\$(ProjectName)\resource\$(ProjectName)$(TargetExt).amd64.manifest;%(AdditionalManifestFiles)</AdditionalManifestFiles>
-    </Manifest>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'32' == $(PlatformArchitecture)">
-    <Link>
-      <AdditionalManifestDependencies>%(AdditionalManifestDependencies)</AdditionalManifestDependencies>
-    </Link>
-    <Manifest>
-      <AdditionalManifestFiles>$(SolutionDir)\..\source\$(ProjectName)\resource\$(ProjectName)$(TargetExt).manifest;%(AdditionalManifestFiles)</AdditionalManifestFiles>
+      <AdditionalManifestFiles />
     </Manifest>
   </ItemDefinitionGroup>
 </Project>

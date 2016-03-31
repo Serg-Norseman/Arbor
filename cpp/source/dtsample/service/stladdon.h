@@ -1,6 +1,6 @@
 #pragma once
 #include "ns\stladd.h"
-#include "service\memorymg.h"
+#include "service\winapi\heap.h"
 #include <functional>
 #include <iterator>
 #include <malloc.h>
@@ -17,12 +17,42 @@
 STLADD_BEGIN
 
 #pragma region memory
+class private_heap
+{
+protected:
+    HANDLE getHeap() const noexcept
+    {
+        class initializer
+        {
+        public:
+            initializer()
+            {
+                /*
+                 * C++11 guarantees thread-safety here (static local variables initialization, [6.7]).
+                 *
+                 * `m_heap` is protected from multiple access by Windows (see implementation of `createHeap` method).
+                 */
+                m_heap.reset(createHeap());
+            }
+        };
+        static initializer guard {};
+        return m_heap.get();
+    }
+
+
+private:
+    static HANDLE createHeap();
+
+    // Do not access `m_heap` directly. Use `getHeap` method instead.
+    static WAPI heap_t m_heap;
+};
+
 /**
  * class default_allocator.
  * Allocator for STL.
  */
 template <typename T>
-class default_allocator
+class default_allocator: private private_heap
 {
 public:
     typedef T value_type;
@@ -39,30 +69,15 @@ public:
         typedef default_allocator<U> other;
     };
 
-    default_allocator() noexcept
-        :
-        m_nThreadId {GetCurrentThreadId()}
-    {
-    }
-
-    default_allocator(_In_ const default_allocator& allocator) noexcept
-        :
-        m_nThreadId {allocator.m_nThreadId}
-    {
-    }
+    default_allocator() = default;
+    default_allocator(_In_ const default_allocator&) = default;
 
     template <typename U>
-    default_allocator(_In_ const default_allocator<U>& allocator) noexcept
-        :
-        m_nThreadId {allocator.getThreadId()}
+    default_allocator(_In_ const default_allocator<U>&) noexcept
     {
     }
 
-    default_allocator& operator =(_In_ const default_allocator&) noexcept
-    {
-        // Assign from an allocator (do nothing).
-        return *this;
-    }
+    default_allocator& operator =(_In_ const default_allocator&) = default;
 
     template <typename U>
     bool operator ==(_In_ const default_allocator<U>&) const noexcept
@@ -112,46 +127,47 @@ __pragma(warning(push)) __pragma(warning(disable: 4100))
     }
 __pragma(warning(pop))
 
-    pointer allocate(_In_ const size_type nCount) const throw(...)
+    pointer allocate(_In_ const size_type count) const noexcept(false)
     {
-        if (!nCount)
+        if (count)
+        {
+            if (max_size() < count)
+            {
+                throw std::length_error {"`default_allocator::allocate`, length too long"};
+            }
+            void* p = HeapAlloc(getHeap(), 0, count * sizeof(value_type));
+            if (!p)
+            {
+                throw std::bad_alloc {};
+            }
+            return static_cast<pointer> (p);
+        }
+        else
         {
             return nullptr;
         }
-        if (max_size() < nCount)
-        {
-            throw std::length_error {"default_allocator<T>::allocate() - Length too long."};
-        }
-        memory_manager::pointer_t pMemoryManager = memory_manager::getInstance();
-        void* p = pMemoryManager->mAlloc<void*>(m_nThreadId, nCount * sizeof(value_type));
-        if (!p)
-        {
-            throw std::bad_alloc();
-        }
-        return static_cast<pointer> (p);
+    }
+
+    pointer allocate(_In_ const size_type size, _In_ const size_type) const noexcept(false)
+    {
+        return allocate(size / sizeof(value_type));
     }
 
     template <typename U>
-    pointer allocate(_In_ const size_type nCount, _In_ typename U::const_pointer) const
+    pointer allocate(_In_ const size_type count, _In_ typename U::const_pointer) const noexcept(false)
     {
-        return allocate(nCount);
+        return allocate(count);
     }
 
     void deallocate(_In_ const pointer p, _In_ const size_type) const
     {
-        memory_manager::pointer_t pMemoryManager = memory_manager::getInstance();
-        pMemoryManager->free<void*>(m_nThreadId, p);
+        HeapFree(getHeap(), 0, p);
     }
 
-    inline DWORD getThreadId() const
+    void deallocate(_In_ void* p) const
     {
-        return m_nThreadId;
+        deallocate(static_cast<pointer> (p), 0);
     }
-
-
-private:
-    // Thread whose heap will be used for allocation/deallocation.
-    const DWORD m_nThreadId;
 };
 
 
@@ -169,92 +185,12 @@ public:
         typedef default_allocator<U> other;
     };
 };
-
-
-
-/**
- * smart_ptr_deleter class.
- * Deleter that uses memory_manager service.
- */
-template <typename T>
-class smart_ptr_deleter
-{
-public:
-    typedef typename std::conditional<std::is_pointer<T>::value, typename std::remove_pointer<T>::type, T>::type
-        element_type;
-    typedef typename std::conditional<std::is_pointer<T>::value, T, typename std::add_pointer<T>::type>::type pointer;
-
-    smart_ptr_deleter() noexcept
-        :
-        m_nThreadId {GetCurrentThreadId()}
-    {
-    }
-
-    smart_ptr_deleter(_In_ const smart_ptr_deleter&) = delete;
-
-    smart_ptr_deleter(_In_ smart_ptr_deleter&& right) noexcept
-        :
-        m_nThreadId {right.m_nThreadId}
-    {
-    }
-
-    void operator ()(_In_ pointer pMemory)
-    {
-        memory_manager::pointer_t pMemoryManager = memory_manager::getInstance();
-        pMemoryManager->free<pointer>(m_nThreadId, pMemory);
-    }
-
-    smart_ptr_deleter& operator =(_In_ const smart_ptr_deleter& right) = delete;
-
-    smart_ptr_deleter& operator =(_In_ smart_ptr_deleter&& right) noexcept
-    {
-        if (this != &right)
-        {
-            m_nThreadId = right.m_nThreadId;
-        }
-        return *this;
-    }
-
-    void setThreadId(_In_ const DWORD nThreadId) noexcept
-    {
-        m_nThreadId = nThreadId;
-    }
-
-
-protected:
-    // Thread whose heap will be used for deallocation.
-    DWORD m_nThreadId;
-};
-
-
-
-/**
- * CSharedPtrCryptoAPIBlobDeleter class.
- * Deleter for DATA_BLOB structure.
- * Derived from the 'smart_ptr_deleter' to get deallocation thread awareness.
- */
-class data_blob_deleter: public smart_ptr_deleter<DATA_BLOB>
-{
-public:
-    void operator ()(_In_ pointer pMemory)
-    {
-        memory_manager::pointer_t pMemoryManager = memory_manager::getInstance();
-        if (pMemory->pbData)
-        {
-            pMemoryManager->free(m_nThreadId, pMemory->pbData);
-        }
-        pMemoryManager->free<pointer>(m_nThreadId, pMemory);
-    }
-};
 #pragma endregion memory resource handling
 
 #pragma region typedefs
-typedef std::unique_ptr<DATA_BLOB, data_blob_deleter> data_blob_unique_ptr_t;
-typedef std::shared_ptr<DATA_BLOB> data_blob_shared_ptr_t;
-typedef std::unique_ptr<SYSTEMTIME, smart_ptr_deleter<SYSTEMTIME>> system_time_unique_ptr_t;
-typedef std::unique_ptr<LOGFONT, smart_ptr_deleter<LOGFONT>> logfont_unique_ptr_t;
-typedef std::unique_ptr<unsigned char, smart_ptr_deleter<unsigned char>> u_char_unique_ptr_t;
-typedef std::unique_ptr<TCHAR, smart_ptr_deleter<TCHAR>> t_char_unique_ptr_t;
+typedef std::unique_ptr<LOGFONT> logfont_unique_ptr_t;
+typedef std::unique_ptr<unsigned char> u_char_unique_ptr_t;
+typedef std::unique_ptr<TCHAR> t_char_unique_ptr_t;
 
 typedef std::basic_string<wchar_t, std::char_traits<wchar_t>, default_allocator<wchar_t>> w_string_type;
 typedef std::basic_string<char, std::char_traits<char>, default_allocator<char>> a_string_type;

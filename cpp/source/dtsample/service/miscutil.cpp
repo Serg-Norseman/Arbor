@@ -1,12 +1,13 @@
 #include "service\functype.h"
-#include "service\memorymg.h"
 #include "service\miscutil.h"
+#include "service\stladdon.h"
 #include <shellapi.h>
 #include <tchar.h>
 
 #pragma comment(lib, "version.lib")
 
 MISCUTIL_BEGIN
+
 #pragma region version_info
 /**
  * Returns application exe module version.
@@ -21,36 +22,28 @@ MISCUTIL_BEGIN
 std::vector<WORD> version_info::getApplicationExeVersionAsVector()
 {
     std::vector<WORD> result;
-    memory_manager::pointer_t pMemoryManager = memory_manager::getInstance();
-    LPTSTR pszImageFileName = pMemoryManager->mAllocChars<LPTSTR>(MAX_PATH);
-    if (pszImageFileName)
+    STLADD t_char_unique_ptr_t imageFileName {new TCHAR[MAX_PATH]};
+    DWORD nBytesCopied = GetModuleFileName(nullptr, imageFileName.get(), MAX_PATH);
+    if (nBytesCopied && (MAX_PATH != nBytesCopied))
     {
-        DWORD nBytesCopied = GetModuleFileName(nullptr, pszImageFileName, MAX_PATH);
-        if (nBytesCopied && (MAX_PATH != nBytesCopied))
+        DWORD nVersionInfoSize = GetFileVersionInfoSize(imageFileName.get(), &nBytesCopied);
+        if (nVersionInfoSize)
         {
-            DWORD nVersionInfoSize = GetFileVersionInfoSize(pszImageFileName, &nBytesCopied);
-            if (nVersionInfoSize)
+            STLADD u_char_unique_ptr_t data {new unsigned char[nVersionInfoSize]};
+            void* pData = data.get();
+            VS_FIXEDFILEINFO* pFileInfo;
+            UINT nLength;
+            if (GetFileVersionInfo(imageFileName.get(), 0, nVersionInfoSize, pData) &&
+                VerQueryValue(pData, TEXT("\\"), reinterpret_cast<void**> (&pFileInfo), &nLength))
             {
-                void* pData = pMemoryManager->mAlloc<void*>(nVersionInfoSize);
-                if (pData)
-                {
-                    VS_FIXEDFILEINFO* pFileInfo;
-                    UINT nLength;
-                    if (GetFileVersionInfo(pszImageFileName, 0, nVersionInfoSize, pData) &&
-                        VerQueryValue(pData, TEXT("\\"), reinterpret_cast<void**> (&pFileInfo), &nLength))
-                    {
-                        result.reserve(4);
-                        result.resize(4);
-                        result[0] = HIWORD(pFileInfo->dwFileVersionMS);
-                        result[1] = LOWORD(pFileInfo->dwFileVersionMS);
-                        result[2] = HIWORD(pFileInfo->dwFileVersionLS);
-                        result[3] = LOWORD(pFileInfo->dwFileVersionLS);
-                    }
-                    pMemoryManager->free(pData);
-                }
+                result.reserve(4);
+                result.resize(4);
+                result[0] = HIWORD(pFileInfo->dwFileVersionMS);
+                result[1] = LOWORD(pFileInfo->dwFileVersionMS);
+                result[2] = HIWORD(pFileInfo->dwFileVersionLS);
+                result[3] = LOWORD(pFileInfo->dwFileVersionLS);
             }
         }
-        pMemoryManager->free(pszImageFileName);
     }
     return result;
 }
@@ -69,11 +62,11 @@ std::vector<WORD> version_info::getApplicationExeVersionAsVector()
  */
 STLADD string_unique_ptr_t version_info::getApplicationExeVersion()
 {
-    STLADD string_unique_ptr_t szResult;
+    STLADD string_unique_ptr_t szResult {};
     auto version(getApplicationExeVersionAsVector());
     if (version.size())
     {
-        STLADD wostringstream stream;
+        STLADD wostringstream stream {};
         std::copy(version.begin(), version.end(), std::ostream_iterator<WORD, wchar_t> {stream, TEXT(".")});
         szResult = std::make_unique<STLADD string_type>(stream.str());
         szResult->erase(szResult->end() - 1);
@@ -97,62 +90,48 @@ STLADD string_unique_ptr_t version_info::getApplicationExeVersionInfoStringTable
 {
     STLADD string_unique_ptr_t szResult;
 
-    memory_manager::pointer_t pMemoryManager = memory_manager::getInstance();
-    LPTSTR pszPathFileName = pMemoryManager->mAllocChars<LPTSTR>(MAX_PATH);
-    if (pszPathFileName)
+    STLADD t_char_unique_ptr_t pathFileName {new TCHAR[MAX_PATH]};
+    DWORD nCharsCopied = GetModuleFileName(nullptr, pathFileName.get(), MAX_PATH);
+    if (nCharsCopied && (MAX_PATH != nCharsCopied))
     {
-        DWORD nCharsCopied = GetModuleFileName(nullptr, pszPathFileName, MAX_PATH);
-        if (nCharsCopied && (MAX_PATH != nCharsCopied))
+        // Form link object name.
+        DWORD nVersionInfoSize = GetFileVersionInfoSize(pathFileName.get(), &nCharsCopied);
+        if (nVersionInfoSize)
         {
-            // Form link object name.
-            DWORD nVersionInfoSize = GetFileVersionInfoSize(pszPathFileName, &nCharsCopied);
-            if (nVersionInfoSize)
+            STLADD u_char_unique_ptr_t data {new unsigned char[nVersionInfoSize]};
+            void* pData = data.get();
+            typedef struct
             {
-                void* pData = pMemoryManager->mAlloc<void*>(nVersionInfoSize);
-                if (pData)
+                WORD nLanguage;
+                WORD nCodePage;
+            }
+            lang_and_code_page_t;
+
+            lang_and_code_page_t* pTranslation;
+            UINT nLength;
+            if (GetFileVersionInfo(pathFileName.get(), 0, nVersionInfoSize, pData) &&
+                VerQueryValue(
+                    pData, TEXT("\\VarFileInfo\\Translation"), reinterpret_cast<void**> (&pTranslation), &nLength) &&
+                nLength)
+            {
+                TCHAR szStringFileInfoFormat[] = TEXT("\\StringFileInfo\\%04x%04x\\%s");
+                size_t nEntryPathLength = _countof(szStringFileInfoFormat) + _tcscnlen(pszName, 32);
+                STLADD t_char_unique_ptr_t stringFileInfoEntry {new TCHAR[nEntryPathLength]};
+                _stprintf_s(stringFileInfoEntry.get(),
+                            nEntryPathLength,
+                            szStringFileInfoFormat,
+                            pTranslation[0].nLanguage,
+                            pTranslation[0].nCodePage,
+                            pszName);
+
+                LPTSTR pszFileDescription;
+                if (VerQueryValue(
+                    pData, stringFileInfoEntry.get(), reinterpret_cast<void**> (&pszFileDescription), &nLength))
                 {
-                    typedef struct
-                    {
-                        WORD nLanguage;
-                        WORD nCodePage;
-                    }
-                    lang_and_code_page_t;
-
-                    lang_and_code_page_t* pTranslation;
-                    UINT nLength;
-                    if (GetFileVersionInfo(pszPathFileName, 0, nVersionInfoSize, pData) &&
-                        VerQueryValue(pData,
-                                      TEXT(R"(\VarFileInfo\Translation)"),
-                                      reinterpret_cast<void**> (&pTranslation),
-                                      &nLength) &&
-                        nLength)
-                    {
-                        TCHAR szStringFileInfoFormat[] = TEXT(R"(\StringFileInfo\%04x%04x\%s)");
-                        size_t nEntryPathLength = _countof(szStringFileInfoFormat) + _tcscnlen(pszName, 32);
-                        LPTSTR pszStringFileInfoEntry = pMemoryManager->mAllocChars<LPTSTR>(nEntryPathLength);
-                        if (pszStringFileInfoEntry)
-                        {
-                            _stprintf_s(pszStringFileInfoEntry,
-                                        nEntryPathLength,
-                                        szStringFileInfoFormat,
-                                        pTranslation[0].nLanguage,
-                                        pTranslation[0].nCodePage,
-                                        pszName);
-
-                            LPTSTR pszData;
-                            if (VerQueryValue(
-                                pData, pszStringFileInfoEntry, reinterpret_cast<void**> (&pszData), &nLength))
-                            {
-                                szResult = std::make_unique<STLADD string_type>(pszData, nLength - 1);
-                            }
-                            pMemoryManager->free(pszStringFileInfoEntry);
-                        }
-                    }
-                    pMemoryManager->free(pData);
+                    szResult = std::make_unique<STLADD string_type>(pszFileDescription, nLength - 1);
                 }
             }
         }
-        pMemoryManager->free(pszPathFileName);
     }
 
     return szResult;
@@ -316,4 +295,5 @@ void windows_system::changeWindowMessageFilter(_In_ const HWND hWnd, _In_ const 
     }
 }
 #pragma endregion windows_system implementation
+
 MISCUTIL_END

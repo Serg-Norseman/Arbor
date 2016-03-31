@@ -6,6 +6,7 @@
 #include <atlbase.h>
 #include <atlwin.h>
 #include <memory>
+#include <vsstyle.h>
 #include <wincodec.h>
 
 ATLADD_BEGIN
@@ -86,6 +87,22 @@ protected:
         _In_ const D2D1_SIZE_F* pSize,
         _COM_Outptr_result_maybenull_ IDWriteTextLayout** ppTextLayout) const;
 
+    HRESULT createTextFormatForBodyTitle(
+        _In_ IDWriteFactory* pDWriteFactory,
+        _In_ const HWND hWnd,
+        _COM_Outptr_result_maybenull_ IDWriteTextFormat** ppTextFormat) const
+    {
+        return createTextFormat(pDWriteFactory, hWnd, TEXT_BODYTITLE, ppTextFormat);
+    }
+
+    HRESULT createTextFormatForBodyText(
+        _In_ IDWriteFactory* pDWriteFactory,
+        _In_ const HWND hWnd,
+        _COM_Outptr_result_maybenull_ IDWriteTextFormat** ppTextFormat) const
+    {
+        return createTextFormat(pDWriteFactory, hWnd, TEXT_BODYTEXT, ppTextFormat);
+    }
+
     HRESULT loadBitmapFromResource(
         _In_z_ LPCTSTR pszResourceName,
         _In_z_ LPCTSTR pszResourceType,
@@ -109,9 +126,18 @@ private:
         _In_ IDWriteFactory* pDWriteFactory,
         _In_reads_z_(nSize) LPCTSTR pszText,
         _In_ const size_t nSize,
-        _In_ const LOGFONT* pLogFont,
+        _In_ IDWriteTextFormat* pTextFormat,
         _In_ const D2D1_SIZE_F* pSize,
         _COM_Outptr_result_maybenull_ IDWriteTextLayout** ppTextLayout) const;
+    HRESULT createTextFormat(
+        _In_ IDWriteFactory* pDWriteFactory,
+        _In_ const LOGFONT* pLogFont,
+        _COM_Outptr_result_maybenull_ IDWriteTextFormat** ppTextFormat) const;
+    HRESULT createTextFormat(
+        _In_ IDWriteFactory* pDWriteFactory,
+        _In_ const HWND hWnd,
+        _In_ const int nPartId,
+        _COM_Outptr_result_maybenull_ IDWriteTextFormat** ppTextFormat) const;
 };
 #pragma endregion directx_toolkit declaration
 
@@ -276,6 +302,12 @@ protected:
     {
         return directx_toolkit::createTextLayoutForBodyText(
             m_directWriteFactory.get(), m_hWnd, pszText, nSize, pSize, ppTextLayout);
+    }
+
+    HRESULT createTextFormatForBodyText(
+        _COM_Outptr_result_maybenull_ IDWriteTextFormat** ppTextFormat) const
+    {
+        return directx_toolkit::createTextFormatForBodyText(m_directWriteFactory.get(), m_hWnd, ppTextFormat);
     }
 
     std::unique_ptr<WAPI animation> m_animation;

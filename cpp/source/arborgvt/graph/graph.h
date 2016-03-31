@@ -1,6 +1,7 @@
 #pragma once
 #include "ns\arbor.h"
 #include "graph\edge.h"
+#include "graph\vector.h"
 #include "graph\vertex.h"
 #include "service\sse.h"
 #include "service\stladdon.h"
@@ -40,7 +41,7 @@ protected:
         std::hash<STLADD string_type>,
         std::equal_to<STLADD string_type>,
         STLADD aligned_sse_allocator<std::pair<const STLADD string_type, vertex>>> vertices_cont_t;
-    typedef std::vector<std::unique_ptr<edge>> edges_cont_t;
+    typedef std::vector<std::unique_ptr<edge>, STLADD default_allocator<std::unique_ptr<edge>>> edges_cont_t;
 
     // Prepare tag dispatch pattern.
     template <typename T>
@@ -142,13 +143,14 @@ public:
         m_engine {},
         m_distribution {-2.0f, 2.0f},
         m_verticesLock {},
-        m_edgesLock {}
+        m_edgesLock {},
+        m_meanOfEnergy {0.0f}
     {
         std::random_device rd {};
         m_engine.seed(rd());
         sse_t value = {m_distribution.b(), m_distribution.a(), m_distribution.b(), m_distribution.a()};
         m_graphBound = _mm_load_ps(value.data);
-        m_viewBound = m_graphBound;
+        m_viewBound = getZeroVector();
     }
 
     WAPI srw_lock& getVerticesLock() noexcept
@@ -204,17 +206,51 @@ public:
         return const_edges_iterator {m_edges.end()};
     }
 
+    bool active() const noexcept
+    {
+        if (m_autoStop)
+        {
+            return (m_energyThreshold < m_meanOfEnergy) || (0.0f == m_meanOfEnergy);
+        }
+        else
+        {
+            return true;
+        }
+    }
+
     __m128 __vectorcall getViewBound() const noexcept
     {
         return m_viewBound;
     }
 
+    void __vectorcall update(_In_ const __m128 renderSurfaceSize);
+
 
 private:
-    const vertex* addVertex(_In_ STLADD string_type&& name);
-    const vertex* __vectorcall addVertex(_In_ STLADD string_type&& name, _In_ const __m128 coordinates);
+    vertex* addVertex(_In_ STLADD string_type&& name);
+    vertex* __vectorcall addVertex(_In_ STLADD string_type&& name, _In_ const __m128 coordinates);
+    void updateGraphBound();
+    void __vectorcall updateViewBound(_In_ const __m128 renderSurfaceSize);
+    void updatePhysics();
+    void applyBarnesHutRepulsion();
+    void applySprings();
+    void __fastcall updateVelocityAndPosition(_In_ const float time);
 
-    static constexpr float m_stiffness = 600.0f;
+    static constexpr float m_stiffness = 250.0f;
+#if defined(__ICL)
+    // Intel C++ 16.0 doesn't support single-quotation mark as a digit separator for floating point types,
+    // it's a known bug with internal tracker DPD200379927.
+    static constexpr float m_repulsion = 10000.0f;
+#else
+    static constexpr float m_repulsion = 10'000.0f;
+#endif
+    static constexpr float m_friction = 0.1f;
+    static constexpr float m_animationStep = 0.04f;
+    static constexpr float m_timeSlice = 0.01f;
+    static constexpr float m_energyThreshold = 0.7f;
+    static constexpr float m_theta = 0.4f;
+    static constexpr bool m_gravity = false;
+    static constexpr bool m_autoStop = false;
 
     /*
      * `m_graphBound` is the area used by Barnes Hut algorithm. This is a coordinate space where all graph vertices
@@ -224,7 +260,7 @@ private:
      * While physics calculation is active, the `m_viewBound` is always seeking to become as large as the
      * `m_graphBound` is. Size of the `m_viewBound` is inversely proportional to size of target HWND (where
      * `m_viewBound` is mapped). Therefore while the `m_viewBound` is growing, vertices are moving from outside of the
-     * HWND to its client area.
+     * HWND toward the center of its client area.
      *
      * This class exposes the `m_viewBound` area to caller, which must transform a vertex coordinate from `m_graphBound`
      * coordinate space to its own one (HWND client area, for example). Remember: the `m_viewBound` is just a way to
@@ -247,6 +283,7 @@ private:
     std::uniform_real_distribution<float> m_distribution;
     WAPI srw_lock m_verticesLock;
     WAPI srw_lock m_edgesLock;
+    float m_meanOfEnergy;
 };
 
 ARBOR_END

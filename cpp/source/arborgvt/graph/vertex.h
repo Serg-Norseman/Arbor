@@ -1,4 +1,5 @@
 #pragma once
+#include "graph\vector.h"
 #include "ns\arbor.h"
 #include "service\sse.h"
 #include "service\stladdon.h"
@@ -40,15 +41,24 @@ public:
          * I use QNaN (as .NET Framework 4.6 does (remember about roots of the code)); therefore the code mostly doesn't
          * throw an exception. But if one turns to SNaN, the code may throw an exception on SSE instructions once a
          * floating-point exception was unmasked.
+         *
          * By default, the C++ run-time libraries mask all floating-point exceptions. And I don't change it.
+         *
+         * I believe this all is totally unnecessary -- initializing `m_coordinates` with NaN. Code never uses this
+         * ctor but always use another one, which initialize `m_coordinates` with a specific floating-point value.
+         * Having this ctor available just forces code to do additinal checks before use vertex coordinates, just like
+         * this:
+         *
+         * if (0b0011 == (0b0011 & _mm_movemask_ps(_mm_cmpeq_ps(m_coordinate, m_coordinate))))
+         * { ... }
+         *
+         * Both `CMPPS` and `MOVMSKPS` are far from being the fastest instructions.
          */
         *(reinterpret_cast<uint32_t*> (value.data)) = 0x7FC00000;
         m_coordinates = _mm_load_ps(value.data);
         m_coordinates = _mm_shuffle_ps(m_coordinates, m_coordinates, 0);
         // Set `m_force` and `m_velocity` to zero.
-        value.data[0] = 0;
-        m_force = _mm_load_ps(value.data);
-        m_force = _mm_shuffle_ps(m_force, m_force, 0);
+        m_force = getZeroVector();
         m_velocity = m_force;
         // Set `m_color` to gray.
         value = {0.501960814f, 0.501960814f, 0.501960814f, 1.0f};
@@ -67,6 +77,8 @@ public:
      * Although all the affected memory location are aligned on a 16-byte boundary. But when CL makes "release" build
      * (x86 or x64), it generates the `MOVAPS` instruction (one that I need). So it ain't required to use `_mm_load_ps`
      * and `_mm_store_ps` intrinsics.
+     *
+     * Moreover, sometime even Debug builds use `MOVAPS` instruction.
      */
     vertex(_In_ STLADD string_type&& name, _In_ __m128 coordinates)
         :
@@ -111,34 +123,44 @@ public:
         std::swap(m_fixed, right.m_fixed);
     }
 
-    __m128 __vectorcall getCoordinates() const
+    __m128 __vectorcall getCoordinates() const noexcept
     {
         return m_coordinates;
     }
 
-    void __vectorcall setCoordinates(_In_ const __m128 value)
+    void __vectorcall setCoordinates(_In_ const __m128 value) noexcept
     {
         m_coordinates = value;
     }
 
-    __m128 __vectorcall getColor() const
+    __m128 __vectorcall getColor() const noexcept
     {
         return m_color;
     }
 
-    void __vectorcall setColor(_In_ const __m128 value)
-    {
-        m_color = value;
-    }
-
-    __m128 __vectorcall getTextColor() const
+    __m128 __vectorcall getTextColor() const noexcept
     {
         return m_textColor;
     }
 
-    void __vectorcall setTextColor(_In_ const __m128 value)
+    __m128 __vectorcall getForce() const noexcept
     {
-        m_textColor = value;
+        return m_force;
+    }
+
+    void __vectorcall setForce(_In_ const __m128 value) noexcept
+    {
+        m_force = value;
+    }
+
+    __m128 __vectorcall getVelocity() const noexcept
+    {
+        return m_velocity;
+    }
+
+    void __vectorcall setVelocity(_In_ const __m128 value) noexcept
+    {
+        m_velocity = value;
     }
 
     const STLADD string_type* getName() const noexcept
@@ -156,14 +178,24 @@ public:
         m_data = value;
     }
 
-    void __vectorcall applyForce(_In_ const __m128 value)
+    float getMass() const noexcept
     {
+        return m_mass;
+    }
+
+    bool getFixed() const noexcept
+    {
+        return m_fixed;
+    }
+
+    void __vectorcall applyForce(_In_ const __m128 value) noexcept
+    {
+        // `value` must not be zero.
         sse_t massData;
         massData.data[0] = m_mass;
         __m128 mass = _mm_load_ps(massData.data);
         mass = _mm_shuffle_ps(mass, mass, 0);
-        // Try to replace `_mm_div_ps` with `_mm_rcp_ps` "+" `_mm_mul_ps`?
-        m_force = _mm_add_ps(m_force, _mm_div_ps(value, mass));
+        m_force = _mm_add_ps(m_force, _mm_mul_ps(value, _mm_rcp_ps(mass)));
     }
 
 
