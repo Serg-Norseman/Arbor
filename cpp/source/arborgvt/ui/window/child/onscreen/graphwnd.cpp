@@ -3,6 +3,10 @@
 
 ATLADD_BEGIN
 
+#if !defined(__ICL)
+D2D1_SIZE_F graph_window::m_vertexNameSize = {100.0f, 50.0f};
+#endif
+
 /**
  * Creates this window.
  *
@@ -635,31 +639,17 @@ void graph_window::scrollContent(_In_ int bar, _In_ const int position)
 HRESULT graph_window::createTextLayout(
     _In_ const STLADD string_type* text, _COM_Outptr_result_maybenull_ IDWriteTextLayout** textLayout) const
 {
-    D2D1_SIZE_F size;
-    if (m_direct2DContext)
-    {
-        size = m_direct2DContext->GetSize();
-    }
-    else
-    {
-        RECT rect;
-        GetClientRect(&rect);
-        float dpiX;
-        float dpiY;
-        if (SUCCEEDED(getDpiForMonitor(m_hWnd, &dpiX, &dpiY)))
-        {
-            size.width = physicalToLogical(rect.right, dpiX);
-            size.height = physicalToLogical(rect.bottom, dpiY);
-        }
-        else
-        {
-            size.width = static_cast<float> (rect.right);
-            size.height = static_cast<float> (rect.bottom);
-        }
-    }
-    size.width *= m_vertexNameWidth;
+    /*
+     * When base initial size of text layout on size of `m_direct2DContext`, HWND and so on I can end up with a bug
+     * (ticket #24), when device context/HWND ain't resized but HWND got `WM_PAINT` and this method is called.
+     *
+     * To fix it I:
+     * (*) must guarantee that caller shows this HWND **only** after caller has resized this HWND,
+     * (*) must base initial size on something other than USER or D2D resources. I stuck with a predefined constant.
+     */
     ATLADD com_ptr<IDWriteTextLayout> layout {};
-    HRESULT hr = base_class_t::createTextLayoutForBodyTitle(text->c_str(), text->size(), &size, layout.getAddressOf());
+    HRESULT hr = base_class_t::createTextLayoutForBodyTitle(
+        text->c_str(), text->size(), &m_vertexNameSize, layout.getAddressOf());
     if (SUCCEEDED(hr))
     {
         hr = layout->SetWordWrapping(DWRITE_WORD_WRAPPING_NO_WRAP);
