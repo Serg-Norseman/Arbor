@@ -287,7 +287,7 @@ vertex* __vectorcall graph::addVertex(_In_ STLADD string_type&& name, _In_ const
      *
      * // For MSVC 2015 Update 2 and above:
      * std::pair<vertices_cont_t::iterator, bool> result =
-     *     m_vertices.insert({name, vertex {std::move(name), coordinates}});
+     *     m_vertices.insert({STLADD string_type {name}, vertex {std::move(name), coordinates}});
      *
      * Thus, the above code for 'VC 2015 Update 2' calls this template ctor of `std::pair`:
      * std::pair(std::basic_string<...>& _Val1, arbor::vertex&& _Val2 = {...});
@@ -297,9 +297,8 @@ vertex* __vectorcall graph::addVertex(_In_ STLADD string_type&& name, _In_ const
      * Following [8.5.4.4] the code, at first, makes a copy of `name` argument (passing it as `_Val1` parameter),
      * and after that the code moves `name` into `vertex` ctor.
      */
-    STLADD string_type key {name};
     std::pair<vertices_cont_t::iterator, bool> result =
-        m_vertices.emplace(key, vertex {std::move(name), coordinates});
+        m_vertices.insert({STLADD string_type {name}, vertex {std::move(name), coordinates}});
     return &(result.first->second);
 }
 
