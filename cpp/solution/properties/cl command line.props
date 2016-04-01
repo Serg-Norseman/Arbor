@@ -114,7 +114,7 @@
       <!-- Debug -->
       <AdditionalOptions>/Zi %(AdditionalOptions)</AdditionalOptions>
       <!-- Code generation -->
-      <AdditionalOptions>/RTCc /RTC1 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/RTC1 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
 
     <!-- Linker options -->
