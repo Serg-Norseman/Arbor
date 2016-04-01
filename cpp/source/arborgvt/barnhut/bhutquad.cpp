@@ -101,9 +101,13 @@ void branch::applyForce(
                 temp2 = _mm_mul_ps(temp, temp);
                 temp2 = _mm_add_ps(temp2, _mm_shuffle_ps(temp2, temp2, 0b10110001));
             }
-            temp2 = _mm_sqrt_ps(temp2);
+            temp2 = _mm_rsqrt_ps(temp2);
         }
-        temp = _mm_mul_ps(temp, _mm_rcp_ps(temp2));
+        else
+        {
+            temp2 = _mm_rcp_ps(temp2);
+        }
+        temp = _mm_mul_ps(temp, temp2);
         value.data[0] = repulsion;
         temp2 = _mm_load_ps(value.data);
         temp2 = _mm_shuffle_ps(temp2, temp2, 0);
