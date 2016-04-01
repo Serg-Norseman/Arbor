@@ -12,7 +12,7 @@ public:
     barnes_hut_tree(_In_ __m128 area, _In_ const float dist)
         :
         m_root {std::make_unique<branch>(area)},
-        m_dist {dist}
+        m_dist {dist * dist}
     {
     }
 
