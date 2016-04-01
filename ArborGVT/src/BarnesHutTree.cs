@@ -44,7 +44,7 @@ namespace ArborGVT
 
         public BarnesHutTree(ArborPoint origin, ArborPoint h, double dist)
         {
-            this.fDist = dist;
+            this.fDist = dist * dist;
             this.fRoot = new Branch(origin, h.sub(origin));
         }
 
@@ -173,11 +173,11 @@ namespace ArborGVT
                         ptx = node.Pt;
 
                         k = m.Pt.sub(ptx);
-                        kMag = k.magnitude();
+                        kMag = k.magnitudeSquare();
 
-                        l = Math.Max(1, kMag);
                         i = ((kMag > 0) ? k : ArborPoint.newRnd(1)).normalize();
-                        m.applyForce(i.mul(g * massx).div(l * l));
+                        l = Math.Max(1, kMag);
+                        m.applyForce(i.mul(g * massx).div(l));
                     }
                     else
                     {
@@ -186,9 +186,9 @@ namespace ArborGVT
                         ptx = branch.Pt.div(massx);
 
                         k = m.Pt.sub(ptx);
-                        kMag = k.magnitude();
+                        kMag = k.magnitudeSquare();
 
-                        double h = Math.Sqrt(branch.Size.X * branch.Size.Y);
+                        double h = branch.Size.X * branch.Size.Y;
                         if (h / kMag > fDist)
                         {
                             f.Enqueue(branch.Q[QNe]);
@@ -198,9 +198,9 @@ namespace ArborGVT
                         }
                         else
                         {
-                            l = Math.Max(1, kMag);
                             i = ((kMag > 0) ? k : ArborPoint.newRnd(1)).normalize();
-                            m.applyForce(i.mul(g * massx).div(l * l));
+                            l = Math.Max(1, kMag);
+                            m.applyForce(i.mul(g * massx).div(l));
                         }
                     }
                 }
