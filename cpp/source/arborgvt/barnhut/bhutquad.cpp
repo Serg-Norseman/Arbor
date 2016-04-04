@@ -69,11 +69,8 @@ void branch::applyForce(
         temp2 = _mm_mul_ps(temp2, temp2);
         temp2 = _mm_add_ps(temp2, _mm_shuffle_ps(temp2, temp2, 0b10110001));
     }
-    __m128 dotProduct = temp2;
-    temp2 = _mm_sqrt_ps(temp2);
     __m128 temp3 = _mm_sub_ps(_mm_shuffle_ps(m_area, m_area, 0b01001110), m_area);
     temp3 = _mm_mul_ps(temp3, _mm_shuffle_ps(temp3, temp3, 0b10110001));
-    temp3 = _mm_sqrt_ps(temp3);
     temp3 = _mm_mul_ps(temp3, _mm_rcp_ps(temp2));
     sse_t value;
     value.data[0] = dist;
@@ -91,7 +88,7 @@ void branch::applyForce(
         value.data[0] = 1.0f;
         temp3 = _mm_load_ps(value.data);
         temp3 = _mm_shuffle_ps(temp3, temp3, 0);
-        temp3 = _mm_max_ps(dotProduct, temp3);
+        temp3 = _mm_max_ps(temp2, temp3);
         if (0b1111 & _mm_movemask_ps(_mm_cmpeq_ps(temp2, ARBOR getZeroVector())))
         {
             temp = ARBOR randomVector(1.0f);
@@ -104,9 +101,13 @@ void branch::applyForce(
                 temp2 = _mm_mul_ps(temp, temp);
                 temp2 = _mm_add_ps(temp2, _mm_shuffle_ps(temp2, temp2, 0b10110001));
             }
-            temp2 = _mm_sqrt_ps(temp2);
+            temp2 = _mm_rsqrt_ps(temp2);
         }
-        temp = _mm_mul_ps(temp, _mm_rcp_ps(temp2));
+        else
+        {
+            temp2 = _mm_rcp_ps(temp2);
+        }
+        temp = _mm_mul_ps(temp, temp2);
         value.data[0] = repulsion;
         temp2 = _mm_load_ps(value.data);
         temp2 = _mm_shuffle_ps(temp2, temp2, 0);
