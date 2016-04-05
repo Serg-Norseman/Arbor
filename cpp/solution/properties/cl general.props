@@ -4,6 +4,9 @@
   <ItemDefinitionGroup>
     <ClCompile>
       <DebugInformationFormat />
+      <!-- MSFT linker get all OBJ files with `$(ObjectFileName)` prefix; can't make it empty. -->
+      <!-- <ObjectFileName /> -->
+      <ProgramDataBaseFileName />
     </ClCompile>
   </ItemDefinitionGroup>
 </Project>

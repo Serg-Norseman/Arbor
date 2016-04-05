@@ -8,5 +8,6 @@
     <DebugConfiguration>$([System.Text.RegularExpressions.Regex]::IsMatch($(Configuration), '[Dd]ebug'))</DebugConfiguration>
     <IntelToolset>$([System.Text.RegularExpressions.Regex]::IsMatch($(PlatformToolset), 'Intel .+ [Cc]ompiler'))</IntelToolset>
     <TargetIsDLL>$([System.Text.RegularExpressions.Regex]::IsMatch($(TargetExt), 'dll'))</TargetIsDLL>
+    <OutDirectory>..\..\build\$(Configuration)-$(PlatformModName)\</OutDirectory>
   </PropertyGroup>
 </Project>

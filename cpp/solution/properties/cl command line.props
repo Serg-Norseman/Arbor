@@ -76,6 +76,8 @@
       <AdditionalOptions>/GR- /Zc:rvalueCast /Zc:inline /Zc:throwingNew %(AdditionalOptions)</AdditionalOptions>
       <!-- Include files-->
       <AdditionalOptions>/I$(SelfReference) %(AdditionalOptions)</AdditionalOptions>
+      <!-- Object files -->
+      <AdditionalOptions>/Fo$(OutDirectory)obj\$(ProjectName)\ %(AdditionalOptions)</AdditionalOptions>
       <!-- Code generation (what and how) -->
       <AdditionalOptions>/Gm- /GF /MP /W4 %(AdditionalOptions)</AdditionalOptions>
       <!-- Floating point -->
@@ -87,6 +89,13 @@
       <!-- Defines (Win32 API) -->
       <AdditionalOptions>/DPLATFORM_WIN32 /DNTDDI_VERSION=NTDDI_WINTHRESHOLD /D_WIN32_WINNT=_WIN32_WINNT_WINTHRESHOLD /DWINVER=0x0A00 /DWIN32_LEAN_AND_MEAN %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
+
+    <!-- Linker options -->
+
+    <Link>
+      <!-- Output file -->
+      <AdditionalOptions>/OUT:$(OutDir)$(TargetName)$(TargetExt) %(AdditionalOptions)</AdditionalOptions>
+    </Link>
 
     <!-- Resource compiler options -->
 
@@ -113,6 +122,8 @@
     <ClCompile>
       <!-- Debug -->
       <AdditionalOptions>/Zi %(AdditionalOptions)</AdditionalOptions>
+      <!-- Program database file -->
+      <AdditionalOptions>/Fd$(OutDirectory)obj\$(ProjectName)\ %(AdditionalOptions)</AdditionalOptions>
       <!-- Code generation -->
       <AdditionalOptions>/RTC1 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
@@ -123,7 +134,7 @@
       <!-- General settings -->
       <AdditionalOptions>/INCREMENTAL %(AdditionalOptions)</AdditionalOptions>
       <!-- Debug -->
-      <AdditionalOptions>/DEBUG %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/DEBUG /PDB:$(OutDir)$(TargetName).pdb %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
 
