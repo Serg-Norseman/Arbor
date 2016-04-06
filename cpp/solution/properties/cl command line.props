@@ -61,6 +61,8 @@
       <AdditionalOptions>/Qstd=c++14 /Qms0</AdditionalOptions>
       <!-- Floating point -->
       <AdditionalOptions>/QxSSE3 /QaxSSE3 %(AdditionalOptions)</AdditionalOptions>
+      <!-- TEMPORARY fix until ICC 16.0 Update 3 release: MSVC 2015 Update 2 broke ICC 16.0 Update 2 -->
+      <AdditionalOptions>/D__is_assignable=__is_trivially_assignable</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
 
