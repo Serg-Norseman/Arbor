@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "barnhut\bhutquad.h"
 #include "graph\vertex.h"
 #include "ns\barnhut.h"

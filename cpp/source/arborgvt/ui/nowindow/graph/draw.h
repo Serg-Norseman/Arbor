@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "graph\edge.h"
 #include "graph\vertex.h"
 #include "service\com\comptr.h"

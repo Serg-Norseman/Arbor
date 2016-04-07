@@ -6,6 +6,9 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "arborgvt", "arborgvt\arborgvt.vcxproj", "{A241A2EC-DFE1-438A-B231-B1C8D3EFF13A}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dtsample", "dtsample\dtsample.vcxproj", "{3758EA3D-0F72-4DEF-B427-51EB9D3B0570}"
+	ProjectSection(ProjectDependencies) = postProject
+		{A241A2EC-DFE1-438A-B231-B1C8D3EFF13A} = {A241A2EC-DFE1-438A-B231-B1C8D3EFF13A}
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "property sheets", "property sheets", "{2B96B948-2E28-40B9-8FA4-CF12E9F6807A}"
 	ProjectSection(SolutionItems) = preProject

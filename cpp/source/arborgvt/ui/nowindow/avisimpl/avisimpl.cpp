@@ -1,4 +1,4 @@
-#include "ui\nowindow\avisimpl\avisimpl.h"
+﻿#include "ui\nowindow\avisimpl\avisimpl.h"
 
 /**
  * Creates a target window object where graph is rendered. The window is created asynchronously.

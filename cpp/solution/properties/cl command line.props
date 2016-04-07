@@ -103,7 +103,7 @@
 
     <ResourceCompile>
       <!-- Include files-->
-      <AdditionalOptions>/I$(SelfReference)</AdditionalOptions>
+      <AdditionalOptions>/I$(SelfReference) /C 65001</AdditionalOptions>
     </ResourceCompile>
   </ItemDefinitionGroup>
 

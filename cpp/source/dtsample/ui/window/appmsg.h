@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 /**
  * >WM_NOTIFY_DPICHANGED

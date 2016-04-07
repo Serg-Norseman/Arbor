@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "ns\wapi.h"
 #include "service\functype.h"
 #include <synchapi.h>

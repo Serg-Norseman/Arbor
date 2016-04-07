@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "dlllayer\arborvis.h"
 
 #if defined(ARBORGVT_EXPORTS)

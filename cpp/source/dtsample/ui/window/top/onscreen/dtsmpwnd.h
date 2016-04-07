@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "dlllayer\arbor.h"
 #include "ns\atladd.h"
 #include "service\com\comptr.h"

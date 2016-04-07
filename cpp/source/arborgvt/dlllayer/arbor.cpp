@@ -1,4 +1,4 @@
-#include "dlllayer\arbor.h"
+﻿#include "dlllayer\arbor.h"
 #include "ui\nowindow\avisimpl\avisimpl.h"
 
 /**

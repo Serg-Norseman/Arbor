@@ -1,4 +1,4 @@
-#include "resource.h"
+﻿#include "resource.h"
 #include "ui\window\appmsg.h"
 #include "ui\window\top\twinimpl.h"
 

@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "ns\stladd.h"
 #include "service\winapi\heap.h"
 #include <functional>

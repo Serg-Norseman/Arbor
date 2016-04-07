@@ -1,4 +1,4 @@
-#include "barnhut\barnhut.h"
+﻿#include "barnhut\barnhut.h"
 #include "graph\graph.h"
 
 ARBOR_BEGIN

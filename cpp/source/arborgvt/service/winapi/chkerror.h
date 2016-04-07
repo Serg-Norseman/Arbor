@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "ns\wapi.h"
 #include <winerror.h>
 

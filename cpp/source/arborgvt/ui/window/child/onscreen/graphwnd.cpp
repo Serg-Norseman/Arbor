@@ -1,4 +1,4 @@
-#include "service\sse.h"
+ï»¿#include "service\sse.h"
 #include "ui\window\child\onscreen\graphwnd.h"
 
 ATLADD_BEGIN
@@ -311,10 +311,10 @@ void graph_window::draw()
     auto durationInMicroseconds = std::chrono::duration_cast<std::chrono::microseconds>(duration);
     auto durationInSeconds = std::chrono::duration_cast<std::chrono::duration<double>>(duration);
     double fps = 1.0 / durationInSeconds.count();
-    int length = _sctprintf(TEXT("%.4f FPS (%I64i µs per frame)"), fps, durationInMicroseconds.count()) + 1;
+    int length = _sctprintf(TEXT("%.4f FPS (%I64i Âµs per frame)"), fps, durationInMicroseconds.count()) + 1;
     STLADD t_char_unique_ptr_t text {new TCHAR[length]};
     length =
-        _stprintf_s(text.get(), length, TEXT("%.4f FPS (%I64i µs per frame)"), fps, durationInMicroseconds.count());
+        _stprintf_s(text.get(), length, TEXT("%.4f FPS (%I64i Âµs per frame)"), fps, durationInMicroseconds.count());
     m_direct2DContext->DrawText(
         text.get(),
         length,
@@ -759,7 +759,7 @@ void graph_window::connectAreas(
  *
  * If we solve the above system of equations we get the answer:
  *                        b
- * x = x0 ± ------------------------- ('+' when x1 > x0 and '-' when x1 < x0),
+ * x = x0 Â± ------------------------- ('+' when x1 > x0 and '-' when x1 < x0),
  *                 n * n     b * b
  *           sqrt(------- + -------)
  *                 m * m     a * a

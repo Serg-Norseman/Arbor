@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "graph\vector.h"
 #include "graph\vertex.h"
 #include "ns\barnhut.h"

@@ -1,4 +1,4 @@
-#include "service\stladdon.h"
+﻿#include "service\stladdon.h"
 
 _Ret_notnull_ _Post_writable_byte_size_(size)
 void* operator new(size_t size)

@@ -1,4 +1,4 @@
-#include "service\functype.h"
+﻿#include "service\functype.h"
 #include "service\miscutil.h"
 #include "service\stladdon.h"
 #include <shellapi.h>

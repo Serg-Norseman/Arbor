@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "ns\arbor.h"
 #include "ns\stladd.h"
 #include "service\winapi\heap.h"

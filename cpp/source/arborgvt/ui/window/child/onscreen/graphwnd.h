@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "graph\graph.h"
 #include "service\com\comptr.h"
 #include "service\stladdon.h"

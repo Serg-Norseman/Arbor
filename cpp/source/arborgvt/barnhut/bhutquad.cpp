@@ -1,4 +1,4 @@
-#include "barnhut\bhutquad.h"
+﻿#include "barnhut\bhutquad.h"
 #include "graph\vector.h"
 #include "service\sse.h"
 

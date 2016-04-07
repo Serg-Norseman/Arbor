@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "ns\atladd.h"
 #include <Windows.h>
 

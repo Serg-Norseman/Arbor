@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "ns\atladd.h"
 #include "service\com\comptr.h"
 #include "service\winapi\icon.h"

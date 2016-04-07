@@ -1,4 +1,4 @@
-#include <VerRsrc.h>
+﻿#include <VerRsrc.h>
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -14,12 +14,12 @@ FILEFLAGS VS_FF_DEBUG
 FILEFLAGS 0x0L
 #endif
 FILEOS VOS_NT_WINDOWS32
-FILETYPE VFT_APP
+FILETYPE VFT_DLL
 FILESUBTYPE 0x0L
 BEGIN
     BLOCK "StringFileInfo"
     BEGIN
-        BLOCK "040904e4"
+        BLOCK "0409fde9"
         BEGIN
             VALUE "CompanyName", "ruslangaripov, Serg-Norseman"
             VALUE "FileDescription", "Arbor GVT library"
@@ -33,6 +33,6 @@ BEGIN
     END
     BLOCK "VarFileInfo"
     BEGIN
-        VALUE "Translation", 0x0409, 1252
+        VALUE "Translation", 0x0409, 65001
     END
 END

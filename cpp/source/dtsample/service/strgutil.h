@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "service\stladdon.h"
 #include <memory>
 

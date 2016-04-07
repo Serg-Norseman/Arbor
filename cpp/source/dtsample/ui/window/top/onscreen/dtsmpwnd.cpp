@@ -1,4 +1,4 @@
-#define OEMRESOURCE
+﻿#define OEMRESOURCE
 #include "resource.h"
 #include "service\miscutil.h"
 #include "service\stladdon.h"

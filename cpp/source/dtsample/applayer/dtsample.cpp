@@ -1,4 +1,4 @@
-#include "resource.h"
+﻿#include "resource.h"
 #include "service\functype.h"
 #include "service\miscutil.h"
 #include "service\strgutil.h"

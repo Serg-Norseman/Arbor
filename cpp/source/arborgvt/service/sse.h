@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <intrin.h>
 
 typedef struct alignas(16)

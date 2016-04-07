@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "ns\miscutil.h"
 #include "service\stladdon.h"
 #include <memory>

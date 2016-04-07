@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "ns\arbor.h"
 #include "graph\edge.h"
 #include "graph\vector.h"
