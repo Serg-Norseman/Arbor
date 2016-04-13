@@ -1,7 +1,7 @@
 ﻿#pragma once
-#include "graph\vertex.h"
-#include "ns\arbor.h"
-#include "service\stladdon.h"
+#include "graph/vertex.h"
+#include "ns/arbor.h"
+#include "service/stladdon.h"
 #include <d2d1.h>
 
 ARBOR_BEGIN

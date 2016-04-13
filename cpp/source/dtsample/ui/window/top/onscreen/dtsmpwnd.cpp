@@ -1,11 +1,11 @@
 ﻿#define OEMRESOURCE
 #include "resource.h"
-#include "service\miscutil.h"
-#include "service\stladdon.h"
-#include "service\winapi\chkerror.h"
-#include "service\winapi\directx\dx.h"
-#include "ui\window\appmsg.h"
-#include "ui\window\top\onscreen\dtsmpwnd.h"
+#include "service/miscutil.h"
+#include "service/stladdon.h"
+#include "service/winapi/chkerror.h"
+#include "service/winapi/directx/dx.h"
+#include "ui/window/appmsg.h"
+#include "ui/window/top/onscreen/dtsmpwnd.h"
 #include <memory>
 #include <wincodec.h>
 

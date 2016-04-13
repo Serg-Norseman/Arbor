@@ -1,6 +1,6 @@
 ﻿#pragma once
-#include "ns\atladd.h"
-#include "ui\window\wi.h"
+#include "ns/atladd.h"
+#include "ui/window/wi.h"
 #include <d2d1.h>
 
 ATLADD_BEGIN

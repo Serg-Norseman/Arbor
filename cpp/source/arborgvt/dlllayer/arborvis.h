@@ -1,6 +1,6 @@
 ﻿#pragma once
-#include "graph\edge.h"
-#include "graph\vertex.h"
+#include "graph/edge.h"
+#include "graph/vertex.h"
 #include "sdkver.h"
 #include <rpc.h>
 #include <rpcndr.h>

@@ -1,8 +1,8 @@
 ﻿#pragma once
-#include "ns\atladd.h"
-#include "service\com\comptr.h"
-#include "service\winapi\directx\dx.h"
-#include "service\winapi\wam\animatio.h"
+#include "ns/atladd.h"
+#include "service/com/comptr.h"
+#include "service/winapi/directx/dx.h"
+#include "service/winapi/wam/animatio.h"
 #include <atlbase.h>
 #include <atlwin.h>
 #include <memory>

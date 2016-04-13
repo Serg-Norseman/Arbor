@@ -1,6 +1,6 @@
 ﻿#pragma once
-#include "ns\miscutil.h"
-#include "service\stladdon.h"
+#include "ns/miscutil.h"
+#include "service/stladdon.h"
 #include <memory>
 #include <vector>
 #include <Windows.h>

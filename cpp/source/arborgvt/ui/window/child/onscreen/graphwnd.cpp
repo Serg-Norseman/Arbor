@@ -1,5 +1,5 @@
-﻿#include "service\sse.h"
-#include "ui\window\child\onscreen\graphwnd.h"
+﻿#include "service/sse.h"
+#include "ui/window/child/onscreen/graphwnd.h"
 
 ATLADD_BEGIN
 

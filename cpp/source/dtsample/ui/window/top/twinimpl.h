@@ -1,9 +1,9 @@
 ﻿#pragma once
-#include "ns\atladd.h"
-#include "service\com\comptr.h"
-#include "service\winapi\icon.h"
-#include "service\winapi\menu.h"
-#include "ui\window\wi.h"
+#include "ns/atladd.h"
+#include "service/com/comptr.h"
+#include "service/winapi/icon.h"
+#include "service/winapi/menu.h"
+#include "ui/window/wi.h"
 
 ATLADD_BEGIN
 

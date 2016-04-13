@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "ns\atladd.h"
+#include "ns/atladd.h"
 #include <assert.h>
 #include <sal.h>
 #include <Unknwn.h>

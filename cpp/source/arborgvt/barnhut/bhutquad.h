@@ -1,8 +1,8 @@
 ﻿#pragma once
-#include "graph\vector.h"
-#include "graph\vertex.h"
-#include "ns\barnhut.h"
-#include "service\stladdon.h"
+#include "graph/vector.h"
+#include "graph/vertex.h"
+#include "ns/barnhut.h"
+#include "service/stladdon.h"
 #include <deque>
 #include <memory>
 #include <vector>

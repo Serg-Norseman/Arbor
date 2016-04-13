@@ -1,9 +1,9 @@
 ﻿#pragma once
-#include "graph\graph.h"
-#include "service\com\comptr.h"
-#include "service\stladdon.h"
-#include "ui\nowindow\graph\draw.h"
-#include "ui\window\child\cwi.h"
+#include "graph/graph.h"
+#include "service/com/comptr.h"
+#include "service/stladdon.h"
+#include "ui/nowindow/graph/draw.h"
+#include "ui/window/child/cwi.h"
 #if defined(_DEBUG) || defined(SHOW_FPS)
 #include <chrono>
 #endif

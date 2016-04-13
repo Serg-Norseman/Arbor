@@ -1,9 +1,9 @@
 ﻿#pragma once
-#include "dlllayer\arborvis.h"
-#include "graph\edge.h"
-#include "graph\vertex.h"
-#include "service\com\impl.h"
-#include "ui\window\child\onscreen\graphwnd.h"
+#include "dlllayer/arborvis.h"
+#include "graph/edge.h"
+#include "graph/vertex.h"
+#include "service/com/impl.h"
+#include "ui/window/child/onscreen/graphwnd.h"
 #include <memory>
 #include <thread>
 

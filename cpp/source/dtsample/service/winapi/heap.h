@@ -1,6 +1,6 @@
 ﻿#pragma once
-#include "ns\wapi.h"
-#include "service\winapi\uh.h"
+#include "ns/wapi.h"
+#include "service/winapi/uh.h"
 #include <Windows.h>
 
 WAPI_BEGIN

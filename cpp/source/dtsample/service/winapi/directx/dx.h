@@ -1,8 +1,8 @@
 ﻿#pragma once
-#include "ns\dxu.h"
-#include "service\com\comptr.h"
-#include "service\winapi\chkerror.h"
-#include "service\functype.h"
+#include "ns/dxu.h"
+#include "service/com/comptr.h"
+#include "service/winapi/chkerror.h"
+#include "service/functype.h"
 #include <d3d11.h>
 #include <dcomp.h>
 #include <dwrite_2.h>
