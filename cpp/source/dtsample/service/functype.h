@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <ShellScalingApi.h>
 #include <windef.h>
 

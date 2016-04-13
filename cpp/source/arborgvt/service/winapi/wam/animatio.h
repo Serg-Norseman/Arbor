@@ -1,6 +1,6 @@
-#pragma once
-#include "ns\wapi.h"
-#include "service\com\comptr.h"
+﻿#pragma once
+#include "ns/wapi.h"
+#include "service/com/comptr.h"
 #include <dcomp.h>
 #include <UIAnimation.h>
 

@@ -1,5 +1,5 @@
-#include "dlllayer\arbor.h"
-#include "ui\nowindow\avisimpl\avisimpl.h"
+﻿#include "dlllayer/arbor.h"
+#include "ui/nowindow/avisimpl/avisimpl.h"
 
 /**
  * Creates `IArborVisual` object used to control graph representation and rendering.

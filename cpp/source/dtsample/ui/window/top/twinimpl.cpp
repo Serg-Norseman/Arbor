@@ -1,6 +1,6 @@
-#include "resource.h"
-#include "ui\window\appmsg.h"
-#include "ui\window\top\twinimpl.h"
+﻿#include "resource.h"
+#include "ui/window/appmsg.h"
+#include "ui/window/top/twinimpl.h"
 
 ATLADD_BEGIN
 

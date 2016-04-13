@@ -1,5 +1,5 @@
-#pragma once
-#include "ns\wapi.h"
+﻿#pragma once
+#include "ns/wapi.h"
 #include <sal.h>
 #include <utility>
 

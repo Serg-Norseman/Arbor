@@ -1,5 +1,5 @@
-#pragma once
-#include "ns\atladd.h"
+﻿#pragma once
+#include "ns/atladd.h"
 #include <Windows.h>
 
 ATLADD_BEGIN
