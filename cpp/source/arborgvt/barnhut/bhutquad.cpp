@@ -1,6 +1,6 @@
-#include "barnhut\bhutquad.h"
-#include "graph\vector.h"
-#include "service\sse.h"
+﻿#include "barnhut/bhutquad.h"
+#include "graph/vector.h"
+#include "service/sse.h"
 
 BHUT_BEGIN
 

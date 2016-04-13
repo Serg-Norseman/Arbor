@@ -1,11 +1,11 @@
-#pragma once
-#include "ns\arbor.h"
-#include "graph\edge.h"
-#include "graph\vector.h"
-#include "graph\vertex.h"
-#include "service\sse.h"
-#include "service\stladdon.h"
-#include "service\winapi\srwlock.h"
+﻿#pragma once
+#include "ns/arbor.h"
+#include "graph/edge.h"
+#include "graph/vector.h"
+#include "graph/vertex.h"
+#include "service/sse.h"
+#include "service/stladdon.h"
+#include "service/winapi/srwlock.h"
 #include <memory>
 #include <random>
 #include <unordered_map>
@@ -35,17 +35,12 @@ ARBOR_BEGIN
  * Public versions of `addEdge` and `addVertex` methods ain't used by this class and are exposed as public interface
  * only.
  */
+#if !defined(__ICL)
 class graph_settings
 {
 protected:
     static constexpr float m_stiffness = 750.0f;
-#if defined(__ICL)
-    // Intel C++ 16.0 doesn't support single-quotation mark as a digit separator for floating point types,
-    // it's a known bug with internal tracker DPD200379927.
-    static constexpr float m_repulsion = 10000.0f;
-#else
     static constexpr float m_repulsion = 10'000.0f;
-#endif
     static constexpr float m_friction = 0.1f;
     static constexpr float m_animationStep = 0.04f;
     static constexpr float m_timeSlice = 0.01f;
@@ -54,6 +49,7 @@ protected:
     static constexpr bool m_gravity = false;
     static constexpr bool m_autoStop = false;
 };
+#endif
 
 class graph_data_type
 {
@@ -151,7 +147,11 @@ protected:
     };
 };
 
+#if defined(__ICL)
+class graph: private graph_data_type
+#else
 class __declspec(empty_bases) graph: private graph_data_type, private graph_settings
+#endif
 {
 public:
     typedef data_iterator<vertices_cont_t::mapped_type, vertices_cont_t::iterator> vertices_iterator;
@@ -286,6 +286,20 @@ private:
     void applyBarnesHutRepulsion();
     void applySprings();
     void __fastcall updateVelocityAndPosition(_In_ const float time);
+
+#if defined(__ICL)
+    static constexpr float m_stiffness = 750.0f;
+    // Intel C++ 16.0 doesn't support single-quotation mark as a digit separator for floating point types,
+    // it's a known bug with internal tracker DPD200379927.
+    static constexpr float m_repulsion = 10000.0f;
+    static constexpr float m_friction = 0.1f;
+    static constexpr float m_animationStep = 0.04f;
+    static constexpr float m_timeSlice = 0.01f;
+    static constexpr float m_energyThreshold = 0.7f;
+    static constexpr float m_theta = 0.4f;
+    static constexpr bool m_gravity = false;
+    static constexpr bool m_autoStop = false;
+#endif
 
     /*
      * `m_graphBound` is the area used by Barnes Hut algorithm. This is a coordinate space where all graph vertices

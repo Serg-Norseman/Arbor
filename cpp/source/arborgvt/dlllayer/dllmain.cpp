@@ -1,4 +1,4 @@
-#include "sdkver.h"
+﻿#include "sdkver.h"
 #include <Windows.h>
 
 BOOL APIENTRY DllMain(_In_ HMODULE module, _In_ DWORD reasonForCall, _In_ LPVOID reserved)

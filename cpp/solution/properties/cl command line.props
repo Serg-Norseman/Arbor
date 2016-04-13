@@ -61,6 +61,8 @@
       <AdditionalOptions>/Qstd=c++14 /Qms0</AdditionalOptions>
       <!-- Floating point -->
       <AdditionalOptions>/QxSSE3 /QaxSSE3 %(AdditionalOptions)</AdditionalOptions>
+      <!-- TEMPORARY fix until ICC 16.0 Update 3 release: MSVC 2015 Update 2 broke ICC 16.0 Update 2 -->
+      <AdditionalOptions>/D__is_assignable=__is_trivially_assignable %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
 
@@ -76,6 +78,8 @@
       <AdditionalOptions>/GR- /Zc:rvalueCast /Zc:inline /Zc:throwingNew %(AdditionalOptions)</AdditionalOptions>
       <!-- Include files-->
       <AdditionalOptions>/I$(SelfReference) %(AdditionalOptions)</AdditionalOptions>
+      <!-- Object files -->
+      <AdditionalOptions>/Fo$(OutDirectory)obj\$(ProjectName)\ %(AdditionalOptions)</AdditionalOptions>
       <!-- Code generation (what and how) -->
       <AdditionalOptions>/Gm- /GF /MP /W4 %(AdditionalOptions)</AdditionalOptions>
       <!-- Floating point -->
@@ -88,11 +92,18 @@
       <AdditionalOptions>/DPLATFORM_WIN32 /DNTDDI_VERSION=NTDDI_WINTHRESHOLD /D_WIN32_WINNT=_WIN32_WINNT_WINTHRESHOLD /DWINVER=0x0A00 /DWIN32_LEAN_AND_MEAN %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
 
+    <!-- Linker options -->
+
+    <Link>
+      <!-- Output file -->
+      <AdditionalOptions>/OUT:$(OutDir)$(TargetName)$(TargetExt) %(AdditionalOptions)</AdditionalOptions>
+    </Link>
+
     <!-- Resource compiler options -->
 
     <ResourceCompile>
       <!-- Include files-->
-      <AdditionalOptions>/I$(SelfReference)</AdditionalOptions>
+      <AdditionalOptions>/I$(SelfReference) /C 65001</AdditionalOptions>
     </ResourceCompile>
   </ItemDefinitionGroup>
 
@@ -113,6 +124,8 @@
     <ClCompile>
       <!-- Debug -->
       <AdditionalOptions>/Zi %(AdditionalOptions)</AdditionalOptions>
+      <!-- Program database file -->
+      <AdditionalOptions>/Fd$(OutDirectory)obj\$(ProjectName)\ %(AdditionalOptions)</AdditionalOptions>
       <!-- Code generation -->
       <AdditionalOptions>/RTC1 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
@@ -123,7 +136,7 @@
       <!-- General settings -->
       <AdditionalOptions>/INCREMENTAL %(AdditionalOptions)</AdditionalOptions>
       <!-- Debug -->
-      <AdditionalOptions>/DEBUG %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/DEBUG /PDB:$(OutDir)$(TargetName).pdb %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
 

@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 /*
  * Macros, that define/use the 'dxu' namespace (DirectX util).
  * Can't use 'DX' shortcut -- there's 'DX' field name in the 'MilMatrix3x2D' structure (@Windows API's dwmapi.h).

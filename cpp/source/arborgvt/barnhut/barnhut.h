@@ -1,7 +1,7 @@
-#pragma once
-#include "barnhut\bhutquad.h"
-#include "graph\vertex.h"
-#include "ns\barnhut.h"
+﻿#pragma once
+#include "barnhut/bhutquad.h"
+#include "graph/vertex.h"
+#include "ns/barnhut.h"
 #include <memory>
 
 BHUT_BEGIN

@@ -1,4 +1,4 @@
-#include "barnhut\barnhut.h"
+﻿#include "barnhut/barnhut.h"
 #include <memory>
 
 BHUT_BEGIN

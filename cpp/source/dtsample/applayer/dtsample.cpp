@@ -1,8 +1,8 @@
-#include "resource.h"
-#include "service\functype.h"
-#include "service\miscutil.h"
-#include "service\strgutil.h"
-#include "ui\window\top\onscreen\dtsmpwnd.h"
+﻿#include "resource.h"
+#include "service/functype.h"
+#include "service/miscutil.h"
+#include "service/strgutil.h"
+#include "ui/window/top/onscreen/dtsmpwnd.h"
 #include <Windows.h>
 
 #pragma comment(lib, "comctl32.Lib")

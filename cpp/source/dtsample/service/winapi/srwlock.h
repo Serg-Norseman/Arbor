@@ -1,6 +1,6 @@
-#pragma once
-#include "ns\wapi.h"
-#include "service\functype.h"
+﻿#pragma once
+#include "ns/wapi.h"
+#include "service/functype.h"
 #include <synchapi.h>
 #include <atldef.h>
 #include <utility>

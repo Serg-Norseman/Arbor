@@ -1,9 +1,9 @@
-#pragma once
-#include "graph\edge.h"
-#include "graph\vertex.h"
-#include "service\com\comptr.h"
-#include "service\sse.h"
-#include "service\stladdon.h"
+﻿#pragma once
+#include "graph/edge.h"
+#include "graph/vertex.h"
+#include "service/com/comptr.h"
+#include "service/sse.h"
+#include "service/stladdon.h"
 #include <d2d1.h>
 #include <d2d1_1.h>
 #include <dwrite.h>

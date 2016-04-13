@@ -1,4 +1,4 @@
-#include "resource.h"
+﻿#include "resource.h"
 #include <VerRsrc.h>
 #include <winuser.h>
 
@@ -27,7 +27,7 @@ FILESUBTYPE 0x0L
 BEGIN
     BLOCK "StringFileInfo"
     BEGIN
-        BLOCK "040904e4"
+        BLOCK "0409fde9"
         BEGIN
             VALUE "CompanyName", "ruslangaripov, Serg-Norseman"
             VALUE "FileDescription", "Arbor GVT desktop sample"
@@ -41,7 +41,7 @@ BEGIN
     END
     BLOCK "VarFileInfo"
     BEGIN
-        VALUE "Translation", 0x0409, 1252
+        VALUE "Translation", 0x0409, 65001
     END
 END
 /////////////////////////////////////////////////////////////////////////////

@@ -1,6 +1,6 @@
-#pragma once
-#include "ns\stladd.h"
-#include "service\winapi\heap.h"
+﻿#pragma once
+#include "ns/stladd.h"
+#include "service/winapi/heap.h"
 #include <functional>
 #include <iterator>
 #include <malloc.h>

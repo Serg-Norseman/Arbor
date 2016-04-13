@@ -1,7 +1,7 @@
-#include "service\functype.h"
-#include "service\miscutil.h"
-#include "service\stladdon.h"
-#include "service\strgutil.h"
+﻿#include "service/functype.h"
+#include "service/miscutil.h"
+#include "service/stladdon.h"
+#include "service/strgutil.h"
 #include <regex>
 #include <tchar.h>
 #include <strsafe.h>
