@@ -311,11 +311,13 @@ void graph_window::draw()
     STLADD t_char_unique_ptr_t text {new TCHAR[length]};
     length =
         _stprintf_s(text.get(), length, TEXT("%.4f FPS (%I64i µs per frame)"), fps, durationInMicroseconds.count());
+    D2D1_MATRIX_3X2_F transform;
+    m_direct2DContext->GetTransform(&transform);
     m_direct2DContext->DrawText(
         text.get(),
         length,
         m_framesPerSecondTextFormat.get(),
-        D2D1::RectF(0.0f, 0.0f, targetSize.width, targetSize.height),
+        D2D1::RectF(-transform._31, -transform._32, targetSize.width, targetSize.height),
         m_framesPerSecondBrush.get());
 #endif
     if (m_graph.active())
