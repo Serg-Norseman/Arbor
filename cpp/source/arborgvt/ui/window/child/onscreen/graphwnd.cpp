@@ -3,10 +3,6 @@
 
 ATLADD_BEGIN
 
-#if !defined(__ICL)
-D2D1_SIZE_F graph_window::m_vertexNameSize = {50.0f, 50.0f};
-#endif
-
 /**
  * Creates this window.
  *
