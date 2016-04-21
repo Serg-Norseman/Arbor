@@ -24,34 +24,34 @@ endif
 .PHONY: all
 all:
 	@CPUCOUNT=`grep -c ^processor /proc/cpuinfo` && set -x && \
-$(MAKE) toolchain=$(icc) platform=$(x86-64) releasetype=$(release) -f arborgvt.mk --jobs $$CPUCOUNT --output-sync
+$(MAKE) toolchain=$(icc) platform=$(x86-64) releasetype=$(release) --file=arborgvt.mk --jobs=$$CPUCOUNT --output-sync=target
 	@CPUCOUNT=`grep -c ^processor /proc/cpuinfo` && set -x && \
-$(MAKE) toolchain=$(icc) platform=$(x86) releasetype=$(release) -f arborgvt.mk --jobs $$CPUCOUNT --output-sync
+$(MAKE) toolchain=$(icc) platform=$(x86) releasetype=$(release) --file=arborgvt.mk --jobs=$$CPUCOUNT --output-sync=target
 	@CPUCOUNT=`grep -c ^processor /proc/cpuinfo` && set -x && \
-$(MAKE) toolchain=$(msvc) platform=$(x86-64) releasetype=$(release) -f arborgvt.mk --jobs $$CPUCOUNT --output-sync
+$(MAKE) toolchain=$(msvc) platform=$(x86-64) releasetype=$(release) --file=arborgvt.mk --jobs=$$CPUCOUNT --output-sync=target
 	@CPUCOUNT=`grep -c ^processor /proc/cpuinfo` && set -x && \
-$(MAKE) toolchain=$(msvc) platform=$(x86) releasetype=$(release) -f arborgvt.mk --jobs $$CPUCOUNT --output-sync
+$(MAKE) toolchain=$(msvc) platform=$(x86) releasetype=$(release) --file=arborgvt.mk --jobs=$$CPUCOUNT --output-sync=target
 ifeq ($(dtsample), $(project))
 	@CPUCOUNT=`grep -c ^processor /proc/cpuinfo` && set -x && \
-$(MAKE) toolchain=$(icc) platform=$(x86-64) releasetype=$(release) -f dtsample.mk --jobs $$CPUCOUNT --output-sync
+$(MAKE) toolchain=$(icc) platform=$(x86-64) releasetype=$(release) --file=dtsample.mk --jobs=$$CPUCOUNT --output-sync=target
 	@CPUCOUNT=`grep -c ^processor /proc/cpuinfo` && set -x && \
-$(MAKE) toolchain=$(icc) platform=$(x86) releasetype=$(release) -f dtsample.mk --jobs $$CPUCOUNT --output-sync
+$(MAKE) toolchain=$(icc) platform=$(x86) releasetype=$(release) --file=dtsample.mk --jobs=$$CPUCOUNT --output-sync=target
 	@CPUCOUNT=`grep -c ^processor /proc/cpuinfo` && set -x && \
-$(MAKE) toolchain=$(msvc) platform=$(x86-64) releasetype=$(release) -f dtsample.mk --jobs $$CPUCOUNT --output-sync
+$(MAKE) toolchain=$(msvc) platform=$(x86-64) releasetype=$(release) --file=dtsample.mk --jobs=$$CPUCOUNT --output-sync=target
 	@CPUCOUNT=`grep -c ^processor /proc/cpuinfo` && set -x && \
-$(MAKE) toolchain=$(msvc) platform=$(x86) releasetype=$(release) -f dtsample.mk --jobs $$CPUCOUNT --output-sync
+$(MAKE) toolchain=$(msvc) platform=$(x86) releasetype=$(release) --file=dtsample.mk --jobs=$$CPUCOUNT --output-sync=target
 endif
 
 .PHONY: clean
 clean:
-	$(MAKE) toolchain=$(icc) platform=$(x86-64) releasetype=$(release) -f arborgvt.mk $@
-	$(MAKE) toolchain=$(icc) platform=$(x86) releasetype=$(release) -f arborgvt.mk $@
-	$(MAKE) toolchain=$(msvc) platform=$(x86-64) releasetype=$(release) -f arborgvt.mk $@
-	$(MAKE) toolchain=$(msvc) platform=$(x86) releasetype=$(release) -f arborgvt.mk $@
+	$(MAKE) toolchain=$(icc) platform=$(x86-64) releasetype=$(release) --file=arborgvt.mk $@
+	$(MAKE) toolchain=$(icc) platform=$(x86) releasetype=$(release) --file=arborgvt.mk $@
+	$(MAKE) toolchain=$(msvc) platform=$(x86-64) releasetype=$(release) --file=arborgvt.mk $@
+	$(MAKE) toolchain=$(msvc) platform=$(x86) releasetype=$(release) --file=arborgvt.mk $@
 # `arborgvt` and `dtsample` use the same `outdir`, therefore it ain't necessary to remove it twice.
 #ifeq ($(dtsample), $(project))
-#	$(MAKE) toolchain=$(icc) platform=$(x86-64) releasetype=$(release) -f dtsample.mk $@
-#	$(MAKE) toolchain=$(icc) platform=$(x86) releasetype=$(release) -f dtsample.mk $@
-#	$(MAKE) toolchain=$(msvc) platform=$(x86-64) releasetype=$(release) -f dtsample.mk $@
-#	$(MAKE) toolchain=$(msvc) platform=$(x86) releasetype=$(release) -f dtsample.mk $@
+#	$(MAKE) toolchain=$(icc) platform=$(x86-64) releasetype=$(release) --file=dtsample.mk $@
+#	$(MAKE) toolchain=$(icc) platform=$(x86) releasetype=$(release) --file=dtsample.mk $@
+#	$(MAKE) toolchain=$(msvc) platform=$(x86-64) releasetype=$(release) --file=dtsample.mk $@
+#	$(MAKE) toolchain=$(msvc) platform=$(x86) releasetype=$(release) --file=dtsample.mk $@
 #endif

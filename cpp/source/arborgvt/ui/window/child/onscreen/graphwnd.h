@@ -148,12 +148,7 @@ private:
         _In_ std::chrono::high_resolution_clock::duration&& frameTime);
 #endif
 
-#if defined(__ICL)
     static constexpr D2D1_SIZE_F m_vertexNameSize = {50.0f, 50.0f};
-#else
-    // Definition is on the top of graphwnd.cpp file.
-    static D2D1_SIZE_F m_vertexNameSize;
-#endif
     static constexpr float m_arrowLength = 7.75f;
     static constexpr float m_arrowHalfWidth = 1.5f;
     // Value of the `m_margin` depends on size of a vertex area.
