@@ -19,16 +19,16 @@ namespace ArborGVT
         public bool Directed;
 
         public ArborEdge(ArborNode src, ArborNode tgt, double len, double stiffness)
+            : this(src, tgt, len, stiffness, false)
+        {
+        }
+
+        public ArborEdge(ArborNode src, ArborNode tgt, double len, double stiffness, bool directed)
         {
             this.Source = src;
             this.Target = tgt;
             this.Length = len;
             this.Stiffness = stiffness;
-        }
-
-        public ArborEdge(ArborNode src, ArborNode tgt, double len, double stiffness, bool directed)
-            : this(src, tgt, len, stiffness)
-        {
             this.Directed = directed;
         }
     }

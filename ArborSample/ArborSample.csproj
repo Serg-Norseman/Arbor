@@ -39,6 +39,9 @@
     <Reference Include="System.Windows.Forms" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ArborViewer.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="SampleForm.cs">
       <SubType>Form</SubType>
     </Compile>

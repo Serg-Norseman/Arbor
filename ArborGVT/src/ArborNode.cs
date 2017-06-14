@@ -7,8 +7,6 @@
  *  Fork and C# implementation, copyright (c) 2012,2016 by Serg V. Zhdanovskih.
  */
 
-using System.Drawing;
-
 namespace ArborGVT
 {
     public class ArborNode
@@ -20,9 +18,6 @@ namespace ArborGVT
         public double Mass;
         public ArborPoint Pt;
 
-        public Color Color;
-        public RectangleF Box;
-
         internal ArborPoint V;
         internal ArborPoint F;
 
@@ -33,8 +28,6 @@ namespace ArborGVT
             this.Fixed = false;
             this.Mass = 1;
             this.Pt = ArborPoint.Null;
-
-            this.Color = Color.Gray;
 
             this.V = new ArborPoint(0, 0);
             this.F = new ArborPoint(0, 0);

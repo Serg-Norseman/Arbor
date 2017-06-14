@@ -27,7 +27,7 @@ namespace ArborGVT
         }
     }
 
-    public sealed class ArborSystem : IDisposable
+    public class ArborSystem : IDisposable
     {
         private static readonly int DEBUG_PROFILER_LIMIT = 0;//2000;
 
@@ -180,12 +180,22 @@ namespace ArborGVT
             if (fOnStop != null) fOnStop(this, new EventArgs());
         }
 
+        protected virtual ArborNode CreateNode(string sign)
+        {
+            return new ArborNode(sign);
+        }
+
+        protected virtual ArborEdge CreateEdge(ArborNode src, ArborNode tgt, double len, double stiffness, bool directed = false)
+        {
+            return new ArborEdge(src, tgt, len, stiffness, directed);
+        }
+
         public ArborNode addNode(string sign, double x, double y)
         {
             ArborNode node = this.getNode(sign);
             if (node != null) return node;
 
-            node = new ArborNode(sign);
+            node = CreateNode(sign);
             node.Pt = new ArborPoint(x, y);
 
             fNames.Add(sign, node);
@@ -232,7 +242,7 @@ namespace ArborGVT
 
             if (x == null)
             {
-                x = new ArborEdge(src, tgt, len, ParamStiffness);
+                x = CreateEdge(src, tgt, len, ParamStiffness);
                 fEdges.Add(x);
             }
 
@@ -341,10 +351,10 @@ namespace ArborGVT
 
                 if (aX > 1 || aY > 1)
                 {
-                	ArborPoint nbLT = fViewBounds.LeftTop.add(vLT);
-                	ArborPoint nbRB = fViewBounds.RightBottom.add(vRB);
+                    ArborPoint nbLT = fViewBounds.LeftTop.add(vLT);
+                    ArborPoint nbRB = fViewBounds.RightBottom.add(vRB);
 
-                	fViewBounds = new PSBounds(nbLT, nbRB);
+                    fViewBounds = new PSBounds(nbLT, nbRB);
                 }
             }
             catch (Exception ex)

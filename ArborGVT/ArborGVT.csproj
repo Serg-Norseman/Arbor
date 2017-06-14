@@ -16,9 +16,10 @@
     <TreatWarningsAsErrors>False</TreatWarningsAsErrors>
     <IntermediateOutputPath>obj\$(Configuration)\</IntermediateOutputPath>
     <WarningLevel>4</WarningLevel>
+    <NoWin32Manifest>False</NoWin32Manifest>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Platform)' == 'AnyCPU' ">
-    <PlatformTarget>x86</PlatformTarget>
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <BaseAddress>4194304</BaseAddress>
     <RegisterForComInterop>False</RegisterForComInterop>
     <GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
@@ -43,8 +44,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
-    <Reference Include="System.Drawing" />
-    <Reference Include="System.Windows.Forms" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -52,9 +51,6 @@
     <Compile Include="src\ArborNode.cs" />
     <Compile Include="src\ArborPoint.cs" />
     <Compile Include="src\ArborSystem.cs" />
-    <Compile Include="src\ArborViewer.cs">
-      <SubType>Component</SubType>
-    </Compile>
     <Compile Include="src\BarnesHutTree.cs" />
     <Compile Include="src\IArborRenderer.cs" />
   </ItemGroup>

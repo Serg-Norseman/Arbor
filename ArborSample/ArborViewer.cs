@@ -13,8 +13,39 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 
-namespace ArborGVT
+using ArborGVT;
+
+namespace ArborSample
 {
+    public sealed class ArborNodeEx : ArborNode
+    {
+        public Color Color;
+        public RectangleF Box;
+
+        public ArborNodeEx(string sign) : base(sign)
+        {
+            this.Color = Color.Gray;
+        }
+    }
+
+    public sealed class ArborSystemEx : ArborSystem
+    {
+        public ArborSystemEx(double repulsion, double stiffness, double friction, IArborRenderer renderer)
+            : base(repulsion, stiffness, friction, renderer)
+        {
+        }
+
+        protected override ArborNode CreateNode(string sign)
+        {
+            return new ArborNodeEx(sign);
+        }
+
+        protected override ArborEdge CreateEdge(ArborNode src, ArborNode tgt, double len, double stiffness, bool directed = false)
+        {
+            return new ArborEdge(src, tgt, len, stiffness, directed);
+        }
+    }
+
     public sealed class ArborViewer : Panel, IArborRenderer
     {
         private bool fEnergyDebug;
@@ -22,7 +53,7 @@ namespace ArborGVT
         private readonly Font fDrawFont;
         private bool fNodesDragging;
         private readonly StringFormat fStrFormat;
-        private readonly ArborSystem fSys;
+        private readonly ArborSystemEx fSys;
         private readonly SolidBrush fBlackBrush;
         private readonly SolidBrush fWhiteBrush;
 
@@ -38,7 +69,7 @@ namespace ArborGVT
             set { this.fNodesDragging = value; }
         }
 
-        public ArborSystem Sys
+        public ArborSystemEx Sys
         {
             get { return this.fSys; }
         }
@@ -54,7 +85,7 @@ namespace ArborGVT
             base.SetStyle(ControlStyles.OptimizedDoubleBuffer, true);
 
             // repulsion - отталкивание, stiffness - тугоподвижность, friction - сила трения
-            this.fSys = new ArborSystem(10000, 500/*1000*/, 0.1, this);
+            this.fSys = new ArborSystemEx(10000, 500/*1000*/, 0.1, this);
             this.fSys.setScreenSize(this.Width, this.Height);
             this.fSys.AutoStop = false;
 
@@ -102,9 +133,11 @@ namespace ArborGVT
 
                 foreach (ArborNode node in fSys.Nodes)
                 {
-                    node.Box = this.getNodeRect(gfx, node);
-                    gfx.FillRectangle(new SolidBrush(node.Color), node.Box);
-                    gfx.DrawString(node.Sign, fDrawFont, this.fWhiteBrush, node.Box, this.fStrFormat);
+                    var xnode = node as ArborNodeEx;
+
+                    xnode.Box = this.getNodeRect(gfx, node);
+                    gfx.FillRectangle(new SolidBrush(xnode.Color), xnode.Box);
+                    gfx.DrawString(node.Sign, fDrawFont, this.fWhiteBrush, xnode.Box, this.fStrFormat);
                 }
 
                 using (Pen grayPen = new Pen(Color.Gray, 1))
@@ -114,8 +147,8 @@ namespace ArborGVT
 
                     foreach (ArborEdge edge in fSys.Edges)
                     {
-                        ArborNode srcNode = edge.Source;
-                        ArborNode tgtNode = edge.Target;
+                        var srcNode = edge.Source as ArborNodeEx;
+                        var tgtNode = edge.Target as ArborNodeEx;
 
                         ArborPoint pt1 = fSys.toScreen(srcNode.Pt);
                         ArborPoint pt2 = fSys.toScreen(tgtNode.Pt);
