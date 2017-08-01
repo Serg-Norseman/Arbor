@@ -120,7 +120,6 @@ public class ArborSystem
                 }
             }
         }*/
-
     public double getStopThreshold()
     {
         return this.fStopThreshold;
@@ -178,6 +177,16 @@ public class ArborSystem
         //if (fOnStop != null) fOnStop(this, new EventArgs());
     }
 
+    protected ArborNode createNode(String sign)
+    {
+        return new ArborNode(sign);
+    }
+
+    protected ArborEdge createEdge(ArborNode src, ArborNode tgt, double len, double stiffness, boolean directed)
+    {
+        return new ArborEdge(src, tgt, len, stiffness, directed);
+    }
+
     public ArborNode addNode(String sign, double x, double y)
     {
         ArborNode node = this.getNode(sign);
@@ -185,7 +194,7 @@ public class ArborSystem
             return node;
         }
 
-        node = new ArborNode(sign);
+        node = createNode(sign);
         node.Pt = new ArborPoint(x, y);
 
         fNames.put(sign, node);
@@ -233,7 +242,7 @@ public class ArborSystem
         }
 
         if (x == null) {
-            x = new ArborEdge(src, tgt, len, ParamStiffness);
+            x = createEdge(src, tgt, len, ParamStiffness, false);
             fEdges.add(x);
         }
 

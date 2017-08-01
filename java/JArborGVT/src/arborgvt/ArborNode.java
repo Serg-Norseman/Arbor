@@ -9,9 +9,6 @@
  */
 package arborgvt;
 
-import java.awt.Color;
-import java.awt.geom.Rectangle2D;
-
 /**
  *
  * @author Serg V. Zhdanovskih
@@ -25,9 +22,6 @@ public class ArborNode
     public double Mass;
     public ArborPoint Pt;
 
-    public Color Color;
-    public Rectangle2D.Float Box;
-
     public ArborPoint V;
     public ArborPoint F;
 
@@ -38,8 +32,6 @@ public class ArborNode
         this.Fixed = false;
         this.Mass = 1;
         this.Pt = ArborPoint.Null;
-
-        this.Color = Color.gray;
 
         this.V = new ArborPoint(0, 0);
         this.F = new ArborPoint(0, 0);

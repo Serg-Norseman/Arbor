@@ -7,8 +7,13 @@
  *  Fork and C# implementation, copyright (c) 2012,2016 by Serg V. Zhdanovskih.
  *  Fork and Java implementation, copyright (c) 2016 by Serg V. Zhdanovskih.
  */
-package arborgvt;
+package jarborsample;
 
+import arborgvt.ArborEdge;
+import arborgvt.ArborNode;
+import arborgvt.ArborPoint;
+import arborgvt.ArborSystem;
+import arborgvt.IArborRenderer;
 import java.awt.Color;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
@@ -30,7 +35,7 @@ public class ArborViewer extends JPanel implements IArborRenderer
     private boolean fEnergyDebug;
     private ArborNode fDragged;
     private boolean fNodesDragging;
-    private final ArborSystem fSys;
+    private final ArborSystemEx fSys;
 
     public boolean getEnergyDebug()
     {
@@ -63,7 +68,7 @@ public class ArborViewer extends JPanel implements IArborRenderer
         this.setBorder(BorderFactory.createLoweredBevelBorder());
         this.setDoubleBuffered(true);
 
-        this.fSys = new ArborSystem(10000, 500/*1000*/, 0.1, this);
+        this.fSys = new ArborSystemEx(10000, 500/*1000*/, 0.1, this);
         this.fSys.setScreenSize(this.getWidth(), this.getHeight());
         this.fSys.setAutoStop(false);
 
@@ -118,15 +123,16 @@ public class ArborViewer extends JPanel implements IArborRenderer
 
         try {
             for (ArborNode node : fSys.getNodes()) {
-                node.Box = this.getNodeRect(gfx, node);
+                ArborNodeEx nodeEx = (ArborNodeEx) node;
+                nodeEx.Box = this.getNodeRect(gfx, node);
 
-                gfx.setColor(node.Color);
-                gfx.fillRect((int) node.Box.x, (int) node.Box.y, (int) node.Box.width, (int) node.Box.height);
+                gfx.setColor(nodeEx.Color);
+                gfx.fillRect((int) nodeEx.Box.x, (int) nodeEx.Box.y, (int) nodeEx.Box.width, (int) nodeEx.Box.height);
 
                 gfx.setColor(Color.white);
                 gfx.drawString(node.Sign,
-                        (int)(node.Box.x + (node.Box.width - metrics.stringWidth(node.Sign)) / 2),
-                        (int)(node.Box.y + (node.Box.height - metrics.getHeight()) / 2 + metrics.getAscent()));
+                        (int) (nodeEx.Box.x + (nodeEx.Box.width - metrics.stringWidth(node.Sign)) / 2),
+                        (int) (nodeEx.Box.y + (nodeEx.Box.height - metrics.getHeight()) / 2 + metrics.getAscent()));
             }
 
             //using (Pen grayPen = new Pen(Color.Gray, 1))
@@ -136,8 +142,8 @@ public class ArborViewer extends JPanel implements IArborRenderer
                 gfx.setColor(Color.gray);
 
                 for (ArborEdge edge : fSys.getEdges()) {
-                    ArborNode srcNode = edge.Source;
-                    ArborNode tgtNode = edge.Target;
+                    ArborNodeEx srcNode = (ArborNodeEx) edge.Source;
+                    ArborNodeEx tgtNode = (ArborNodeEx) edge.Target;
 
                     ArborPoint pt1 = fSys.toScreen(srcNode.Pt);
                     ArborPoint pt2 = fSys.toScreen(tgtNode.Pt);

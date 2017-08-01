@@ -10,7 +10,6 @@
 package jarborsample;
 
 import arborgvt.ArborNode;
-import arborgvt.ArborViewer;
 import bslib.common.FramesHelper;
 import bslib.common.StringHelper;
 import java.awt.BorderLayout;
