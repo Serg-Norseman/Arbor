@@ -11,6 +11,7 @@ using System;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Timers;
 using System.Windows.Forms;
 
 using ArborGVT;
@@ -30,9 +31,36 @@ namespace ArborSample
 
     public sealed class ArborSystemEx : ArborSystem
     {
+        private System.Timers.Timer fTimer;
+
         public ArborSystemEx(double repulsion, double stiffness, double friction, IArborRenderer renderer)
             : base(repulsion, stiffness, friction, renderer)
         {
+            this.fTimer = null;
+        }
+
+        private void TimerElapsed(object sender, ElapsedEventArgs e)
+        {
+            TickTimer();
+        }
+
+        protected override void StartTimer()
+        {
+            fTimer = new System.Timers.Timer();
+            fTimer.AutoReset = true;
+            fTimer.Interval = ParamTimeout;
+            fTimer.Elapsed += TimerElapsed;
+            fTimer.Start();
+        }
+
+        protected override void StopTimer()
+        {
+            if (fTimer != null)
+            {
+                fTimer.Stop();
+                fTimer.Dispose();
+                fTimer = null;
+            }
         }
 
         protected override ArborNode CreateNode(string sign)

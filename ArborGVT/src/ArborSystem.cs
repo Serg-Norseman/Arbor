@@ -11,7 +11,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Timers;
 
 namespace ArborGVT
 {
@@ -27,7 +26,7 @@ namespace ArborGVT
         }
     }
 
-    public class ArborSystem : IDisposable
+    public abstract class ArborSystem : IDisposable
     {
         private static readonly int DEBUG_PROFILER_LIMIT = 0;//2000;
 
@@ -51,7 +50,6 @@ namespace ArborGVT
         private int fScreenHeight;
         private int fScreenWidth;
         private double fStopThreshold;
-        private Timer fTimer;
         private PSBounds fViewBounds;
 
         public double EnergySum = 0;
@@ -133,7 +131,6 @@ namespace ArborGVT
             this.fRenderer = renderer;
             this.fPrevTime = DateTime.FromBinary(0);
             this.fStopThreshold = /*0.05*/ 0.7;
-            this.fTimer = null;
 
             this.ParamRepulsion = repulsion;
             this.ParamStiffness = stiffness;
@@ -149,33 +146,28 @@ namespace ArborGVT
             }
         }
 
+        protected abstract void StartTimer();
+
+        protected abstract void StopTimer();
+
         public void start()
         {
             if (fOnStart != null) fOnStart(this, new EventArgs());
 
-            if (fTimer != null)
+            /*if (fTimer != null)
             {
                 return;
-            }
+            }*/
             fPrevTime = DateTime.FromBinary(0);
 
             fIterationsCounter = 0;
 
-            fTimer = new System.Timers.Timer();
-            fTimer.AutoReset = true;
-            fTimer.Interval = ParamTimeout;
-            fTimer.Elapsed += this.tickTimer;
-            fTimer.Start();
+            StartTimer();
         }
 
         public void stop()
         {
-            if (fTimer != null)
-            {
-                fTimer.Stop();
-                fTimer.Dispose();
-                fTimer = null;
-            }
+            StopTimer();
 
             if (fOnStop != null) fOnStop(this, new EventArgs());
         }
@@ -363,7 +355,7 @@ namespace ArborGVT
             }
         }
 
-        private void tickTimer(object sender, ElapsedEventArgs e)
+        protected void TickTimer()
         {
             if (DEBUG_PROFILER_LIMIT > 0)
             {
