@@ -36,7 +36,7 @@ namespace ArborSample
         public ArborSystemEx(double repulsion, double stiffness, double friction, IArborRenderer renderer)
             : base(repulsion, stiffness, friction, renderer)
         {
-            this.fTimer = null;
+            fTimer = null;
         }
 
         private void TimerElapsed(object sender, ElapsedEventArgs e)
@@ -206,7 +206,7 @@ namespace ArborSample
         public static ArborPoint intersect_line_line(ArborPoint p1, ArborPoint p2, ArborPoint p3, ArborPoint p4)
         {
             double denom = ((p4.Y - p3.Y) * (p2.X - p1.X) - (p4.X - p3.X) * (p2.Y - p1.Y));
-            if (denom == 0) return ArborPoint.Null; // lines are parallel
+            if (denom == 0.0f) return ArborPoint.Null; // lines are parallel
 
             double ua = ((p4.X - p3.X) * (p1.Y - p3.Y) - (p4.Y - p3.Y) * (p1.X - p3.X)) / denom;
             double ub = ((p2.X - p1.X) * (p1.Y - p3.Y) - (p2.Y - p1.Y) * (p1.X - p3.X)) / denom;

@@ -1,4 +1,6 @@
 
+rmdir .\.vs /s /q
+
 rmdir .\ArborGVT\bin /s /q
 rmdir .\ArborGVT\obj /s /q
 

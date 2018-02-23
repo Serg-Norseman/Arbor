@@ -62,7 +62,7 @@ namespace ArborGVT
         public double ParamDt = 0.01; // 0.02;
         public bool ParamGravity = false;
         public double ParamPrecision = 0.6;
-        public double ParamTimeout = 1000 / 100;
+        public double ParamTimeout = 1000.0f / 100.0f;
         public double ParamTheta = 0.4;
 
         #region Properties
@@ -139,10 +139,10 @@ namespace ArborGVT
 
         public void Dispose()
         {
-            if (!this.fDisposed)
+            if (!fDisposed)
             {
-                this.stop();
-                this.fDisposed = true;
+                stop();
+                fDisposed = true;
             }
         }
 

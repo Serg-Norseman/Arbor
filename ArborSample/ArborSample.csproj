@@ -42,6 +42,7 @@
     <Compile Include="ArborViewer.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="AssemblyInfo.cs" />
     <Compile Include="SampleForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -49,7 +50,6 @@
       <DependentUpon>SampleForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Program.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="SampleForm.resx">
